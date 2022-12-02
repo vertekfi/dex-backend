@@ -1,6 +1,8 @@
-import { CacheModule, Module } from '@nestjs/common';
+import { Logger, CacheModule, Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { loggingMiddleware, PrismaModule } from 'nestjs-prisma';
+
 import { join } from 'path';
 import type { ClientOpts } from 'redis';
 import * as redisStore from 'cache-manager-redis-store';
@@ -21,6 +23,18 @@ import { PoolModule } from './modules/pool/pool.module';
       store: redisStore,
       // Store-specific configuration:
       host: process.env.REDIS_URL,
+    }),
+    PrismaModule.forRoot({
+      isGlobal: true,
+      prismaServiceOptions: {
+        // configure your prisma middleware
+        middlewares: [
+          loggingMiddleware({
+            logger: new Logger('PrismaMiddleware'),
+            logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'log',
+          }),
+        ],
+      },
     }),
 
     PoolModule,

@@ -6,7 +6,7 @@ import helmet from 'helmet';
 const cluster = require('cluster');
 
 async function bootstrap() {
-  if (cluster.isMaster) {
+  if (cluster.isMaster && process.env.NODE_ENV === 'production') {
     console.log(`Master process: ${process.pid} is running`);
 
     const WORKERS = process.env.WEB_CONCURRENCY || 1;
