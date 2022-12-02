@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import {
   BalancerJoinExitsQuery,
   BalancerJoinExitsQueryVariables,
+  BalancerSwapsQuery,
+  BalancerSwapsQueryVariables,
   getSdk,
 } from './balancer-subgraph-types';
 import { GraphQLClient } from 'graphql-request';
@@ -20,5 +22,9 @@ export class BalancerSubgraphService {
 
   async getPoolJoinExits(args: BalancerJoinExitsQueryVariables): Promise<BalancerJoinExitsQuery> {
     return this.sdk.BalancerJoinExits(args);
+  }
+
+  async getSwaps(args: BalancerSwapsQueryVariables): Promise<BalancerSwapsQuery> {
+    return this.sdk.BalancerSwaps(args);
   }
 }
