@@ -141,6 +141,7 @@ export interface GqlPoolTokenBase {
 }
 
 export interface IQuery {
+    __typename?: 'IQuery';
     poolGetPool(id: string): GqlPoolBase | Promise<GqlPoolBase>;
     poolGetPools(first?: Nullable<number>, skip?: Nullable<number>, orderBy?: Nullable<GqlPoolOrderBy>, orderDirection?: Nullable<GqlPoolOrderDirection>, where?: Nullable<GqlPoolFilter>, textSearch?: Nullable<string>): GqlPoolMinimal[] | Promise<GqlPoolMinimal[]>;
     poolGetPoolsCount(first?: Nullable<number>, skip?: Nullable<number>, orderBy?: Nullable<GqlPoolOrderBy>, orderDirection?: Nullable<GqlPoolOrderDirection>, where?: Nullable<GqlPoolFilter>, textSearch?: Nullable<string>): number | Promise<number>;
@@ -156,6 +157,7 @@ export interface IQuery {
 }
 
 export interface IMutation {
+    __typename?: 'IMutation';
     poolSyncAllPoolsFromSubgraph(): string[] | Promise<string[]>;
     poolSyncNewPoolsFromSubgraph(): string[] | Promise<string[]>;
     poolLoadOnChainDataForAllPools(): string | Promise<string>;
@@ -181,6 +183,7 @@ export interface IMutation {
 }
 
 export interface GqlPoolMinimal {
+    __typename?: 'GqlPoolMinimal';
     id: string;
     name: string;
     symbol: string;
@@ -197,6 +200,7 @@ export interface GqlPoolMinimal {
 }
 
 export interface GqlPoolDynamicData {
+    __typename?: 'GqlPoolDynamicData';
     poolId: string;
     swapFee: BigDecimal;
     swapEnabled: boolean;
@@ -232,30 +236,35 @@ export interface GqlPoolDynamicData {
 }
 
 export interface GqlPoolInvestConfig {
+    __typename?: 'GqlPoolInvestConfig';
     proportionalEnabled: boolean;
     singleAssetEnabled: boolean;
     options: GqlPoolInvestOption[];
 }
 
 export interface GqlPoolInvestOption {
+    __typename?: 'GqlPoolInvestOption';
     poolTokenIndex: number;
     poolTokenAddress: string;
     tokenOptions: GqlPoolToken[];
 }
 
 export interface GqlPoolWithdrawConfig {
+    __typename?: 'GqlPoolWithdrawConfig';
     proportionalEnabled: boolean;
     singleAssetEnabled: boolean;
     options: GqlPoolWithdrawOption[];
 }
 
 export interface GqlPoolWithdrawOption {
+    __typename?: 'GqlPoolWithdrawOption';
     poolTokenIndex: number;
     poolTokenAddress: string;
     tokenOptions: GqlPoolToken[];
 }
 
 export interface GqlPoolWeighted extends GqlPoolBase {
+    __typename?: 'GqlPoolWeighted';
     id: string;
     name: string;
     symbol: string;
@@ -275,6 +284,7 @@ export interface GqlPoolWeighted extends GqlPoolBase {
 }
 
 export interface GqlPoolLiquidityBootstrapping extends GqlPoolBase {
+    __typename?: 'GqlPoolLiquidityBootstrapping';
     id: string;
     name: string;
     symbol: string;
@@ -294,6 +304,7 @@ export interface GqlPoolLiquidityBootstrapping extends GqlPoolBase {
 }
 
 export interface GqlPoolStable extends GqlPoolBase {
+    __typename?: 'GqlPoolStable';
     id: string;
     name: string;
     symbol: string;
@@ -313,6 +324,7 @@ export interface GqlPoolStable extends GqlPoolBase {
 }
 
 export interface GqlPoolMetaStable extends GqlPoolBase {
+    __typename?: 'GqlPoolMetaStable';
     id: string;
     name: string;
     symbol: string;
@@ -332,6 +344,7 @@ export interface GqlPoolMetaStable extends GqlPoolBase {
 }
 
 export interface GqlPoolPhantomStable extends GqlPoolBase {
+    __typename?: 'GqlPoolPhantomStable';
     id: string;
     name: string;
     symbol: string;
@@ -353,6 +366,7 @@ export interface GqlPoolPhantomStable extends GqlPoolBase {
 }
 
 export interface GqlPoolElement extends GqlPoolBase {
+    __typename?: 'GqlPoolElement';
     id: string;
     name: string;
     symbol: string;
@@ -374,6 +388,7 @@ export interface GqlPoolElement extends GqlPoolBase {
 }
 
 export interface GqlPoolLinear extends GqlPoolBase {
+    __typename?: 'GqlPoolLinear';
     id: string;
     name: string;
     symbol: string;
@@ -397,6 +412,7 @@ export interface GqlPoolLinear extends GqlPoolBase {
 }
 
 export interface GqlPoolLinearNested {
+    __typename?: 'GqlPoolLinearNested';
     id: string;
     name: string;
     symbol: string;
@@ -415,6 +431,7 @@ export interface GqlPoolLinearNested {
 }
 
 export interface GqlPoolPhantomStableNested {
+    __typename?: 'GqlPoolPhantomStableNested';
     id: string;
     name: string;
     symbol: string;
@@ -432,6 +449,7 @@ export interface GqlPoolPhantomStableNested {
 }
 
 export interface GqlPoolToken extends GqlPoolTokenBase {
+    __typename?: 'GqlPoolToken';
     id: string;
     address: string;
     decimals: number;
@@ -445,6 +463,7 @@ export interface GqlPoolToken extends GqlPoolTokenBase {
 }
 
 export interface GqlPoolTokenLinear extends GqlPoolTokenBase {
+    __typename?: 'GqlPoolTokenLinear';
     id: string;
     address: string;
     balance: BigDecimal;
@@ -462,6 +481,7 @@ export interface GqlPoolTokenLinear extends GqlPoolTokenBase {
 }
 
 export interface GqlPoolTokenPhantomStable extends GqlPoolTokenBase {
+    __typename?: 'GqlPoolTokenPhantomStable';
     id: string;
     address: string;
     balance: BigDecimal;
@@ -476,6 +496,7 @@ export interface GqlPoolTokenPhantomStable extends GqlPoolTokenBase {
 }
 
 export interface GqlPoolLinearPoolData {
+    __typename?: 'GqlPoolLinearPoolData';
     id: string;
     address: string;
     symbol: string;
@@ -490,6 +511,7 @@ export interface GqlPoolLinearPoolData {
 }
 
 export interface GqlPoolStablePhantomPoolData {
+    __typename?: 'GqlPoolStablePhantomPoolData';
     id: string;
     address: string;
     symbol: string;
@@ -499,6 +521,7 @@ export interface GqlPoolStablePhantomPoolData {
 }
 
 export interface GqlPoolLinearPoolMainToken {
+    __typename?: 'GqlPoolLinearPoolMainToken';
     address: string;
     index: number;
     balance: string;
@@ -509,6 +532,7 @@ export interface GqlPoolLinearPoolMainToken {
 }
 
 export interface GqlPoolLinearPoolWrappedToken {
+    __typename?: 'GqlPoolLinearPoolWrappedToken';
     address: string;
     index: number;
     balance: string;
@@ -520,6 +544,7 @@ export interface GqlPoolLinearPoolWrappedToken {
 }
 
 export interface GqlPoolApr {
+    __typename?: 'GqlPoolApr';
     total: BigDecimal;
     min?: Nullable<BigDecimal>;
     max?: Nullable<BigDecimal>;
@@ -531,17 +556,20 @@ export interface GqlPoolApr {
 }
 
 export interface GqlPoolAprItem {
+    __typename?: 'GqlPoolAprItem';
     title: string;
     apr: BigDecimal;
     subItems?: Nullable<GqlBalancePoolAprSubItem[]>;
 }
 
 export interface GqlPoolAprSubItem {
+    __typename?: 'GqlPoolAprSubItem';
     title: string;
     apr: BigDecimal;
 }
 
 export interface GqlPoolTokenExpanded {
+    __typename?: 'GqlPoolTokenExpanded';
     id: string;
     address: string;
     name: string;
@@ -554,11 +582,13 @@ export interface GqlPoolTokenExpanded {
 }
 
 export interface GqlPoolFilterDefinition {
+    __typename?: 'GqlPoolFilterDefinition';
     id: string;
     title: string;
 }
 
 export interface GqlPoolSwap {
+    __typename?: 'GqlPoolSwap';
     id: string;
     poolId: string;
     userAddress: string;
@@ -572,6 +602,7 @@ export interface GqlPoolSwap {
 }
 
 export interface GqlPoolBatchSwap {
+    __typename?: 'GqlPoolBatchSwap';
     id: string;
     userAddress: string;
     tokenIn: string;
@@ -587,6 +618,7 @@ export interface GqlPoolBatchSwap {
 }
 
 export interface GqlPoolBatchSwapSwap {
+    __typename?: 'GqlPoolBatchSwapSwap';
     id: string;
     pool: GqlPoolMinimal;
     userAddress: string;
@@ -600,11 +632,13 @@ export interface GqlPoolBatchSwapSwap {
 }
 
 export interface GqlPoolBatchSwapPool {
+    __typename?: 'GqlPoolBatchSwapPool';
     id: string;
     tokens: string[];
 }
 
 export interface GqlPoolStaking {
+    __typename?: 'GqlPoolStaking';
     id: string;
     type: GqlPoolStakingType;
     address: string;
@@ -614,18 +648,21 @@ export interface GqlPoolStaking {
 }
 
 export interface GqlPoolStakingMasterChefFarm {
+    __typename?: 'GqlPoolStakingMasterChefFarm';
     id: string;
     beetsPerBlock: string;
     rewarders?: Nullable<GqlPoolStakingFarmRewarder[]>;
 }
 
 export interface GqlPoolStakingReliquaryFarm {
+    __typename?: 'GqlPoolStakingReliquaryFarm';
     id: string;
     beetsPerSecond: string;
     levels?: Nullable<GqlPoolStakingReliquarFarmLevel[]>;
 }
 
 export interface GqlPoolStakingReliquarFarmLevel {
+    __typename?: 'GqlPoolStakingReliquarFarmLevel';
     id: string;
     level: number;
     balance: BigDecimal;
@@ -635,6 +672,7 @@ export interface GqlPoolStakingReliquarFarmLevel {
 }
 
 export interface GqlPoolStakingFarmRewarder {
+    __typename?: 'GqlPoolStakingFarmRewarder';
     id: string;
     address: string;
     tokenAddress: string;
@@ -642,18 +680,21 @@ export interface GqlPoolStakingFarmRewarder {
 }
 
 export interface GqlPoolStakingGauge {
+    __typename?: 'GqlPoolStakingGauge';
     id: string;
     gaugeAddress: string;
     rewards: GqlPoolStakingGaugeReward[];
 }
 
 export interface GqlPoolStakingGaugeReward {
+    __typename?: 'GqlPoolStakingGaugeReward';
     id: string;
     tokenAddress: string;
     rewardPerSecond: string;
 }
 
 export interface GqlPoolJoinExit {
+    __typename?: 'GqlPoolJoinExit';
     id: string;
     type: GqlPoolJoinExitType;
     sender: string;
@@ -665,11 +706,13 @@ export interface GqlPoolJoinExit {
 }
 
 export interface GqlPoolJoinExitAmount {
+    __typename?: 'GqlPoolJoinExitAmount';
     address: string;
     amount: string;
 }
 
 export interface GqlBalancePoolAprItem {
+    __typename?: 'GqlBalancePoolAprItem';
     id: string;
     title: string;
     apr: BigDecimal;
@@ -677,17 +720,20 @@ export interface GqlBalancePoolAprItem {
 }
 
 export interface GqlBalancePoolAprSubItem {
+    __typename?: 'GqlBalancePoolAprSubItem';
     id: string;
     title: string;
     apr: BigDecimal;
 }
 
 export interface GqlPoolUserSwapVolume {
+    __typename?: 'GqlPoolUserSwapVolume';
     userAddress: string;
     swapVolumeUSD: BigDecimal;
 }
 
 export interface GqlPoolFeaturedPoolGroup {
+    __typename?: 'GqlPoolFeaturedPoolGroup';
     id: string;
     title: string;
     icon: string;
@@ -695,6 +741,7 @@ export interface GqlPoolFeaturedPoolGroup {
 }
 
 export interface GqlFeaturePoolGroupItemExternalLink {
+    __typename?: 'GqlFeaturePoolGroupItemExternalLink';
     id: string;
     image: string;
     buttonText: string;
@@ -702,6 +749,7 @@ export interface GqlFeaturePoolGroupItemExternalLink {
 }
 
 export interface GqlPoolSnapshot {
+    __typename?: 'GqlPoolSnapshot';
     id: string;
     poolId: string;
     timestamp: number;
@@ -718,6 +766,7 @@ export interface GqlPoolSnapshot {
 }
 
 export interface GqlPoolTokenDisplay {
+    __typename?: 'GqlPoolTokenDisplay';
     id: string;
     address: string;
     name: string;

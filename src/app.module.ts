@@ -15,6 +15,7 @@ import { PoolModule } from './modules/pool/pool.module';
       typePaths: ['./**/*.gql'],
       definitions: {
         path: join(process.cwd(), 'src/graphql.ts'),
+        emitTypenameField: true,
       },
       cache: 'bounded',
       playground: true,
