@@ -73,3 +73,9 @@ export interface GqlPoolSwapFilter {
   tokenInIn?: InputMaybe<Array<Scalars['String']>>;
   tokenOutIn?: InputMaybe<Array<Scalars['String']>>;
 }
+
+export interface QueryPoolGetBatchSwapsArgs {
+  first?: InputMaybe<Scalars['Int']>;
+  skip?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<GqlPoolSwapFilter>;
+}

@@ -25,7 +25,6 @@ import {
   GqlPoolPhantomStableNested,
   GqlPoolTokenExpanded,
   GqlPoolTokenDisplay,
-  GqlPoolMinimal,
 } from 'src/graphql';
 import { oldBnum } from 'src/modules/utils/old-big-number';
 import { Prisma } from '@prisma/client';

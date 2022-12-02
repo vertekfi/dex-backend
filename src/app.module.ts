@@ -7,18 +7,23 @@ import * as redisStore from 'cache-manager-redis-store';
 import { PoolModule } from './modules/pool/pool.module';
 import { join } from 'path';
 
+const gqlConfig: ApolloDriverConfig = {
+  driver: ApolloDriver,
+  typePaths: ['./**/*.gql'],
+  cache: 'bounded',
+  playground: true,
+};
+
+if (process.env.NODE_ENV === 'production') {
+  gqlConfig.definitions = {
+    path: join(process.cwd(), 'src/graphql.ts'), // Need for prod. Generate manually during dev for quicker startup using --watch
+    emitTypenameField: true,
+  };
+}
+
 @Module({
   imports: [
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      typePaths: ['./**/*.gql'],
-      definitions: {
-        path: join(process.cwd(), 'src/graphql.ts'), // Need for prod
-        emitTypenameField: true,
-      },
-      cache: 'bounded',
-      playground: true,
-    }),
+    GraphQLModule.forRoot<ApolloDriverConfig>(gqlConfig),
     CacheModule.register<ClientOpts>({
       store: redisStore,
       // Store-specific configuration:
