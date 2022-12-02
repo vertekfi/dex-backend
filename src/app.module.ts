@@ -8,6 +8,8 @@ import { PoolModule } from './modules/pool/pool.module';
 import { join } from 'path';
 import { SubgraphModule } from './modules/subgraphs/subgraph.module';
 import { CommonModule } from './modules/common/common.module';
+import { TokenModule } from './modules/token/token.module';
+import { CacheService } from './modules/common/cache.service';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -28,11 +30,7 @@ console.log(process.env.REDIS_URL);
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>(gqlConfig),
-    CacheModule.register<ClientOpts>({
-      store: redisStore,
-      // Store-specific configuration:
-      host: process.env.REDIS_URL,
-    }),
+
     PrismaModule.forRoot({
       isGlobal: true,
       prismaServiceOptions: {
@@ -49,8 +47,8 @@ console.log(process.env.REDIS_URL);
     PoolModule,
     SubgraphModule,
     CommonModule,
+    TokenModule,
   ],
-  controllers: [],
   providers: [],
 })
 export class AppModule {}
