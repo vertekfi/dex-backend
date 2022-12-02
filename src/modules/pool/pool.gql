@@ -1,0 +1,58 @@
+extend type Query {
+  poolGetPool(id: String!): Int!
+  #   poolGetPool(id: String!): GqlPoolBase!
+  #   poolGetPools(
+  #     first: Int
+  #     skip: Int
+  #     orderBy: GqlPoolOrderBy
+  #     orderDirection: GqlPoolOrderDirection
+  #     where: GqlPoolFilter
+  #     textSearch: String
+  #   ): [GqlPoolMinimal!]!
+  #   poolGetPoolsCount(
+  #     first: Int
+  #     skip: Int
+  #     orderBy: GqlPoolOrderBy
+  #     orderDirection: GqlPoolOrderDirection
+  #     where: GqlPoolFilter
+  #     textSearch: String
+  #   ): Int!
+  #   poolGetPoolFilters: [GqlPoolFilterDefinition!]!
+  #   poolGetSwaps(first: Int, skip: Int, where: GqlPoolSwapFilter): [GqlPoolSwap!]!
+  #   poolGetBatchSwaps(first: Int, skip: Int, where: GqlPoolSwapFilter): [GqlPoolBatchSwap!]!
+  #   poolGetJoinExits(first: Int, skip: Int, where: GqlPoolJoinExitFilter): [GqlPoolJoinExit!]!
+  #   poolGetUserSwapVolume(
+  #     first: Int
+  #     skip: Int
+  #     where: GqlUserSwapVolumeFilter
+  #   ): [GqlPoolUserSwapVolume!]!
+  #   poolGetFeaturedPoolGroups: [GqlPoolFeaturedPoolGroup!]!
+  #   poolGetSnapshots(id: String!, range: GqlPoolSnapshotDataRange!): [GqlPoolSnapshot!]!
+  #   poolGetAllPoolsSnapshots(range: GqlPoolSnapshotDataRange!): [GqlPoolSnapshot!]!
+  #   poolGetLinearPools: [GqlPoolLinear!]!
+}
+
+extend type Mutation {
+  poolSyncAllPoolsFromSubgraph: [String!]!
+  # poolSyncNewPoolsFromSubgraph: [String!]!
+  # poolLoadOnChainDataForAllPools: String!
+  # poolLoadOnChainDataForPoolsWithActiveUpdates: String!
+  # poolUpdateLiquidityValuesForAllPools: String!
+  # poolUpdateVolumeAndFeeValuesForAllPools: String!
+  # poolSyncSwapsForLast48Hours: String!
+  # poolSyncSanityPoolData: String!
+  # poolUpdateAprs: String!
+  # poolSyncPoolAllTokensRelationship: String!
+  # poolReloadAllPoolAprs: String!
+  # poolSyncTotalShares: String!
+  # poolReloadStakingForAllPools(stakingTypes: [GqlPoolStakingType!]!): String!
+  # poolSyncStakingForPools: String!
+  # poolUpdateLiquidity24hAgoForAllPools: String!
+  # poolLoadSnapshotsForAllPools: String!
+  # poolSyncLatestSnapshotsForAllPools(daysToSync: Int): String!
+  # poolUpdateLifetimeValuesForAllPools: String!
+  # poolInitializeSnapshotsForPool(poolId: String!): String!
+  # poolSyncPool(poolId: String!): String!
+  # poolReloadPoolNestedTokens(poolId: String!): String!
+  # poolReloadAllTokenNestedPoolIds: String!
+}
