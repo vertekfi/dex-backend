@@ -6,6 +6,7 @@ import type { ClientOpts } from 'redis';
 import * as redisStore from 'cache-manager-redis-store';
 import { PoolModule } from './modules/pool/pool.module';
 import { join } from 'path';
+import { SubgraphModule } from './modules/subgraphs/subgraph.module';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -43,6 +44,7 @@ if (process.env.NODE_ENV === 'production') {
     }),
 
     PoolModule,
+    SubgraphModule,
   ],
   controllers: [],
   providers: [],
