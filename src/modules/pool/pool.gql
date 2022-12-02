@@ -282,7 +282,7 @@ type GqlPoolPhantomStable implements GqlPoolBase {
   nestingType: GqlPoolNestingType!
   amp: BigInt!
   staking: GqlPoolStaking
-  bptPriceRate: BigDecimal!
+  bptPriceRate: BigDecimal
 }
 
 type GqlPoolElement implements GqlPoolBase {
@@ -330,7 +330,7 @@ type GqlPoolLinear implements GqlPoolBase {
   upperTarget: BigInt!
   lowerTarget: BigInt!
   staking: GqlPoolStaking
-  bptPriceRate: BigDecimal!
+  bptPriceRate: BigDecimal
 }
 
 type GqlPoolLinearNested {
@@ -351,7 +351,7 @@ type GqlPoolLinearNested {
   wrappedIndex: Int!
   upperTarget: BigInt!
   lowerTarget: BigInt!
-  bptPriceRate: BigDecimal!
+  bptPriceRate: BigDecimal
 }
 
 type GqlPoolPhantomStableNested {
@@ -369,7 +369,7 @@ type GqlPoolPhantomStableNested {
   totalLiquidity: BigDecimal!
   amp: BigInt!
   swapFee: BigDecimal!
-  bptPriceRate: BigDecimal!
+  bptPriceRate: BigDecimal
 }
 
 union GqlPoolUnion =

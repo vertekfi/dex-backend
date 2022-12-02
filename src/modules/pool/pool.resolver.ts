@@ -7,7 +7,12 @@ export class PoolResolver {
   constructor(private poolService: PoolService) {}
 
   @Query()
-  async poolGetPool(@Args('id') id): Promise<GqlPoolBase> {
+  async poolGetPool(@Args('id') id) {
     return this.poolService.getGqlPool(id);
+  }
+
+  @Query()
+  async poolGetPools(@Args() args) {
+    return this.poolService.getGqlPools(args);
   }
 }

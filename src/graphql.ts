@@ -362,7 +362,7 @@ export interface GqlPoolPhantomStable extends GqlPoolBase {
     nestingType: GqlPoolNestingType;
     amp: BigInt;
     staking?: Nullable<GqlPoolStaking>;
-    bptPriceRate: BigDecimal;
+    bptPriceRate?: Nullable<BigDecimal>;
 }
 
 export interface GqlPoolElement extends GqlPoolBase {
@@ -408,7 +408,7 @@ export interface GqlPoolLinear extends GqlPoolBase {
     upperTarget: BigInt;
     lowerTarget: BigInt;
     staking?: Nullable<GqlPoolStaking>;
-    bptPriceRate: BigDecimal;
+    bptPriceRate?: Nullable<BigDecimal>;
 }
 
 export interface GqlPoolLinearNested {
@@ -427,7 +427,7 @@ export interface GqlPoolLinearNested {
     wrappedIndex: number;
     upperTarget: BigInt;
     lowerTarget: BigInt;
-    bptPriceRate: BigDecimal;
+    bptPriceRate?: Nullable<BigDecimal>;
 }
 
 export interface GqlPoolPhantomStableNested {
@@ -445,7 +445,7 @@ export interface GqlPoolPhantomStableNested {
     totalLiquidity: BigDecimal;
     amp: BigInt;
     swapFee: BigDecimal;
-    bptPriceRate: BigDecimal;
+    bptPriceRate?: Nullable<BigDecimal>;
 }
 
 export interface GqlPoolToken extends GqlPoolTokenBase {
