@@ -7,6 +7,7 @@ import * as redisStore from 'cache-manager-redis-store';
 import { PoolModule } from './modules/pool/pool.module';
 import { join } from 'path';
 import { SubgraphModule } from './modules/subgraphs/subgraph.module';
+import { CommonModule } from './modules/common/common.module';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -47,6 +48,7 @@ console.log(process.env.REDIS_URL);
 
     PoolModule,
     SubgraphModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],
