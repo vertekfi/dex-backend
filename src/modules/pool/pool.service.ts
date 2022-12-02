@@ -14,4 +14,8 @@ export class PoolService {
   async getGqlPools(args: QueryPoolGetPoolsArgs): Promise<GqlPoolMinimal[]> {
     return this.poolGqlLoaderService.getPools(args);
   }
+
+  async getPoolsCount(args: QueryPoolGetPoolsArgs): Promise<number> {
+    return this.poolGqlLoaderService.getPoolsCount(args);
+  }
 }

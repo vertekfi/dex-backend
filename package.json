@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@balancer-labs/sdk": "^0.1.38",
+    "@graphql-tools/schema": "^8.3.1",
     "@nestjs/apollo": "^10.1.6",
     "@nestjs/common": "^8.0.0",
     "@nestjs/core": "^8.0.0",
@@ -69,7 +70,6 @@
     "@graphql-codegen/typescript-graphql-request": "^4.3.0",
     "@graphql-codegen/typescript-operations": "^2.2.0",
     "@graphql-codegen/typescript-resolvers": "2.4.1",
-    "@graphql-tools/schema": "^8.3.1",
     "@nestjs/cli": "^8.0.0",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",

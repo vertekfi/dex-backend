@@ -38,4 +38,10 @@ export class PoolGqlLoaderService {
 
     return pools.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
   }
+
+  async getPoolsCount(args: QueryPoolGetPoolsArgs): Promise<number> {
+    return this.prisma.prismaPool.count({
+      where: this.poolUtils.mapQueryArgsToPoolQuery(args).where,
+    });
+  }
 }

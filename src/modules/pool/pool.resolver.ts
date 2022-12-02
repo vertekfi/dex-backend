@@ -15,4 +15,9 @@ export class PoolResolver {
   async poolGetPools(@Args() args) {
     return this.poolService.getGqlPools(args);
   }
+
+  @Query()
+  async poolGetPoolsCount(@Args() args) {
+    return this.poolService.getPoolsCount(args);
+  }
 }
