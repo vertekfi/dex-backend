@@ -22,6 +22,8 @@ if (process.env.NODE_ENV === 'production') {
   };
 }
 
+console.log(process.env.REDIS_URL);
+
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>(gqlConfig),
