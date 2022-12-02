@@ -12,10 +12,10 @@ import { join } from 'path';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       typePaths: ['./**/*.gql'],
-      // definitions: {
-      //   path: join(process.cwd(), 'src/graphql.ts'), // Need for prod
-      //   emitTypenameField: true,
-      // },
+      definitions: {
+        path: join(process.cwd(), 'src/graphql.ts'), // Need for prod
+        emitTypenameField: true,
+      },
       cache: 'bounded',
       playground: true,
     }),
