@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaPoolMinimal, prismaPoolWithExpandedNesting } from 'prisma/prisma-types';
 import { PoolGqlLoaderUtils } from './gql-loader-utils.service';
-import { QueryPoolGetPoolsArgs } from 'src/gql-addons';
+import { GqlPoolLinear, QueryPoolGetPoolsArgs } from 'src/gql-addons';
 
 @Injectable()
 export class PoolGqlLoaderService {
@@ -38,5 +38,15 @@ export class PoolGqlLoaderService {
     return this.prisma.prismaPool.count({
       where: this.poolUtils.mapQueryArgsToPoolQuery(args).where,
     });
+  }
+
+  async getLinearPools(): Promise<GqlPoolLinear[]> {
+    const pools = await this.prisma.prismaPool.findMany({
+      where: { type: 'LINEAR' },
+      orderBy: { dynamicData: { totalLiquidity: 'desc' } },
+      include: prismaPoolWithExpandedNesting.include,
+    });
+
+    return pools.map((pool) => this.poolUtils.mapPoolToGqlPool(pool)) as GqlPoolLinear[];
   }
 }

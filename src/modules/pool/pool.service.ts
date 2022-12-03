@@ -8,6 +8,7 @@ import * as moment from 'moment-timezone';
 import {
   GqlPoolFeaturedPoolGroup,
   GqlPoolJoinExit,
+  GqlPoolLinear,
   GqlPoolSnapshotDataRange,
   GqlPoolUserSwapVolume,
   QueryPoolGetBatchSwapsArgs,
@@ -55,6 +56,10 @@ export class PoolService {
 
   async getGqlPools(args: QueryPoolGetPoolsArgs): Promise<GqlPoolMinimal[]> {
     return this.poolGqlLoaderService.getPools(args);
+  }
+
+  async getGqlLinearPools(): Promise<GqlPoolLinear[]> {
+    return this.poolGqlLoaderService.getLinearPools();
   }
 
   async getPoolsCount(args: QueryPoolGetPoolsArgs): Promise<number> {
