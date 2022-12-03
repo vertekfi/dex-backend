@@ -27,8 +27,10 @@ import { PoolOnChainDataService } from './lib/pool-on-chain-data.service';
 import { PoolSnapshotService } from './lib/pool-snapshot.service';
 import { PoolSwapService } from './lib/pool-swap.service';
 import { PoolUsdDataService } from './lib/pool-usd-data.service';
-import { PoolStakingService } from './pool-types';
+import { PoolAprService, PoolStakingService } from './pool-types';
 import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
+import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
+import { PoolSyncService } from './lib/pool-sync.service';
 
 @Injectable()
 export class PoolService {
@@ -43,6 +45,8 @@ export class PoolService {
     private readonly poolOnChainDataService: PoolOnChainDataService,
     private readonly poolUsdDataService: PoolUsdDataService,
     private readonly balancerSubgraphService: BalancerSubgraphService,
+    private readonly poolAprUpdaterService: PoolAprUpdaterService,
+    private readonly poolSyncService: PoolSyncService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -175,6 +179,16 @@ export class PoolService {
     console.timeEnd('updateOnChainData');
   }
 
+  async updateLiquidityValuesForPools(minShares?: number, maxShares?: number): Promise<void> {
+    await this.poolUsdDataService.updateLiquidityValuesForPools(minShares, maxShares);
+  }
+
+  async updateVolumeAndFeeValuesForPools(poolIds?: string[]): Promise<void> {
+    console.time('updateVolumeAndFeeValuesForPools');
+    await this.poolUsdDataService.updateVolumeAndFeeValuesForPools(poolIds);
+    console.timeEnd('updateVolumeAndFeeValuesForPools');
+  }
+
   async syncSwapsForLast48Hours(): Promise<string[]> {
     console.time('syncSwapsForLast48Hours');
     const poolIds = await this.poolSwapService.syncSwapsForLast48Hours();
@@ -183,9 +197,34 @@ export class PoolService {
     return poolIds;
   }
 
-  async updateVolumeAndFeeValuesForPools(poolIds?: string[]): Promise<void> {
-    console.time('updateVolumeAndFeeValuesForPools');
-    await this.poolUsdDataService.updateVolumeAndFeeValuesForPools(poolIds);
-    console.timeEnd('updateVolumeAndFeeValuesForPools');
+  async syncStakingForPools(poolStakingServices: PoolStakingService[]) {
+    await Promise.all(
+      poolStakingServices.map((stakingService) => stakingService.syncStakingForPools()),
+    );
+  }
+
+  async updatePoolAprs(aprServices: PoolAprService[]) {
+    await this.poolAprUpdaterService.updatePoolAprs(aprServices);
+  }
+
+  async syncChangedPools() {
+    const { startBlock, endBlock, latestBlock } = await this.poolSyncService.syncChangedPools();
+
+    const poolIds = await this.poolSyncService.getChangedPoolIds(startBlock, endBlock);
+    if (poolIds.length !== 0) {
+      console.log(`Syncing ${poolIds.length} pools`);
+      await this.updateOnChainDataForPools(poolIds, latestBlock);
+
+      const poolsWithNewSwaps = await this.syncSwapsForLast48Hours();
+      await this.updateVolumeAndFeeValuesForPools(poolsWithNewSwaps);
+    }
+  }
+
+  async realodAllPoolAprs(aprServices: PoolAprService[]) {
+    await this.poolAprUpdaterService.realodAllPoolAprs(aprServices);
+  }
+
+  async updateLiquidity24hAgoForAllPools() {
+    await this.poolUsdDataService.updateLiquidity24hAgoForAllPools();
   }
 }
