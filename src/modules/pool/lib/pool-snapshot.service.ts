@@ -2,19 +2,29 @@ import { Injectable } from '@nestjs/common';
 import { PrismaPoolSnapshot } from '@prisma/client';
 import * as moment from 'moment-timezone';
 import { PrismaService } from 'nestjs-prisma';
+import { prismaPoolWithExpandedNesting } from 'prisma/prisma-types';
+import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
+import * as _ from 'lodash';
+
 import { GqlPoolSnapshotDataRange } from 'src/gql-addons';
+import { sleep } from 'src/modules/common/promise-utils';
+import { BlockService } from 'src/modules/common/web3/block.service';
 import {
   PoolSnapshot_OrderBy,
   OrderDirection,
   BalancerPoolSnapshotFragment,
 } from 'src/modules/subgraphs/balancer/balancer-subgraph-types';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
+import { TokenHistoricalPrices } from 'src/modules/token/token-types-old';
+import { CoingeckoService } from 'src/modules/token/lib/coingecko.service';
 
 @Injectable()
 export class PoolSnapshotService {
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly balancerSubgraphService: BalancerSubgraphService,
+    private readonly blockService: BlockService,
+    private readonly coingeckoService: CoingeckoService,
   ) {}
 
   async getSnapshotsForPool(poolId: string, range: GqlPoolSnapshotDataRange) {
@@ -74,6 +84,215 @@ export class PoolSnapshotService {
         skipDuplicates: true,
       });
     }
+  }
+
+  async syncLatestSnapshotsForAllPools(daysToSync = 1) {
+    let operations: any[] = [];
+    const oneDayAgoStartOfDay = moment().utc().startOf('day').subtract(daysToSync, 'days').unix();
+
+    const allSnapshots = await this.balancerSubgraphService.getAllPoolSnapshots({
+      where: { timestamp_gte: oneDayAgoStartOfDay },
+      orderBy: PoolSnapshot_OrderBy.Timestamp,
+      orderDirection: OrderDirection.Asc,
+    });
+
+    const latestSyncedSnapshots = await this.prisma.prismaPoolSnapshot.findMany({
+      where: {
+        timestamp: moment()
+          .utc()
+          .startOf('day')
+          .subtract(daysToSync + 1, 'days')
+          .unix(),
+      },
+    });
+
+    const poolIds = _.uniq(allSnapshots.map((snapshot) => snapshot.pool.id));
+
+    for (const poolId of poolIds) {
+      const snapshots = allSnapshots.filter((snapshot) => snapshot.pool.id === poolId);
+      const latestSyncedSnapshot = latestSyncedSnapshots.find(
+        (snapshot) => snapshot.poolId === poolId,
+      );
+      const startTotalSwapVolume = `${latestSyncedSnapshot?.totalSwapVolume || '0'}`;
+      const startTotalSwapFee = `${latestSyncedSnapshot?.totalSwapFee || '0'}`;
+
+      const poolOperations = snapshots.map((snapshot, index) => {
+        const prevTotalSwapVolume =
+          index === 0 ? startTotalSwapVolume : snapshots[index - 1].swapVolume;
+        const prevTotalSwapFee = index === 0 ? startTotalSwapFee : snapshots[index - 1].swapFees;
+
+        const data = this.getPrismaPoolSnapshotFromSubgraphData(
+          snapshot,
+          prevTotalSwapVolume,
+          prevTotalSwapFee,
+        );
+
+        return this.prisma.prismaPoolSnapshot.upsert({
+          where: { id: snapshot.id },
+          create: data,
+          update: data,
+        });
+      });
+      operations.push(...poolOperations);
+    }
+
+    await prismaBulkExecuteOperations(operations, true);
+
+    const poolsWithoutSnapshots = await this.prisma.prismaPool.findMany({
+      where: {
+        OR: [{ type: 'PHANTOM_STABLE' }, { tokens: { some: { nestedPoolId: { not: null } } } }],
+      },
+      include: { tokens: true },
+    });
+
+    for (const pool of poolsWithoutSnapshots) {
+      if (pool.type !== 'LINEAR') {
+        await this.createPoolSnapshotsForPoolsMissingSubgraphData(pool.id, oneDayAgoStartOfDay);
+      }
+    }
+  }
+
+  async createPoolSnapshotsForPoolsMissingSubgraphData(poolId: string, timestampToSyncFrom = 0) {
+    const pool = await this.prisma.prismaPool.findUniqueOrThrow({
+      where: { id: poolId },
+      include: prismaPoolWithExpandedNesting.include,
+    });
+
+    const startTimestamp = timestampToSyncFrom > 0 ? timestampToSyncFrom : pool.createTime;
+
+    if (pool.type === 'LINEAR') {
+      throw new Error('Unsupported pool type');
+    }
+
+    const swaps = await this.balancerSubgraphService.getAllSwapsWithPaging({
+      where: { poolId },
+      startTimestamp,
+    });
+    const numDays = moment().endOf('day').diff(moment.unix(startTimestamp), 'days');
+
+    const tokenPriceMap: TokenHistoricalPrices = {};
+
+    for (const token of pool.tokens) {
+      if (token.address === pool.address) {
+        continue;
+      }
+
+      if (token.nestedPoolId && token.nestedPool) {
+        const snapshots = await this.prisma.prismaPoolSnapshot.findMany({
+          where: { poolId: token.nestedPoolId },
+        });
+
+        tokenPriceMap[token.address] = snapshots.map((snapshot) => ({
+          timestamp: snapshot.timestamp,
+          price: snapshot.sharePrice,
+        }));
+      } else {
+        try {
+          tokenPriceMap[token.address] = await this.coingeckoService.getTokenHistoricalPrices(
+            token.address,
+            numDays,
+          );
+          await sleep(5000);
+        } catch (error: any) {
+          // Sentry.captureException(error);
+          console.error(
+            `Error getting historical prices form coingecko, falling back to database`,
+            error.message,
+          );
+          tokenPriceMap[token.address] = await this.prisma.prismaTokenPrice.findMany({
+            where: { tokenAddress: token.address, timestamp: { gte: startTimestamp } },
+          });
+        }
+      }
+    }
+
+    const dailyBlocks = await this.blockService.getDailyBlocks(numDays);
+
+    for (const block of dailyBlocks) {
+      const startTimestamp = parseInt(block.timestamp);
+      const endTimestamp = startTimestamp + 86400;
+      const swapsForDay = swaps.filter(
+        (swap) =>
+          swap.timestamp >= startTimestamp &&
+          swap.timestamp < endTimestamp &&
+          swap.tokenIn !== pool.address &&
+          swap.tokenOut !== pool.address,
+      );
+
+      const volume24h = _.sumBy(swapsForDay, (swap) => {
+        const prices = this.getTokenPricesForTimestamp(swap.timestamp, tokenPriceMap);
+        let valueUsd = 0;
+
+        if (prices[swap.tokenIn]) {
+          valueUsd = prices[swap.tokenIn] * parseFloat(swap.tokenAmountIn);
+        } else if (prices[swap.tokenOut]) {
+          valueUsd = prices[swap.tokenOut] * parseFloat(swap.tokenAmountOut);
+        }
+
+        return valueUsd;
+      });
+
+      const { pool: poolAtBlock } = await this.balancerSubgraphService.getPool({
+        id: poolId,
+        block: { number: parseInt(block.number) },
+      });
+
+      if (!poolAtBlock) {
+        throw new Error(`pool does not exist at block id: ${poolId}, block: ${block.number}`);
+      }
+
+      const tokenPrices = this.getTokenPricesForTimestamp(endTimestamp, tokenPriceMap);
+      const totalLiquidity = _.sumBy(
+        poolAtBlock.tokens || [],
+        (token) => parseFloat(token.balance) * (tokenPrices[token.address] || 0),
+      );
+      const totalShares = parseFloat(poolAtBlock.totalShares);
+
+      const id = `${poolId}-${startTimestamp}`;
+      const data = {
+        id,
+        poolId,
+        timestamp: startTimestamp,
+        totalLiquidity: totalLiquidity || 0,
+        totalShares: poolAtBlock.totalShares,
+        totalSharesNum: totalShares,
+        swapsCount: parseInt(poolAtBlock.swapsCount),
+        holdersCount: parseInt(poolAtBlock.holdersCount),
+        amounts: (poolAtBlock.tokens || []).map((token) => token.balance),
+        volume24h,
+        fees24h: volume24h * parseFloat(poolAtBlock.swapFee),
+        sharePrice: totalLiquidity > 0 && totalShares > 0 ? totalLiquidity / totalShares : 0,
+
+        //TODO: these are always 0 at the moment
+        totalSwapVolume: parseFloat(poolAtBlock.totalSwapVolume),
+        totalSwapFee: parseFloat(poolAtBlock.totalSwapFee),
+      };
+
+      try {
+        await this.prisma.prismaPoolSnapshot.upsert({ where: { id }, create: data, update: data });
+      } catch (e) {
+        console.log('pool snapshot upsert for ' + id, data);
+        throw e;
+      }
+    }
+  }
+
+  getTokenPricesForTimestamp(
+    timestamp: number,
+    tokenHistoricalPrices: TokenHistoricalPrices,
+  ): { [address: string]: number } {
+    const msTimestamp = timestamp * 1000;
+    return _.mapValues(tokenHistoricalPrices, (tokenPrices) => {
+      if (tokenPrices.length === 0) {
+        return 0;
+      }
+
+      const closest = tokenPrices.reduce((a, b) => {
+        return Math.abs(b.timestamp - msTimestamp) < Math.abs(a.timestamp - msTimestamp) ? b : a;
+      });
+
+      return closest.price;
+    });
   }
 
   private getPrismaPoolSnapshotFromSubgraphData(

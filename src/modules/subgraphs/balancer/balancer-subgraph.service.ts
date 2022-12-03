@@ -3,14 +3,19 @@ import {
   BalancerJoinExitsQuery,
   BalancerJoinExitsQueryVariables,
   BalancerPoolFragment,
+  BalancerPoolQuery,
+  BalancerPoolQueryVariables,
   BalancerPoolShareFragment,
   BalancerPoolSharesQueryVariables,
   BalancerPoolSnapshotFragment,
   BalancerPoolSnapshotsQueryVariables,
   BalancerPoolsQueryVariables,
+  BalancerSwapFragment,
   BalancerSwapsQuery,
   BalancerSwapsQueryVariables,
   getSdk,
+  OrderDirection,
+  Swap_OrderBy,
 } from './balancer-subgraph-types';
 import { GraphQLClient } from 'graphql-request';
 import { networkConfig } from 'src/modules/config/network-config';
@@ -45,6 +50,10 @@ export class BalancerSubgraphService {
 
   async getSwaps(args: BalancerSwapsQueryVariables): Promise<BalancerSwapsQuery> {
     return this.sdk.BalancerSwaps(args);
+  }
+
+  async getPool(args: BalancerPoolQueryVariables): Promise<BalancerPoolQuery> {
+    return this.sdk.BalancerPool(args);
   }
 
   async getAllPools(
@@ -92,5 +101,38 @@ export class BalancerSubgraphService {
       'poolSnapshots',
       args,
     );
+  }
+
+  async getAllSwapsWithPaging({
+    where,
+    block,
+    startTimestamp,
+  }: Pick<BalancerSwapsQueryVariables, 'where' | 'block'> & { startTimestamp: number }): Promise<
+    BalancerSwapFragment[]
+  > {
+    const limit = 1000;
+    let timestamp = startTimestamp;
+    let hasMore = true;
+    let swaps: BalancerSwapFragment[] = [];
+
+    while (hasMore) {
+      const response = await this.sdk.BalancerSwaps({
+        where: { ...where, timestamp_gt: timestamp },
+        block,
+        orderBy: Swap_OrderBy.Timestamp,
+        orderDirection: OrderDirection.Asc,
+        first: limit,
+      });
+
+      swaps = [...swaps, ...response.swaps];
+
+      if (response.swaps.length < limit) {
+        hasMore = false;
+      } else {
+        timestamp = response.swaps[response.swaps.length - 1].timestamp;
+      }
+    }
+
+    return swaps;
   }
 }

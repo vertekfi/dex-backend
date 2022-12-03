@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaTokenCurrentPrice } from '@prisma/client';
+import { PrismaService } from 'nestjs-prisma';
 import { CacheService } from '../common/cache.service';
+import { ConfigService } from '../common/config.service';
+import { networkConfig } from '../config/network-config';
 import { TokenPriceService } from './lib/token-price.service';
+import { TokenDefinition } from './token-types';
 
 const TOKEN_PRICES_CACHE_KEY = 'token:prices:current';
 const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
@@ -9,7 +13,43 @@ const ALL_TOKENS_CACHE_KEY = 'tokens:all';
 
 @Injectable()
 export class TokenService {
-  constructor(private cache: CacheService, private tokenPriceService: TokenPriceService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+    private readonly tokenPriceService: TokenPriceService,
+    private readonly config: ConfigService,
+  ) {}
+
+  async getTokenDefinitions(): Promise<TokenDefinition[]> {
+    const tokens = await this.prisma.prismaToken.findMany({
+      where: { types: { some: { type: 'WHITE_LISTED' } } },
+      include: { types: true },
+      orderBy: { priority: 'desc' },
+    });
+
+    const weth = tokens.find((token) => token.address === networkConfig.weth.address);
+
+    if (weth) {
+      tokens.push({
+        ...weth,
+        name: networkConfig.eth.name,
+        address: networkConfig.eth.address,
+        symbol: networkConfig.eth.symbol,
+      });
+    }
+
+    return tokens.map((token) => ({
+      ...token,
+      chainId: this.config.env.CHAIN_ID,
+      //TODO: some linear wrapped tokens are tradable. ie: xBOO
+      tradable: !token.types.find(
+        (type) =>
+          type.type === 'PHANTOM_BPT' ||
+          type.type === 'BPT' ||
+          type.type === 'LINEAR_WRAPPED_TOKEN',
+      ),
+    }));
+  }
 
   async getTokenPrices(): Promise<PrismaTokenCurrentPrice[]> {
     let tokenPrices = await this.cache.get<PrismaTokenCurrentPrice[]>(TOKEN_PRICES_CACHE_KEY);

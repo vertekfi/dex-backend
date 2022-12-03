@@ -7,6 +7,7 @@ import { BalancerPoolFragment } from 'src/modules/subgraphs/balancer/balancer-su
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import * as _ from 'lodash';
 import { UserService } from 'src/modules/user/user.service';
+import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 
 @Injectable()
 export class PoolCreatorService {
@@ -360,6 +361,85 @@ export class PoolCreatorService {
         nestedPoolId: token.nestedPoolId || null,
       })),
     });
+  }
+
+  async reloadPoolNestedTokens(poolId: string): Promise<void> {
+    const subgraphPools = await this.balancerSubgraphService.getAllPools({}, false);
+    const poolToLoad = subgraphPools.find((pool) => pool.id === poolId);
+
+    if (!poolToLoad) {
+      throw new Error('Pool with id does not exist');
+    }
+
+    const poolTokens = poolToLoad.tokens || [];
+
+    for (let i = 0; i < poolTokens.length; i++) {
+      const token = poolTokens[i];
+
+      if (token.address === poolToLoad.address) {
+        continue;
+      }
+
+      const nestedPool = subgraphPools.find((nestedPool) => {
+        const poolType = this.mapSubgraphPoolTypeToPoolType(nestedPool.poolType || '');
+
+        return (
+          nestedPool.address === token.address &&
+          (poolType === 'LINEAR' || poolType === 'PHANTOM_STABLE')
+        );
+      });
+
+      if (nestedPool) {
+        await this.prisma.prismaPoolToken.update({
+          where: { id: token.id },
+          data: { nestedPoolId: nestedPool.id },
+        });
+      }
+    }
+
+    await this.createAllTokensRelationshipForPool(poolId);
+  }
+
+  async reloadAllTokenNestedPoolIds(): Promise<void> {
+    let operations: any[] = [];
+    const pools = await this.prisma.prismaPool.findMany({ ...prismaPoolWithExpandedNesting });
+
+    // clear any existing
+    await this.prisma.prismaPoolExpandedTokens.updateMany({
+      where: {},
+      data: { nestedPoolId: null },
+    });
+
+    for (const pool of pools) {
+      const nestedTokens = _.flattenDeep(
+        pool.tokens
+          .filter((token) => token.address !== pool.address)
+          .map((token) => [
+            ...(token.nestedPool?.tokens || []).map((nestedToken) => ({
+              ...nestedToken,
+              nestedPoolId: token.nestedPool?.id,
+            })),
+            ...(token.nestedPool?.tokens.map((nestedToken) =>
+              (nestedToken.nestedPool?.tokens || []).map((doubleNestedToken) => ({
+                ...doubleNestedToken,
+                nestedPoolId: nestedToken.nestedPool?.id,
+              })),
+            ) || []),
+          ]),
+      );
+
+      operations = [
+        ...operations,
+        ...nestedTokens.map((token) =>
+          this.prisma.prismaPoolExpandedTokens.update({
+            where: { tokenAddress_poolId: { tokenAddress: token.address, poolId: pool.id } },
+            data: { nestedPoolId: token.nestedPoolId },
+          }),
+        ),
+      ];
+    }
+
+    await prismaBulkExecuteOperations(operations);
   }
 
   private sortSubgraphPools(subgraphPools: BalancerPoolFragment[]) {

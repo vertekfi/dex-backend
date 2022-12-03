@@ -247,4 +247,24 @@ export class PoolService {
       await this.poolSnapshotService.loadAllSnapshotsForPools(poolIds);
     }
   }
+
+  async syncLatestSnapshotsForAllPools(daysToSync?: number) {
+    await this.poolSnapshotService.syncLatestSnapshotsForAllPools(daysToSync);
+  }
+
+  async updateLifetimeValuesForAllPools() {
+    await this.poolUsdDataService.updateLifetimeValuesForAllPools();
+  }
+
+  async createPoolSnapshotsForPoolsMissingSubgraphData(poolId: string) {
+    await this.poolSnapshotService.createPoolSnapshotsForPoolsMissingSubgraphData(poolId);
+  }
+
+  async reloadPoolNestedTokens(poolId: string) {
+    await this.poolCreatorService.reloadPoolNestedTokens(poolId);
+  }
+
+  async reloadAllTokenNestedPoolIds() {
+    await this.poolCreatorService.reloadAllTokenNestedPoolIds();
+  }
 }
