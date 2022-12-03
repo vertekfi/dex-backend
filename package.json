@@ -37,6 +37,8 @@
   },
   "dependencies": {
     "@balancer-labs/sdk": "^0.1.38",
+    "@ethersproject/bignumber": "^5.7.0",
+    "@ethersproject/providers": "^5.7.2",
     "@graphql-tools/schema": "^8.3.1",
     "@nestjs/apollo": "^10.1.6",
     "@nestjs/common": "^8.0.0",

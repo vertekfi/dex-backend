@@ -4,6 +4,7 @@ import type { ClientOpts } from 'redis';
 import * as redisStore from 'cache-manager-redis-store';
 import { CacheService } from './cache.service';
 import { RpcProvider } from './web3/rpc.provider';
+import { BlockService } from './web3/block.service';
 
 @Global()
 @Module({
@@ -15,7 +16,7 @@ import { RpcProvider } from './web3/rpc.provider';
       host: process.env.REDIS_URL,
     }),
   ],
-  providers: [ConfigService, CacheService, RpcProvider],
-  exports: [ConfigService, CacheModule, CacheService, RpcProvider],
+  providers: [ConfigService, CacheService, RpcProvider, BlockService],
+  exports: [ConfigService, CacheModule, CacheService, RpcProvider, BlockService],
 })
 export class CommonModule {}

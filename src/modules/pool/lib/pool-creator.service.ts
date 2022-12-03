@@ -297,6 +297,35 @@ export class PoolCreatorService {
     await this.userService.initWalletBalancesForPool(pool.id);
   }
 
+  async syncNewPoolsFromSubgraph(blockNumber: number): Promise<string[]> {
+    const existingPools = await this.prisma.prismaPool.findMany();
+    const latest = await this.prisma.prismaPool.findFirst({
+      orderBy: { createTime: 'desc' },
+      select: { createTime: true },
+    });
+
+    const subgraphPools = await this.balancerSubgraphService.getAllPools(
+      {
+        where: { createTime_gte: latest?.createTime || 0 },
+      },
+      false,
+    );
+    const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools);
+    const poolIds = new Set<string>();
+
+    for (const subgraphPool of sortedSubgraphPools) {
+      const existsInDb = !!existingPools.find((pool) => pool.id === subgraphPool.id);
+
+      if (!existsInDb) {
+        await this.createPoolRecord(subgraphPool, sortedSubgraphPools, blockNumber);
+
+        poolIds.add(subgraphPool.id);
+      }
+    }
+
+    return Array.from(poolIds);
+  }
+
   async createAllTokensRelationshipForPool(poolId: string): Promise<void> {
     const pool = await this.prisma.prismaPool.findUnique({
       ...prismaPoolWithExpandedNesting,

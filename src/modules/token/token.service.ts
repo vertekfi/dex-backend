@@ -23,4 +23,15 @@ export class TokenService {
   getPriceForToken(tokenPrices: PrismaTokenCurrentPrice[], tokenAddress: string): number {
     return this.tokenPriceService.getPriceForToken(tokenPrices, tokenAddress);
   }
+
+  async getTokenPriceFrom24hAgo(): Promise<PrismaTokenCurrentPrice[]> {
+    let tokenPrices24hAgo = await this.cache.get<PrismaTokenCurrentPrice[]>(
+      TOKEN_PRICES_24H_AGO_CACHE_KEY,
+    );
+    if (!tokenPrices24hAgo) {
+      tokenPrices24hAgo = await this.tokenPriceService.getTokenPriceFrom24hAgo();
+      this.cache.put(TOKEN_PRICES_24H_AGO_CACHE_KEY, tokenPrices24hAgo, 60 * 5 * 1000);
+    }
+    return tokenPrices24hAgo;
+  }
 }

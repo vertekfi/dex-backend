@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
-import { PrismaPoolFilter, PrismaPoolSwap } from '@prisma/client';
+import { PrismaPoolFilter, PrismaPoolStakingType, PrismaPoolSwap } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import {
   GqlPoolFeaturedPoolGroup,
@@ -14,15 +14,17 @@ import {
   QueryPoolGetUserSwapVolumeArgs,
 } from 'src/gql-addons';
 import { GqlPoolMinimal } from 'src/graphql';
-import { CacheService } from '../common/cache.service';
 import { AccountWeb3 } from '../common/types';
 import { RPC } from '../common/web3/rpc.provider';
 import { FEATURED_POOLS } from './data/home-screen-info';
 import { PoolGqlLoaderUtils } from './lib/gql-loader-utils.service';
 import { PoolCreatorService } from './lib/pool-creator.service';
 import { PoolGqlLoaderService } from './lib/pool-gql-loader.service';
+import { PoolOnChainDataService } from './lib/pool-on-chain-data.service';
 import { PoolSnapshotService } from './lib/pool-snapshot.service';
 import { PoolSwapService } from './lib/pool-swap.service';
+import { PoolUsdDataService } from './lib/pool-usd-data.service';
+import { PoolStakingService } from './pool-types';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 const HOME_SCREEN_CONFIG_CACHE_KEY = 'content:homeScreen';
@@ -35,9 +37,10 @@ export class PoolService {
     private readonly poolGqlLoaderService: PoolGqlLoaderService,
     private readonly poolSwapService: PoolSwapService,
     private readonly poolUtils: PoolGqlLoaderUtils,
-    private readonly cache: CacheService,
     private readonly poolSnapshotService: PoolSnapshotService,
     private readonly poolCreatorService: PoolCreatorService,
+    private readonly poolOnChainDataService: PoolOnChainDataService,
+    private readonly poolUsdDataService: PoolUsdDataService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -100,5 +103,56 @@ export class PoolService {
     const blockNumber = await this.rpc.provider.getBlockNumber();
 
     return this.poolCreatorService.syncAllPoolsFromSubgraph(blockNumber);
+  }
+
+  async reloadStakingForAllPools(
+    stakingTypes: PrismaPoolStakingType[],
+    poolStakingServices: PoolStakingService[],
+  ): Promise<void> {
+    await Promise.all(
+      poolStakingServices.map((stakingService) =>
+        stakingService.reloadStakingForAllPools(stakingTypes),
+      ),
+    );
+  }
+
+  async syncPoolAllTokensRelationship(): Promise<void> {
+    const pools = await this.prisma.prismaPool.findMany({ select: { id: true } });
+
+    for (const pool of pools) {
+      await this.poolCreatorService.createAllTokensRelationshipForPool(pool.id);
+    }
+  }
+
+  async syncNewPoolsFromSubgraph(): Promise<string[]> {
+    const blockNumber = await this.rpc.provider.getBlockNumber();
+
+    const poolIds = await this.poolCreatorService.syncNewPoolsFromSubgraph(blockNumber);
+
+    if (poolIds.length > 0) {
+      await this.updateOnChainDataForPools(poolIds, blockNumber);
+      await this.syncSwapsForLast48Hours();
+      await this.updateVolumeAndFeeValuesForPools(poolIds);
+    }
+
+    return poolIds;
+  }
+
+  async updateOnChainDataForPools(poolIds: string[], blockNumber: number) {
+    await this.poolOnChainDataService.updateOnChainData(poolIds, blockNumber);
+  }
+
+  async syncSwapsForLast48Hours(): Promise<string[]> {
+    console.time('syncSwapsForLast48Hours');
+    const poolIds = await this.poolSwapService.syncSwapsForLast48Hours();
+    console.timeEnd('syncSwapsForLast48Hours');
+
+    return poolIds;
+  }
+
+  async updateVolumeAndFeeValuesForPools(poolIds?: string[]): Promise<void> {
+    console.time('updateVolumeAndFeeValuesForPools');
+    await this.poolUsdDataService.updateVolumeAndFeeValuesForPools(poolIds);
+    console.timeEnd('updateVolumeAndFeeValuesForPools');
   }
 }
