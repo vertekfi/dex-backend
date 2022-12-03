@@ -4,13 +4,12 @@ import {
   QueryPoolGetBatchSwapsArgs,
   QueryPoolGetJoinExitsArgs,
   QueryPoolGetPoolsArgs,
-  QueryPoolGetSwapsArgs,
   QueryPoolGetUserSwapVolumeArgs,
 } from 'src/gql-addons';
 import { PoolService } from './pool.service';
 
 @Resolver()
-export class PoolResolver {
+export class PoolQueryResolver {
   constructor(private poolService: PoolService) {}
 
   @Query()

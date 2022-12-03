@@ -10,13 +10,15 @@ import { PoolSnapshotService } from './lib/pool-snapshot.service';
 import { PoolSwapService } from './lib/pool-swap.service';
 import { PoolSyncService } from './lib/pool-sync.service';
 import { PoolUsdDataService } from './lib/pool-usd-data.service';
-import { PoolResolver } from './pool.resolver';
+import { PoolMutationResolver } from './pool-mutation.resolver';
+import { PoolQueryResolver } from './pool-query.resolver';
 import { PoolService } from './pool.service';
 
 @Module({
   imports: [TokenModule, UserModule],
   providers: [
-    PoolResolver,
+    PoolQueryResolver,
+    PoolMutationResolver,
     PoolGqlLoaderService,
     PoolService,
     PoolGqlLoaderUtils,
@@ -28,6 +30,6 @@ import { PoolService } from './pool.service';
     PoolAprUpdaterService,
     PoolSyncService,
   ],
-  exports: [PoolResolver],
+  exports: [PoolQueryResolver, PoolMutationResolver],
 })
 export class PoolModule {}
