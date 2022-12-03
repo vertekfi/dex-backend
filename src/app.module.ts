@@ -1,15 +1,12 @@
-import { Logger, CacheModule, Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { loggingMiddleware, PrismaModule } from 'nestjs-prisma';
-import type { ClientOpts } from 'redis';
-import * as redisStore from 'cache-manager-redis-store';
 import { PoolModule } from './modules/pool/pool.module';
 import { join } from 'path';
 import { SubgraphModule } from './modules/subgraphs/subgraph.module';
 import { CommonModule } from './modules/common/common.module';
 import { TokenModule } from './modules/token/token.module';
-import { CacheService } from './modules/common/cache.service';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -25,12 +22,9 @@ if (process.env.NODE_ENV === 'production') {
   };
 }
 
-console.log(process.env.REDIS_URL);
-
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>(gqlConfig),
-
     PrismaModule.forRoot({
       isGlobal: true,
       prismaServiceOptions: {

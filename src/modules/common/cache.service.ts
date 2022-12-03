@@ -9,6 +9,10 @@ export class CacheService {
     await this.cacheManager.set(key, value, expirationSeconds);
   }
 
+  async put(key: string, value: any, expirationSeconds: number) {
+    await this.set(key, value, expirationSeconds);
+  }
+
   async get<T>(key: string): Promise<T> {
     return await this.cacheManager.get(key);
   }

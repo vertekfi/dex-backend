@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GqlPoolMinimal, GqlPoolToken, GqlPoolUnion } from 'src/graphql';
+import { GqlPoolFeaturedPoolGroup, GqlPoolMinimal, GqlPoolToken, GqlPoolUnion } from 'src/graphql';
 import { PrismaService } from 'nestjs-prisma';
 import {
   prismaPoolMinimal,
