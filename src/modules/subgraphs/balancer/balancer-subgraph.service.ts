@@ -2,12 +2,18 @@ import { Injectable } from '@nestjs/common';
 import {
   BalancerJoinExitsQuery,
   BalancerJoinExitsQueryVariables,
+  BalancerPoolFragment,
+  BalancerPoolShareFragment,
+  BalancerPoolSharesQueryVariables,
+  BalancerPoolsQueryVariables,
   BalancerSwapsQuery,
   BalancerSwapsQueryVariables,
   getSdk,
 } from './balancer-subgraph-types';
 import { GraphQLClient } from 'graphql-request';
 import { networkConfig } from 'src/modules/config/network-config';
+import { subgraphLoadAll } from '../utils';
+import { BalancerUserPoolShare } from './balancer-types';
 
 @Injectable()
 export class BalancerSubgraphService {
@@ -16,8 +22,19 @@ export class BalancerSubgraphService {
   private get sdk() {
     return getSdk(this.client);
   }
+
   constructor() {
     this.client = new GraphQLClient(networkConfig.subgraphs.balancer);
+  }
+
+  async getMetadata() {
+    const { meta } = await this.sdk.BalancerGetMeta();
+
+    if (!meta) {
+      throw new Error('Missing meta data');
+    }
+
+    return meta;
   }
 
   async getPoolJoinExits(args: BalancerJoinExitsQueryVariables): Promise<BalancerJoinExitsQuery> {
@@ -26,5 +43,34 @@ export class BalancerSubgraphService {
 
   async getSwaps(args: BalancerSwapsQueryVariables): Promise<BalancerSwapsQuery> {
     return this.sdk.BalancerSwaps(args);
+  }
+
+  async getAllPools(
+    args: BalancerPoolsQueryVariables,
+    applyTotalSharesFilter = true,
+  ): Promise<BalancerPoolFragment[]> {
+    return subgraphLoadAll<BalancerPoolFragment>(this.sdk.BalancerPools, 'pools', {
+      ...args,
+      where: {
+        totalShares_not: applyTotalSharesFilter ? '0.00000000001' : undefined,
+        ...args.where,
+      },
+    });
+  }
+
+  async getAllPoolShares(args: BalancerPoolSharesQueryVariables): Promise<BalancerUserPoolShare[]> {
+    const poolShares = await subgraphLoadAll<BalancerPoolShareFragment>(
+      this.sdk.BalancerPoolShares,
+      'poolShares',
+      args,
+    );
+
+    return poolShares.map((shares) => ({
+      ...shares,
+      //ensure the user balance isn't negative, unsure how the subgraph ever allows this to happen
+      balance: parseFloat(shares.balance) < 0 ? '0' : shares.balance,
+      poolAddress: shares.id.split('-')[0],
+      userAddress: shares.id.split('-')[1],
+    }));
   }
 }

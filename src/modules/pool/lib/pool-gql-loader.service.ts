@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { GqlPoolFeaturedPoolGroup, GqlPoolMinimal, GqlPoolToken, GqlPoolUnion } from 'src/graphql';
 import { PrismaService } from 'nestjs-prisma';
-import {
-  prismaPoolMinimal,
-  PrismaPoolWithExpandedNesting,
-  prismaPoolWithExpandedNesting,
-} from 'prisma/prisma-types';
+import { prismaPoolMinimal, prismaPoolWithExpandedNesting } from 'prisma/prisma-types';
 import { PoolGqlLoaderUtils } from './gql-loader-utils.service';
 import { QueryPoolGetPoolsArgs } from 'src/gql-addons';
 

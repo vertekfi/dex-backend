@@ -24,9 +24,9 @@ import * as _ from 'lodash';
 @Injectable()
 export class PoolSwapService {
   constructor(
-    private prisma: PrismaService,
-    private balancerSubgraphService: BalancerSubgraphService,
-    private tokenService: TokenService,
+    private readonly prisma: PrismaService,
+    private readonly balancerSubgraphService: BalancerSubgraphService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async getSwaps(args: QueryPoolGetSwapsArgs): Promise<PrismaPoolSwap[]> {

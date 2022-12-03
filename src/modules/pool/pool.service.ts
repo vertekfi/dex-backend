@@ -1,3 +1,4 @@
+import { Inject } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { PrismaPoolFilter, PrismaPoolSwap } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
@@ -14,8 +15,11 @@ import {
 } from 'src/gql-addons';
 import { GqlPoolMinimal } from 'src/graphql';
 import { CacheService } from '../common/cache.service';
+import { AccountWeb3 } from '../common/types';
+import { RPC } from '../common/web3/rpc.provider';
 import { FEATURED_POOLS } from './data/home-screen-info';
 import { PoolGqlLoaderUtils } from './lib/gql-loader-utils.service';
+import { PoolCreatorService } from './lib/pool-creator.service';
 import { PoolGqlLoaderService } from './lib/pool-gql-loader.service';
 import { PoolSnapshotService } from './lib/pool-snapshot.service';
 import { PoolSwapService } from './lib/pool-swap.service';
@@ -26,12 +30,14 @@ const HOME_SCREEN_CONFIG_CACHE_KEY = 'content:homeScreen';
 @Injectable()
 export class PoolService {
   constructor(
-    private prisma: PrismaService,
-    private poolGqlLoaderService: PoolGqlLoaderService,
-    private poolSwapService: PoolSwapService,
-    private poolUtils: PoolGqlLoaderUtils,
-    private cache: CacheService,
-    private poolSnapshotService: PoolSnapshotService,
+    @Inject(RPC) private readonly rpc: AccountWeb3,
+    private readonly prisma: PrismaService,
+    private readonly poolGqlLoaderService: PoolGqlLoaderService,
+    private readonly poolSwapService: PoolSwapService,
+    private readonly poolUtils: PoolGqlLoaderUtils,
+    private readonly cache: CacheService,
+    private readonly poolSnapshotService: PoolSnapshotService,
+    private readonly poolCreatorService: PoolCreatorService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -84,5 +90,15 @@ export class PoolService {
 
   async getSnapshotsForAllPools(range: GqlPoolSnapshotDataRange) {
     return this.poolSnapshotService.getSnapshotsForAllPools(range);
+  }
+
+  async getSnapshotsForPool(poolId: string, range: GqlPoolSnapshotDataRange) {
+    return this.poolSnapshotService.getSnapshotsForPool(poolId, range);
+  }
+
+  async syncAllPoolsFromSubgraph(): Promise<string[]> {
+    const blockNumber = await this.rpc.provider.getBlockNumber();
+
+    return this.poolCreatorService.syncAllPoolsFromSubgraph(blockNumber);
   }
 }

@@ -7,6 +7,21 @@ import { GqlPoolSnapshotDataRange } from 'src/gql-addons';
 export class PoolSnapshotService {
   constructor(private prisma: PrismaService) {}
 
+  async getSnapshotsForPool(poolId: string, range: GqlPoolSnapshotDataRange) {
+    const timestamp = this.getTimestampForRange(range);
+
+    return this.prisma.prismaPoolSnapshot.findMany({
+      where: { poolId, timestamp: { gte: timestamp } },
+      orderBy: { timestamp: 'asc' },
+    });
+  }
+
+  async getSnapshotForPool(poolId: string, timestamp: number) {
+    return this.prisma.prismaPoolSnapshot.findUnique({
+      where: { id: `${poolId}-${timestamp}` },
+    });
+  }
+
   async getSnapshotsForAllPools(range: GqlPoolSnapshotDataRange) {
     const timestamp = this.getTimestampForRange(range);
 
