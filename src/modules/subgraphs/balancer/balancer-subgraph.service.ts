@@ -5,6 +5,8 @@ import {
   BalancerPoolFragment,
   BalancerPoolShareFragment,
   BalancerPoolSharesQueryVariables,
+  BalancerPoolSnapshotFragment,
+  BalancerPoolSnapshotsQueryVariables,
   BalancerPoolsQueryVariables,
   BalancerSwapsQuery,
   BalancerSwapsQueryVariables,
@@ -80,5 +82,15 @@ export class BalancerSubgraphService {
     });
 
     return [...ampUpdates, ...gradualWeightUpdates].map((item) => item.poolId.id);
+  }
+
+  async getAllPoolSnapshots(
+    args: BalancerPoolSnapshotsQueryVariables,
+  ): Promise<BalancerPoolSnapshotFragment[]> {
+    return subgraphLoadAll<BalancerPoolSnapshotFragment>(
+      this.sdk.BalancerPoolSnapshots,
+      'poolSnapshots',
+      args,
+    );
   }
 }

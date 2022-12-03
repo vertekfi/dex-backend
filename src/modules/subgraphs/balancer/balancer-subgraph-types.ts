@@ -3770,10 +3770,14 @@ export type BalancerPoolSnapshotsQuery = {
 export type BalancerPoolSnapshotFragment = {
   __typename?: 'PoolSnapshot';
   id: string;
+  amounts: Array<string>;
   totalShares: string;
   swapVolume: string;
   swapFees: string;
   timestamp: number;
+  liquidity: string;
+  swapsCount: string;
+  holdersCount: string;
   pool: { __typename?: 'Pool'; id: string };
 };
 

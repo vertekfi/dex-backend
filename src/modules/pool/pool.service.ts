@@ -227,4 +227,24 @@ export class PoolService {
   async updateLiquidity24hAgoForAllPools() {
     await this.poolUsdDataService.updateLiquidity24hAgoForAllPools();
   }
+
+  async loadSnapshotsForAllPools() {
+    await this.prisma.prismaPoolSnapshot.deleteMany({});
+    const pools = await this.prisma.prismaPool.findMany({
+      select: { id: true },
+      where: {
+        dynamicData: {
+          totalSharesNum: {
+            gt: 0.000000000001,
+          },
+        },
+      },
+    });
+    const chunks = _.chunk(pools, 10);
+
+    for (const chunk of chunks) {
+      const poolIds = chunk.map((pool) => pool.id);
+      await this.poolSnapshotService.loadAllSnapshotsForPools(poolIds);
+    }
+  }
 }
