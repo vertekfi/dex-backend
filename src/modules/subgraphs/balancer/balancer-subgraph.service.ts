@@ -73,4 +73,12 @@ export class BalancerSubgraphService {
       userAddress: shares.id.split('-')[1],
     }));
   }
+
+  async getPoolsWithActiveUpdates(timestamp: number): Promise<string[]> {
+    const { ampUpdates, gradualWeightUpdates } = await this.sdk.BalancerGetPoolsWithActiveUpdates({
+      timestamp: `${timestamp}`,
+    });
+
+    return [...ampUpdates, ...gradualWeightUpdates].map((item) => item.poolId.id);
+  }
 }

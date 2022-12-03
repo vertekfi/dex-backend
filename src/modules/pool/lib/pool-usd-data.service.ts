@@ -1,5 +1,4 @@
-import { prisma } from '@prisma/client';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import * as moment from 'moment-timezone';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';

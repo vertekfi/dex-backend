@@ -1,7 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
+import * as _ from 'lodash';
 import { PrismaPoolFilter, PrismaPoolStakingType, PrismaPoolSwap } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
+import * as moment from 'moment-timezone';
+
 import {
   GqlPoolFeaturedPoolGroup,
   GqlPoolJoinExit,
@@ -25,9 +28,7 @@ import { PoolSnapshotService } from './lib/pool-snapshot.service';
 import { PoolSwapService } from './lib/pool-swap.service';
 import { PoolUsdDataService } from './lib/pool-usd-data.service';
 import { PoolStakingService } from './pool-types';
-
-const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
-const HOME_SCREEN_CONFIG_CACHE_KEY = 'content:homeScreen';
+import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
 
 @Injectable()
 export class PoolService {
@@ -41,6 +42,7 @@ export class PoolService {
     private readonly poolCreatorService: PoolCreatorService,
     private readonly poolOnChainDataService: PoolOnChainDataService,
     private readonly poolUsdDataService: PoolUsdDataService,
+    private readonly balancerSubgraphService: BalancerSubgraphService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -138,8 +140,39 @@ export class PoolService {
     return poolIds;
   }
 
+  async loadOnChainDataForAllPools(): Promise<void> {
+    const result = await this.prisma.prismaPool.findMany({
+      select: { id: true },
+      where: {
+        categories: {
+          none: { category: 'BLACK_LISTED' },
+        },
+      },
+    });
+    const poolIds = result.map((item) => item.id);
+    const blockNumber = await this.rpc.provider.getBlockNumber();
+
+    const chunks = _.chunk(poolIds, 100);
+
+    for (const chunk of chunks) {
+      await this.poolOnChainDataService.updateOnChainData(chunk, blockNumber);
+    }
+  }
+
   async updateOnChainDataForPools(poolIds: string[], blockNumber: number) {
     await this.poolOnChainDataService.updateOnChainData(poolIds, blockNumber);
+  }
+
+  async loadOnChainDataForPoolsWithActiveUpdates() {
+    const blockNumber = await this.rpc.provider.getBlockNumber();
+    const timestamp = moment().subtract(5, 'minutes').unix();
+    console.time('getPoolsWithActiveUpdates');
+    const poolIds = await this.balancerSubgraphService.getPoolsWithActiveUpdates(timestamp);
+    console.timeEnd('getPoolsWithActiveUpdates');
+
+    console.time('updateOnChainData');
+    await this.poolOnChainDataService.updateOnChainData(poolIds, blockNumber);
+    console.timeEnd('updateOnChainData');
   }
 
   async syncSwapsForLast48Hours(): Promise<string[]> {
