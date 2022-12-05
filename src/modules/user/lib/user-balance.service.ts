@@ -55,17 +55,11 @@ export class UserBalanceService {
           include: {
             staking: {
               include: {
-                farm: {
-                  include: {
-                    rewarders: true,
-                  },
-                },
                 gauge: {
                   include: {
                     rewards: true,
                   },
                 },
-                reliquary: true,
               },
             },
           },

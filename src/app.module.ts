@@ -9,6 +9,7 @@ import { CommonModule } from './modules/common/common.module';
 import { TokenModule } from './modules/token/token.module';
 import { UserModule } from './modules/user/user.module';
 import { ProtocolModule } from './modules/protocol/protocol.module';
+import { GaugeModule } from './modules/gauge/gauge.module';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -48,6 +49,7 @@ if (process.env.NODE_ENV === 'production') {
     TokenModule,
     UserModule,
     ProtocolModule,
+    GaugeModule,
   ],
   providers: [],
 })

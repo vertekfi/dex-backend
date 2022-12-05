@@ -4,7 +4,7 @@ import { TokenService } from '../common/token/token.service';
 import { UserService } from './user.service';
 
 @Resolver()
-export class UserResolver {
+export class UserQueryResolver {
   constructor(
     private readonly tokenService: TokenService,
     private readonly userService: UserService,

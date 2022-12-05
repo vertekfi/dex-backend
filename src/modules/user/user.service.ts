@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaPoolStaking } from '@prisma/client';
+import { PrismaPoolStaking, PrismaPoolStakingType } from '@prisma/client';
 import { GqlPoolJoinExit, GqlPoolSwap } from 'src/gql-addons';
 import { PoolSwapService } from '../common/pool/pool-swap.service';
 import { UserBalanceService } from './lib/user-balance.service';
+import { UserSyncGaugeBalanceService } from './lib/user-sync-gauge-balance.service';
 import { UserSyncWalletBalanceService } from './lib/user-sync-wallet-balance.service';
 import { UserPoolBalance } from './user-types';
 
@@ -12,6 +13,7 @@ export class UserService {
     private readonly walletSyncService: UserSyncWalletBalanceService,
     private readonly userBalanceService: UserBalanceService,
     private readonly poolSwapService: PoolSwapService,
+    private readonly stakedSyncServices: UserSyncGaugeBalanceService,
   ) {}
 
   async initWalletBalancesForPool(poolId: string) {
@@ -42,5 +44,17 @@ export class UserService {
 
   async getUserStaking(address: string): Promise<PrismaPoolStaking[]> {
     return this.userBalanceService.getUserStaking(address);
+  }
+
+  async syncChangedWalletBalancesForAllPools() {
+    await this.walletSyncService.syncChangedBalancesForAllPools();
+  }
+
+  async initWalletBalancesForAllPools() {
+    await this.walletSyncService.initBalancesForPools();
+  }
+
+  async initStakedBalances() {
+    this.stakedSyncServices.initStakedBalances();
   }
 }
