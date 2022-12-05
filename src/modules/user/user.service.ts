@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaPoolStaking, PrismaPoolStakingType } from '@prisma/client';
+import { PrismaService } from 'nestjs-prisma';
 import { GqlPoolJoinExit, GqlPoolSwap } from 'src/gql-addons';
 import { PoolSwapService } from '../common/pool/pool-swap.service';
 import { UserBalanceService } from './lib/user-balance.service';
@@ -10,10 +11,11 @@ import { UserPoolBalance } from './user-types';
 @Injectable()
 export class UserService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly walletSyncService: UserSyncWalletBalanceService,
     private readonly userBalanceService: UserBalanceService,
     private readonly poolSwapService: PoolSwapService,
-    private readonly stakedSyncServices: UserSyncGaugeBalanceService,
+    private readonly gaugeSyncService: UserSyncGaugeBalanceService,
   ) {}
 
   async initWalletBalancesForPool(poolId: string) {
@@ -55,6 +57,42 @@ export class UserService {
   }
 
   async initStakedBalances() {
-    this.stakedSyncServices.initStakedBalances();
+    this.gaugeSyncService.initStakedBalances();
+  }
+
+  async syncChangedStakedBalances() {
+    await this.gaugeSyncService.syncChangedStakedBalances();
+  }
+
+  async syncUserBalance(userAddress: string, poolId: string) {
+    const pool = await this.prisma.prismaPool.findUniqueOrThrow({
+      where: { id: poolId },
+      include: { staking: true },
+    });
+
+    // we make sure the user exists
+    await this.prisma.prismaUser.upsert({
+      where: { address: userAddress },
+      update: {},
+      create: { address: userAddress },
+    });
+
+    await this.walletSyncService.syncUserBalance(userAddress, pool.id, pool.address);
+
+    if (pool.staking) {
+      this.gaugeSyncService.syncUserBalance({
+        userAddress,
+        poolId: pool.id,
+        poolAddress: pool.address,
+        staking: pool.staking!,
+      });
+    }
+  }
+
+  async syncUserBalanceAllPools(userAddress: string) {
+    const allBalances = await this.userBalanceService.getUserPoolBalances(userAddress);
+    for (const userPoolBalance of allBalances) {
+      this.syncUserBalance(userAddress, userPoolBalance.poolId);
+    }
   }
 }

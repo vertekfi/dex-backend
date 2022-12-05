@@ -197,6 +197,22 @@ export class UserSyncWalletBalanceService {
     );
   }
 
+  async syncUserBalance(userAddress: string, poolId: string, poolAddresses: string) {
+    const balancesToFetch = [{ erc20Address: poolAddresses, userAddress }];
+
+    const balances = await Multicaller.fetchBalances({
+      multicallAddress: networkConfig.multicall,
+      provider: this.rpc.provider,
+      balancesToFetch,
+    });
+
+    const operations = balances.map((userBalance) =>
+      this.getUserWalletBalanceUpsert(userBalance, poolId),
+    );
+
+    await Promise.all(operations);
+  }
+
   private getPrismaUpsertForPoolShare(poolId: string, share: BalancerUserPoolShare) {
     return this.prisma.prismaUserWalletBalance.upsert({
       where: { id: `${poolId}-${share.userAddress}` },

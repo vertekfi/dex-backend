@@ -27,32 +27,32 @@ export class UserMutationResolver {
     return 'success';
   }
 
-  //   @Mutation()
-  //   async userInitStakedBalances(@Context() context) {
-  //     isAdminRoute(context);
-  //     await this.userService.initStakedBalances(stakingTypes);
-  //     return 'success';
-  //   }
+  @Mutation()
+  async userInitStakedBalances(@Context() context) {
+    isAdminRoute(context);
+    await this.userService.initStakedBalances();
+    return 'success';
+  }
 
-  //   @Mutation()
-  //   async userSyncChangedStakedBalances(@Context() context) {
-  //     isAdminRoute(context);
-  //     await this.userService.syncChangedStakedBalances();
-  //     return 'success';
-  //   }
+  @Mutation()
+  async userSyncChangedStakedBalances(@Context() context) {
+    isAdminRoute(context);
+    await this.userService.syncChangedStakedBalances();
+    return 'success';
+  }
 
-  //   @Mutation()
-  //   async userSyncBalance(@Context() context) {
-  //     const accountAddress = getRequiredAccountAddress(context);
-  //     await this.userService.syncUserBalance(accountAddress, poolId);
-  //     return 'success';
-  //   }
+  @Mutation()
+  async userSyncBalance(@Context() context, @Args('poolId') poolId) {
+    const accountAddress = getRequiredAccountAddress(context);
+    await this.userService.syncUserBalance(accountAddress, poolId);
+    return 'success';
+  }
 
-  //   @Mutation()
-  //   async userSyncBalanceAllPools(@Context() context) {
-  //     isAdminRoute(context);
-  //     const accountAddress = getRequiredAccountAddress(context);
-  //     await this.userService.syncUserBalanceAllPools(accountAddress);
-  //     return 'success';
-  //   }
+  @Mutation()
+  async userSyncBalanceAllPools(@Context() context) {
+    isAdminRoute(context);
+    const accountAddress = getRequiredAccountAddress(context);
+    await this.userService.syncUserBalanceAllPools(accountAddress);
+    return 'success';
+  }
 }

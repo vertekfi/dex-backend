@@ -10,7 +10,7 @@ import { Injectable } from '@nestjs/common';
 export class UserBalanceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async getUserPoolBalances(address: string): Promise<UserPoolBalance[]> {
+  async getUserPoolBalances(address: string): Promise<UserPoolBalance[]> {
     const user = await this.prisma.prismaUser.findUnique({
       where: { address: address.toLowerCase() },
       include: {
@@ -46,7 +46,7 @@ export class UserBalanceService {
     });
   }
 
-  public async getUserStaking(address: string): Promise<PrismaPoolStaking[]> {
+  async getUserStaking(address: string): Promise<PrismaPoolStaking[]> {
     const user = await this.prisma.prismaUser.findUnique({
       where: { address },
       include: {

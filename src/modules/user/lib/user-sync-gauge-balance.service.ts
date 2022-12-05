@@ -71,7 +71,7 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
     console.log('initStakedBalances: finished...');
   }
 
-  public async syncChangedStakedBalances(): Promise<void> {
+  async syncChangedStakedBalances(): Promise<void> {
     // we always store the latest synced block
     const status = await this.prisma.prismaUserBalanceSyncStatus.findUnique({
       where: { type: 'STAKED' },
@@ -202,12 +202,7 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
     );
   }
 
-  public async syncUserBalance({
-    userAddress,
-    poolId,
-    poolAddress,
-    staking,
-  }: UserSyncUserBalanceInput) {
+  async syncUserBalance({ userAddress, poolId, poolAddress, staking }: UserSyncUserBalanceInput) {
     const contract = getContractAt(staking.address, LiqGaugeV5abi);
     const balance = await contract.balanceOf(userAddress);
     const amount = formatFixed(balance, 18);
