@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaTokenCurrentPrice } from '@prisma/client';
+import * as _ from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { CacheService } from '../common/cache.service';
 import { ConfigService } from '../common/config.service';
 import { networkConfig } from '../config/network-config';
 import { TokenDataLoaderService } from './lib/token-data-loader.service';
+import { getPriceHandlers } from './lib/token-price-handlers';
 import { TokenPriceService } from './lib/token-price.service';
 import { TokenDefinition } from './token-types';
 
@@ -78,10 +80,27 @@ export class TokenService {
   }
 
   async loadTokenPrices(): Promise<void> {
-    // return this.tokenPriceService.updateTokenPrices();
+    return this.tokenPriceService.updateTokenPrices(getPriceHandlers(this.prisma));
   }
 
   async syncTokenData() {
     await this.tokenData.syncTokenData();
+  }
+
+  async syncTokenDynamicData() {
+    const tokens = await this.prisma.prismaToken.findMany({
+      include: {
+        types: true,
+        // fetch the last price stored
+        prices: { take: 1, orderBy: { timestamp: 'desc' } },
+      },
+    });
+
+    let tokensWithTypes = _.sortBy(tokens, (token) => token.prices[0]?.timestamp || 0).map(
+      (token) => ({
+        ...token,
+        types: token.types.map((type) => type.type),
+      }),
+    );
   }
 }

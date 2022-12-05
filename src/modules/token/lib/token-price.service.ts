@@ -84,6 +84,8 @@ export class TokenPriceService {
       }),
     );
 
+    // Break up for dexscreener and coingecko as needed. Currently only need screener for our degen shit
+
     for (const handler of handlers) {
       const accepted = await handler.getAcceptedTokens(tokensWithTypes);
       const acceptedTokens = tokensWithTypes.filter((token) => accepted.includes(token.address));

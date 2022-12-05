@@ -17,4 +17,10 @@ export class TokenMutationResolver {
     await this.tokenService.syncTokenData();
     return 'success';
   }
+
+  @Mutation()
+  async tokenSyncTokenDynamicData() {
+    await this.tokenService.syncTokenDynamicData();
+    return 'success';
+  }
 }

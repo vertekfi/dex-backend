@@ -43,3 +43,48 @@ export interface MappedToken {
   address: string;
   originalAddress?: string;
 }
+
+export interface TokenDataDexScreener {
+  dexId: string;
+  pairAddress: string;
+  priceUsd: string;
+  priceNative: string;
+
+  txns: {
+    h24: {
+      buys: number;
+      sells: number;
+    };
+    h6: {
+      buys: number;
+      sells: number;
+    };
+    h1: {
+      buys: number;
+      sells: number;
+    };
+    m5: {
+      buys: number;
+      sells: number;
+    };
+  };
+
+  volume: {
+    h24: number;
+    h6: number;
+    h1: number;
+    m5: number;
+  };
+  priceChange: {
+    h24: number;
+    h6: number;
+    h1: number;
+    m5: number;
+  };
+  iquidity: {
+    usd: number;
+    base: number;
+    quote: number;
+  };
+  fdv: number;
+}

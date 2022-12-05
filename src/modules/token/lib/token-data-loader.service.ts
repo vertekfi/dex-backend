@@ -1,13 +1,83 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
+import axios from 'axios';
+import { isSameAddress } from '@balancer-labs/sdk';
 
 @Injectable()
 export class TokenDataLoaderService {
   constructor(private readonly prisma: PrismaService) {}
 
   async syncTokenData() {
-    // TODO: Get list from github or something
+    const { data } = await axios.get(
+      'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json',
+    );
+
+    const tokens = data.tokens;
+
+    for (const token of tokens) {
+      const tokenAddress = token.address.toLowerCase();
+      let tokenData = {
+        useDexscreener: token.useDexscreener,
+        dexscreenPairAddress: token.dexscreenPairAddress,
+      };
+
+      await this.prisma.prismaToken.upsert({
+        where: { address: tokenAddress },
+        create: {
+          name: token.name,
+          address: tokenAddress,
+          symbol: token.symbol,
+          decimals: token.decimals,
+          logoURI: token.logoURI,
+          priority: token.priority || 0,
+          coingeckoPlatformId: token.coingeckoPlatformId?.toLowerCase(),
+          coingeckoContractAddress: token.coingeckoContractAddress?.toLowerCase(),
+          coingeckoTokenId: token.coingeckoTokenId?.toLowerCase(),
+          ...tokenData,
+        },
+        update: {
+          name: token.name,
+          symbol: token.symbol,
+          //use set to ensure we overwrite the underlying value if it is removed from list
+          logoURI: { set: token.logoURI || null },
+          priority: token.priority,
+          coingeckoPlatformId: { set: token.coingeckoPlatformId?.toLowerCase() || null },
+          coingeckoContractAddress: { set: token.coingeckoContractAddress?.toLowerCase() || null },
+          coingeckoTokenId: { set: token.coingeckoTokenId?.toLowerCase() || null },
+          ...tokenData,
+        },
+      });
+    }
+
+    const whiteListedTokens = await this.prisma.prismaTokenType.findMany({
+      where: {
+        type: 'WHITE_LISTED',
+      },
+    });
+
+    const addToWhitelist = tokens.filter((token) => {
+      return !whiteListedTokens.some((dbToken) =>
+        isSameAddress(token.address, dbToken.tokenAddress),
+      );
+    });
+
+    const removeFromWhitelist = whiteListedTokens.filter((dbToken) => {
+      return !tokens.some((token) => isSameAddress(dbToken.tokenAddress, token.address));
+    });
+
+    await this.prisma.prismaTokenType.createMany({
+      data: addToWhitelist.map((token) => ({
+        id: `${token.address}-white-listed`,
+        tokenAddress: token.address.toLowerCase(),
+        type: 'WHITE_LISTED' as const,
+      })),
+      skipDuplicates: true,
+    });
+
+    await this.prisma.prismaTokenType.deleteMany({
+      where: { id: { in: removeFromWhitelist.map((token) => token.id) } },
+    });
 
     await this.syncTokenTypes();
   }
