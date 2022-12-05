@@ -1,1 +1,7 @@
-export const FEATURED_POOLS = [];
+export const FEATURED_POOLS = [
+  {
+    icon: '',
+    id: '',
+    title: '',
+  },
+];

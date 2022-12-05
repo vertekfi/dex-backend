@@ -99,7 +99,8 @@ export class PoolService {
   }
 
   async getFeaturedPoolGroups(): Promise<GqlPoolFeaturedPoolGroup[]> {
-    return FEATURED_POOLS;
+    const pools = FEATURED_POOLS.map((p) => {});
+    return [];
   }
 
   async getSnapshotsForAllPools(range: GqlPoolSnapshotDataRange) {

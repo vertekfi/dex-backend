@@ -102,5 +102,7 @@ export class TokenService {
         types: token.types.map((type) => type.type),
       }),
     );
+
+    // This syncs up 24 hour price changes and such. Dexscreener api does not provide this, so would need to create myself
   }
 }
