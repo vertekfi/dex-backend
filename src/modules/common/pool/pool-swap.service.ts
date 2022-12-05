@@ -18,7 +18,7 @@ import {
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import * as moment from 'moment-timezone';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
-import { TokenService } from 'src/modules/token/token.service';
+import { TokenService } from 'src/modules/common/token/token.service';
 import * as _ from 'lodash';
 
 @Injectable()

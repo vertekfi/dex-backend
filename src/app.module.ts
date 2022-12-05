@@ -15,6 +15,8 @@ const gqlConfig: ApolloDriverConfig = {
   typePaths: ['./**/*.gql'],
   cache: 'bounded',
   playground: true,
+  introspection: true,
+  context: ({ req }) => req.context,
 };
 
 if (process.env.NODE_ENV === 'production') {

@@ -4,7 +4,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { BlockService } from 'src/modules/common/web3/block.service';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
-import { TokenService } from 'src/modules/token/token.service';
+import { TokenService } from 'src/modules/common/token/token.service';
 
 export class PoolUsdDataService {
   constructor(

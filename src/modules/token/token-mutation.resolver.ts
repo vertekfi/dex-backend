@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Mutation } from '@nestjs/graphql';
-import { TokenService } from './token.service';
+import { TokenService } from '../common/token/token.service';
 
 @Injectable()
 export class TokenMutationResolver {

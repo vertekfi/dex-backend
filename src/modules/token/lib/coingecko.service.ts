@@ -13,7 +13,7 @@ import {
 import { networkConfig } from 'src/modules/config/network-config';
 import { isAddress } from 'ethers/lib/utils';
 import { MappedToken, TokenDefinition } from '../token-types';
-import { TokenService } from '../token.service';
+import { TokenService } from '../../common/token/token.service';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:

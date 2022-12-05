@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { config } from 'dotenv';
 import * as compression from 'compression';
 import helmet from 'helmet';
+import { accountMiddleware } from './modules/common/middleware/accountMiddleware';
 const cluster = require('cluster');
 
 async function bootstrap() {
@@ -41,6 +42,8 @@ async function bootstrap() {
     app.use(helmet.permittedCrossDomainPolicies());
     app.use(helmet.referrerPolicy());
     app.use(helmet.xssFilter());
+
+    app.use(accountMiddleware);
 
     // const HOST = process.env.HOST;
     const PORT = process.env.PORT || 5000;

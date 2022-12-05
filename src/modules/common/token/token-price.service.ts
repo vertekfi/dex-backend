@@ -4,7 +4,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { networkConfig } from 'src/modules/config/network-config';
 import * as moment from 'moment-timezone';
 import * as _ from 'lodash';
-import { TokenPriceHandler } from '../token-types';
+import { TokenPriceHandler } from '../../token/token-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 
 @Injectable()

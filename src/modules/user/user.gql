@@ -1,0 +1,76 @@
+extend type Query {
+  userGetPoolBalances: [GqlUserPoolBalance!]!
+  userGetFbeetsBalance: GqlUserFbeetsBalance!
+  userGetStaking: [GqlPoolStaking!]!
+  userGetPoolJoinExits(first: Int = 10, skip: Int = 0, poolId: String!): [GqlPoolJoinExit!]!
+  userGetSwaps(first: Int = 10, skip: Int = 0, poolId: String!): [GqlPoolSwap!]!
+  userGetPortfolioSnapshots(days: Int!): [GqlUserPortfolioSnapshot!]!
+  # userGetPoolSnapshots(poolId: String!, range: GqlUserSnapshotDataRange!): [GqlUserPoolSnapshot!]!
+}
+
+extend type Mutation {
+  userSyncBalance(poolId: String!): String!
+  userSyncBalanceAllPools: String!
+
+  userInitWalletBalancesForAllPools: String!
+  userInitWalletBalancesForPool(poolId: String!): String!
+  userSyncChangedWalletBalancesForAllPools: String!
+
+  userInitStakedBalances(stakingTypes: [GqlPoolStakingType!]!): String!
+  userSyncChangedStakedBalances: String!
+}
+
+type GqlUserPoolBalance {
+  poolId: String!
+  tokenAddress: String!
+  tokenPrice: Float!
+  totalBalance: AmountHumanReadable!
+  walletBalance: AmountHumanReadable!
+  stakedBalance: AmountHumanReadable!
+}
+
+type GqlUserFbeetsBalance {
+  id: String!
+  totalBalance: AmountHumanReadable!
+  walletBalance: AmountHumanReadable!
+  stakedBalance: AmountHumanReadable!
+}
+
+type GqlUserPortfolioSnapshot {
+  timestamp: Int!
+  walletBalance: AmountHumanReadable!
+  gaugeBalance: AmountHumanReadable!
+  farmBalance: AmountHumanReadable!
+  totalBalance: AmountHumanReadable!
+  totalValueUSD: AmountHumanReadable!
+  fees24h: AmountHumanReadable!
+  totalFees: AmountHumanReadable!
+  pools: [GqlUserPoolSnapshot!]!
+}
+
+type GqlUserPoolSnapshot {
+  # id: ID!
+  timestamp: Int!
+  # poolId: String!
+  # poolAddress: String!
+  # poolName: String!
+  percentShare: Float!
+  walletBalance: AmountHumanReadable!
+  gaugeBalance: AmountHumanReadable!
+  farmBalance: AmountHumanReadable!
+  totalBalance: AmountHumanReadable!
+  totalValueUSD: AmountHumanReadable!
+  fees24h: AmountHumanReadable!
+  # totalFees: AmountHumanReadable!
+  # percentageOfPortfolio: Float!
+  # priceChange24h: AmountHumanReadable!
+  # priceChangePercent24h: Float!
+}
+
+enum GqlUserSnapshotDataRange {
+  THIRTY_DAYS
+  NINETY_DAYS
+  ONE_HUNDRED_EIGHTY_DAYS
+  ONE_YEAR
+  ALL_TIME
+}

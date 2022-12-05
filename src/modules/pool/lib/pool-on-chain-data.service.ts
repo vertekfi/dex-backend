@@ -1,7 +1,7 @@
 import { isSameAddress } from '@balancer-labs/sdk';
 import { Injectable } from '@nestjs/common';
 import { formatFixed } from '@ethersproject/bignumber';
-import { TokenService } from 'src/modules/token/token.service';
+import { TokenService } from 'src/modules/common/token/token.service';
 import { Inject } from '@nestjs/common';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';

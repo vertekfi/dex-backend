@@ -7,7 +7,6 @@ import { PoolCreatorService } from './lib/pool-creator.service';
 import { PoolGqlLoaderService } from './lib/pool-gql-loader.service';
 import { PoolOnChainDataService } from './lib/pool-on-chain-data.service';
 import { PoolSnapshotService } from './lib/pool-snapshot.service';
-import { PoolSwapService } from './lib/pool-swap.service';
 import { PoolSyncService } from './lib/pool-sync.service';
 import { PoolUsdDataService } from './lib/pool-usd-data.service';
 import { PoolMutationResolver } from './pool-mutation.resolver';
@@ -22,7 +21,6 @@ import { PoolService } from './pool.service';
     PoolGqlLoaderService,
     PoolService,
     PoolGqlLoaderUtils,
-    PoolSwapService,
     PoolSnapshotService,
     PoolCreatorService,
     PoolOnChainDataService,

@@ -8,6 +8,10 @@ import { CacheService } from './cache.service';
 import { RpcProvider } from './web3/rpc.provider';
 import { BlockService } from './web3/block.service';
 import { AdminGuard } from './guards/admin.guard';
+import { PoolSwapService } from './pool/pool-swap.service';
+import { TokenPriceService } from './token/token-price.service';
+import { TokenService } from './token/token.service';
+import { TokenDataLoaderService } from './token/token-data-loader.service';
 
 @Global()
 @Module({
@@ -28,7 +32,21 @@ import { AdminGuard } from './guards/admin.guard';
     CacheService,
     RpcProvider,
     BlockService,
+    PoolSwapService,
+    TokenPriceService,
+    TokenService,
+    TokenDataLoaderService,
   ],
-  exports: [ConfigService, CacheModule, CacheService, RpcProvider, BlockService],
+  exports: [
+    ConfigService,
+    CacheModule,
+    CacheService,
+    RpcProvider,
+    BlockService,
+    PoolSwapService,
+    TokenPriceService,
+    TokenService,
+    TokenDataLoaderService,
+  ],
 })
 export class CommonModule {}

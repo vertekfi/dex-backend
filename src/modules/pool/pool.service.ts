@@ -26,7 +26,7 @@ import { PoolCreatorService } from './lib/pool-creator.service';
 import { PoolGqlLoaderService } from './lib/pool-gql-loader.service';
 import { PoolOnChainDataService } from './lib/pool-on-chain-data.service';
 import { PoolSnapshotService } from './lib/pool-snapshot.service';
-import { PoolSwapService } from './lib/pool-swap.service';
+import { PoolSwapService } from '../common/pool/pool-swap.service';
 import { PoolUsdDataService } from './lib/pool-usd-data.service';
 import { PoolAprService, PoolStakingService } from './pool-types';
 import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
