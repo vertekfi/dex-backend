@@ -9,11 +9,10 @@ export class TokenDataLoaderService {
   constructor(private readonly prisma: PrismaService) {}
 
   async syncTokenData() {
-    const { data } = await axios.get(
-      'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json',
-    );
+    const url = 'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json';
+    const { data } = await axios.get(url);
 
-    const tokens = data.tokens;
+    const tokens = data[url].tokens;
 
     for (const token of tokens) {
       const tokenAddress = token.address.toLowerCase();
