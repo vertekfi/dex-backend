@@ -14,7 +14,7 @@ export class UserMutationResolver {
   }
 
   @Mutation()
-  async userInitWalletBalancesForAllPools(@Context() context, @Args() args) {
+  async userInitWalletBalancesForAllPools(@Context() context) {
     isAdminRoute(context);
     await this.userService.initWalletBalancesForAllPools();
     return 'success';
