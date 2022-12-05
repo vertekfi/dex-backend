@@ -1,4 +1,5 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
   GqlPoolSnapshotDataRange,
   QueryPoolGetBatchSwapsArgs,
@@ -6,6 +7,7 @@ import {
   QueryPoolGetPoolsArgs,
   QueryPoolGetUserSwapVolumeArgs,
 } from 'src/gql-addons';
+import { AdminGuard } from '../common/guards/admin.guard';
 import { PoolService } from './pool.service';
 
 @Resolver()
@@ -13,7 +15,12 @@ export class PoolMutationResolver {
   constructor(private poolService: PoolService) {}
 
   @Mutation()
-  async poolSyncAllPoolsFromSubgraph() {}
+  @UseGuards(AdminGuard)
+  async poolSyncAllPoolsFromSubgraph(@Context() ctx) {
+    console.log(ctx);
+    return [];
+    // return this.poolService.syncAllPoolsFromSubgraph();
+  }
 
   @Mutation()
   async poolSyncNewPoolsFromSubgraph() {}

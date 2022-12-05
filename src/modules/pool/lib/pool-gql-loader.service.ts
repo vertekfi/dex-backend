@@ -26,6 +26,8 @@ export class PoolGqlLoaderService {
   }
 
   async getPools(args: QueryPoolGetPoolsArgs): Promise<any[]> {
+    // TODO: Cache this a bit?
+
     const pools = await this.prisma.prismaPool.findMany({
       ...this.poolUtils.mapQueryArgsToPoolQuery(args),
       include: prismaPoolMinimal.include,
