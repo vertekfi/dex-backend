@@ -8,6 +8,7 @@ import { SubgraphModule } from './modules/subgraphs/subgraph.module';
 import { CommonModule } from './modules/common/common.module';
 import { TokenModule } from './modules/token/token.module';
 import { UserModule } from './modules/user/user.module';
+import { ProtocolModule } from './modules/protocol/protocol.module';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -44,6 +45,7 @@ if (process.env.NODE_ENV === 'production') {
     CommonModule,
     TokenModule,
     UserModule,
+    ProtocolModule,
   ],
   providers: [],
 })

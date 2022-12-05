@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  Balancer,
   BalancerJoinExitsQuery,
   BalancerJoinExitsQueryVariables,
   BalancerPoolFragment,
@@ -10,6 +11,7 @@ import {
   BalancerPoolSnapshotFragment,
   BalancerPoolSnapshotsQueryVariables,
   BalancerPoolsQueryVariables,
+  BalancerProtocolDataQueryVariables,
   BalancerSwapFragment,
   BalancerSwapsQuery,
   BalancerSwapsQueryVariables,
@@ -134,5 +136,16 @@ export class BalancerSubgraphService {
     }
 
     return swaps;
+  }
+
+  async getProtocolData(args: BalancerProtocolDataQueryVariables): Promise<Balancer> {
+    const { balancers } = await this.sdk.BalancerProtocolData(args);
+
+    if (balancers.length === 0) {
+      throw new Error('Missing protocol data');
+    }
+
+    //There is only ever one
+    return balancers[0] as Balancer;
   }
 }
