@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 import * as compression from 'compression';
 import helmet from 'helmet';
 import { accountMiddleware } from './modules/common/middleware/accountMiddleware';
+import { PrismaService } from 'nestjs-prisma';
 const cluster = require('cluster');
 
 async function bootstrap() {
@@ -44,6 +45,9 @@ async function bootstrap() {
     app.use(helmet.xssFilter());
 
     app.use(accountMiddleware);
+
+    const prismaService: PrismaService = app.get(PrismaService);
+    await prismaService.enableShutdownHooks(app);
 
     // const HOST = process.env.HOST;
     const PORT = process.env.PORT || 5000;
