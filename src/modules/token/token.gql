@@ -1,0 +1,118 @@
+extend type Query {
+  tokenGetTokens: [GqlToken!]!
+  tokenGetCurrentPrices: [GqlTokenPrice!]!
+  tokenGetHistoricalPrices(addresses: [String!]!): [GqlHistoricalTokenPrice!]!
+  tokenGetTokensDynamicData(addresses: [String!]!): [GqlTokenDynamicData!]!
+  tokenGetTokenDynamicData(address: String!): GqlTokenDynamicData
+  tokenGetRelativePriceChartData(
+    tokenIn: String!
+    tokenOut: String!
+    range: GqlTokenChartDataRange!
+  ): [GqlTokenPriceChartDataItem!]!
+  tokenGetPriceChartData(
+    address: String!
+    range: GqlTokenChartDataRange!
+  ): [GqlTokenPriceChartDataItem!]!
+  tokenGetCandlestickChartData(
+    address: String!
+    range: GqlTokenChartDataRange!
+  ): [GqlTokenCandlestickChartDataItem!]!
+  tokenGetTokenData(address: String!): GqlTokenData
+  tokenGetTokensData(addresses: [String!]!): [GqlTokenData!]!
+}
+
+extend type Mutation {
+  tokenReloadTokenPrices: Boolean
+  tokenSyncTokenDefinitions: String!
+  tokenSyncTokenDynamicData: String!
+  tokenInitChartData(tokenAddress: String!): String!
+  tokenDeletePrice(tokenAddress: String!, timestamp: Int!): Boolean!
+  tokenDeleteTokenType(tokenAddress: String!, type: GqlTokenType!): String!
+}
+
+type GqlTokenPrice {
+  address: String!
+  price: Float!
+}
+
+type GqlHistoricalTokenPrice {
+  address: String!
+  prices: [GqlHistoricalTokenPriceEntry!]!
+}
+
+type GqlHistoricalTokenPriceEntry {
+  timestamp: String!
+  price: Float!
+}
+
+type GqlToken {
+  address: String!
+  name: String!
+  description: String
+  symbol: String!
+  decimals: Int!
+  chainId: Int!
+  websiteUrl: String
+  discordUrl: String
+  telegramUrl: String
+  twitterUsername: String
+  logoURI: String
+  priority: Int!
+  tradable: Boolean!
+}
+
+type GqlTokenDynamicData {
+  id: String!
+  tokenAddress: String!
+  price: Float!
+  ath: Float!
+  atl: Float!
+  marketCap: String
+  fdv: String
+  high24h: Float!
+  low24h: Float!
+  priceChange24h: Float!
+
+  priceChangePercent24h: Float!
+  priceChangePercent7d: Float
+  priceChangePercent14d: Float
+  priceChangePercent30d: Float
+  updatedAt: String!
+}
+
+enum GqlTokenChartDataRange {
+  SEVEN_DAY
+  THIRTY_DAY
+}
+
+type GqlTokenCandlestickChartDataItem {
+  id: ID!
+  timestamp: Int!
+  open: AmountHumanReadable!
+  high: AmountHumanReadable!
+  low: AmountHumanReadable!
+  close: AmountHumanReadable!
+}
+
+type GqlTokenPriceChartDataItem {
+  id: ID!
+  timestamp: Int!
+  price: AmountHumanReadable!
+}
+
+type GqlTokenData {
+  id: ID!
+  tokenAddress: String!
+  description: String
+  websiteUrl: String
+  discordUrl: String
+  telegramUrl: String
+  twitterUsername: String
+}
+
+enum GqlTokenType {
+  WHITE_LISTED
+  BPT
+  PHANTOM_BPT
+  LINEAR_WRAPPED_TOKEN
+}

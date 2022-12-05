@@ -191,10 +191,8 @@ export class PoolCreatorService {
 
     for (const subgraphPool of sortedSubgraphPools) {
       const existsInDb = !!existingPools.find((pool) => pool.id === subgraphPool.id);
-
       if (!existsInDb) {
         await this.createPoolRecord(subgraphPool, sortedSubgraphPools, blockNumber);
-
         poolIds.add(subgraphPool.id);
       }
     }

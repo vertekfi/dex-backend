@@ -4,6 +4,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { CacheService } from '../common/cache.service';
 import { ConfigService } from '../common/config.service';
 import { networkConfig } from '../config/network-config';
+import { TokenDataLoaderService } from './lib/token-data-loader.service';
 import { TokenPriceService } from './lib/token-price.service';
 import { TokenDefinition } from './token-types';
 
@@ -18,6 +19,7 @@ export class TokenService {
     private readonly cache: CacheService,
     private readonly tokenPriceService: TokenPriceService,
     private readonly config: ConfigService,
+    private readonly tokenData: TokenDataLoaderService,
   ) {}
 
   async getTokenDefinitions(): Promise<TokenDefinition[]> {
@@ -73,5 +75,13 @@ export class TokenService {
       this.cache.put(TOKEN_PRICES_24H_AGO_CACHE_KEY, tokenPrices24hAgo, 60 * 5 * 1000);
     }
     return tokenPrices24hAgo;
+  }
+
+  async loadTokenPrices(): Promise<void> {
+    // return this.tokenPriceService.updateTokenPrices();
+  }
+
+  async syncTokenData() {
+    await this.tokenData.syncTokenData();
   }
 }

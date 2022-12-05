@@ -9,10 +9,8 @@ export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     // if (context.getType<GqlContextType>() === 'graphql') {
     //   const gqlCtx = GqlExecutionContext.create(context);
-    //   const req = gqlCtx.getRoot()?.req;
-    //   if (req && req.req) {
-    //     console.log(req.req.headers);
-    //   }
+    //   const req = context.switchToHttp().getRequest();
+    //   console.log(req);
     // }
     return true;
   }

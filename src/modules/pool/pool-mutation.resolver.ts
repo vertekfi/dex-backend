@@ -16,17 +16,20 @@ export class PoolMutationResolver {
 
   @Mutation()
   @UseGuards(AdminGuard)
-  async poolSyncAllPoolsFromSubgraph(@Context() ctx) {
-    console.log(ctx);
-    return [];
-    // return this.poolService.syncAllPoolsFromSubgraph();
+  async poolSyncAllPoolsFromSubgraph() {
+    return this.poolService.syncAllPoolsFromSubgraph();
   }
 
   @Mutation()
-  async poolSyncNewPoolsFromSubgraph() {}
+  async poolSyncNewPoolsFromSubgraph() {
+    return this.poolService.syncNewPoolsFromSubgraph();
+  }
 
   @Mutation()
-  async poolLoadOnChainDataForAllPools() {}
+  async poolLoadOnChainDataForAllPools() {
+    await this.poolService.loadOnChainDataForAllPools();
+    return 'success';
+  }
 
   @Mutation()
   async poolUpdateLiquidityValuesForAllPools() {}

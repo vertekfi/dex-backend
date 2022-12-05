@@ -98,7 +98,7 @@ export class PoolService {
     return this.poolSwapService.getUserSwapVolume(args);
   }
 
-  getFeaturedPoolGroups(): GqlPoolFeaturedPoolGroup[] {
+  async getFeaturedPoolGroups(): Promise<GqlPoolFeaturedPoolGroup[]> {
     return FEATURED_POOLS;
   }
 
