@@ -5,7 +5,6 @@ import { formatFixed } from '@ethersproject/bignumber';
 import { UserStakedBalanceService, UserSyncUserBalanceInput } from '../user-types';
 import { PrismaService } from 'nestjs-prisma';
 import { networkConfig } from 'src/modules/config/network-config';
-import { getContractAt } from 'src/modules/common/web3/contract';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { OrderDirection } from 'src/modules/subgraphs/balancer/balancer-subgraph-types';
 import { GaugeService } from 'src/modules/gauge/gauge.service';
@@ -16,13 +15,15 @@ import { Injectable } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
+import { ContractService } from 'src/modules/common/web3/contract.service';
 
 @Injectable()
 export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
   constructor(
+    @Inject(RPC) private rpc: AccountWeb3,
     private readonly prisma: PrismaService,
     private readonly gaugeService: GaugeService,
-    @Inject(RPC) private rpc: AccountWeb3,
+    private readonly contractService: ContractService,
   ) {}
 
   async initStakedBalances(): Promise<void> {
@@ -107,10 +108,10 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
             therefore we check all deposit, withdraw and transfer events since the last synced block
          */
     for (let gaugeAddress of gaugeAddresses) {
-      const contract = getContractAt(gaugeAddress, LiqGaugeV5abi);
+      const gauge = this.contractService.getLiquidityGauge(gaugeAddress);
 
       // so we get all events since the last synced block
-      const events = await contract.queryFilter({ address: gaugeAddress }, startBlock, endBlock);
+      const events = await gauge.queryFilter({ address: gaugeAddress }, startBlock, endBlock);
 
       // we filter by those events and avoid duplicated users per gauge contract by utlizing a Set
       const uniqueUserAddresses = new Set<string>();
@@ -203,8 +204,8 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
   }
 
   async syncUserBalance({ userAddress, poolId, poolAddress, staking }: UserSyncUserBalanceInput) {
-    const contract = getContractAt(staking.address, LiqGaugeV5abi);
-    const balance = await contract.balanceOf(userAddress);
+    const gauge = this.contractService.getLiquidityGauge(staking.address);
+    const balance = await gauge.balanceOf(userAddress);
     const amount = formatFixed(balance, 18);
 
     await this.prisma.prismaUserStakedBalance.upsert({

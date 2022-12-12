@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClient } from 'graphql-request';
+import { ConfigService } from 'src/modules/common/config.service';
 import { networkConfig } from '../../config/network-config';
 import {
   GaugeLiquidityGaugesQueryVariables,
@@ -15,8 +16,8 @@ export class GaugeSubgraphService {
     return getSdk(this.client);
   }
 
-  constructor() {
-    this.client = new GraphQLClient(networkConfig.subgraphs.gauge ?? '');
+  constructor(private readonly config: ConfigService) {
+    this.client = new GraphQLClient(this.config.env.GAUGES_SUBGRAPH);
   }
   async getAllGauges(args: GaugeLiquidityGaugesQueryVariables) {
     const gaugesQuery = await this.sdk.GaugeLiquidityGauges(args);

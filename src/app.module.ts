@@ -10,6 +10,8 @@ import { TokenModule } from './modules/token/token.module';
 import { UserModule } from './modules/user/user.module';
 import { ProtocolModule } from './modules/protocol/protocol.module';
 import { GaugeModule } from './modules/gauge/gauge.module';
+import { WorkerModule } from './modules/worker/worker.module';
+import { ScheduledJobService } from './modules/worker/scheduled-job.service';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -50,7 +52,12 @@ if (process.env.NODE_ENV === 'production') {
     UserModule,
     ProtocolModule,
     GaugeModule,
+    WorkerModule,
   ],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(jobs: ScheduledJobService) {
+    //jobs.init();
+  }
+}

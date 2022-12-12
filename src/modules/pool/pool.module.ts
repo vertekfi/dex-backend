@@ -28,6 +28,6 @@ import { PoolService } from './pool.service';
     PoolAprUpdaterService,
     PoolSyncService,
   ],
-  exports: [PoolQueryResolver, PoolMutationResolver],
+  exports: [PoolQueryResolver, PoolMutationResolver, PoolService],
 })
 export class PoolModule {}

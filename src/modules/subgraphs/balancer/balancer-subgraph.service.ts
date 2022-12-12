@@ -20,9 +20,9 @@ import {
   Swap_OrderBy,
 } from './balancer-subgraph-types';
 import { GraphQLClient } from 'graphql-request';
-import { networkConfig } from 'src/modules/config/network-config';
 import { subgraphLoadAll } from '../utils';
 import { BalancerUserPoolShare } from './balancer-types';
+import { ConfigService } from 'src/modules/common/config.service';
 
 @Injectable()
 export class BalancerSubgraphService {
@@ -32,8 +32,8 @@ export class BalancerSubgraphService {
     return getSdk(this.client);
   }
 
-  constructor() {
-    this.client = new GraphQLClient(networkConfig.subgraphs.balancer);
+  constructor(private readonly config: ConfigService) {
+    this.client = new GraphQLClient(this.config.env.BALANCER_SUBGRAPH);
   }
 
   async getMetadata() {

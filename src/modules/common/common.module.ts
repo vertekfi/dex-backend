@@ -12,6 +12,7 @@ import { PoolSwapService } from './pool/pool-swap.service';
 import { TokenPriceService } from './token/token-price.service';
 import { TokenService } from './token/token.service';
 import { TokenDataLoaderService } from './token/token-data-loader.service';
+import { ContractService } from './web3/contract.service';
 
 @Global()
 @Module({
@@ -36,6 +37,7 @@ import { TokenDataLoaderService } from './token/token-data-loader.service';
     TokenPriceService,
     TokenService,
     TokenDataLoaderService,
+    ContractService,
   ],
   exports: [
     ConfigService,
@@ -47,6 +49,7 @@ import { TokenDataLoaderService } from './token/token-data-loader.service';
     TokenPriceService,
     TokenService,
     TokenDataLoaderService,
+    ContractService,
   ],
 })
 export class CommonModule {}

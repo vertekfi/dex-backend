@@ -7,7 +7,7 @@ export const RPC = 'RPC';
 
 export const RpcProvider: Provider = {
   provide: RPC,
-  useFactory: (config: ConfigService): AccountWeb3 => {
+  useFactory: async (config: ConfigService): Promise<AccountWeb3> => {
     let rpc = '';
     const chainId = config.env.CHAIN_ID;
     if (chainId === 5) {
@@ -18,9 +18,11 @@ export const RpcProvider: Provider = {
       throw 'Chain id?';
     }
 
+    const provider = new ethers.providers.JsonRpcProvider(rpc);
+    await provider.ready;
     console.log('Using RPC: ' + rpc);
     return {
-      provider: new ethers.providers.JsonRpcProvider(rpc),
+      provider,
       chainId,
     };
   },

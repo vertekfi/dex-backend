@@ -6,6 +6,7 @@ import * as moment from 'moment-timezone';
 import * as _ from 'lodash';
 import { TokenPriceHandler } from '../../token/token-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
+import { getDexPriceFromPair } from './dexscreener';
 
 @Injectable()
 export class TokenPriceService {

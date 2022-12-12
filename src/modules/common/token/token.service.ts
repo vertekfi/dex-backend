@@ -24,6 +24,36 @@ export class TokenService {
     private readonly tokenData: TokenDataLoaderService,
   ) {}
 
+  async getProtocolTokenPrice() {
+    // return getDexPriceFromPair('bsc', '0x7a09ddf458fda6e324a97d1a8e4304856fb3e702000200000000000000000000-0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5-0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c')
+    return '9';
+  }
+
+  async getWhiteListedCurrentTokenPrices(): Promise<PrismaTokenCurrentPrice[]> {
+    const tokenPrices = await this.prisma.prismaTokenCurrentPrice.findMany({
+      orderBy: { timestamp: 'desc' },
+      distinct: ['tokenAddress'],
+      where: {
+        token: {
+          types: { some: { type: 'WHITE_LISTED' } },
+        },
+      },
+    });
+
+    const wethPrice = tokenPrices.find(
+      (tokenPrice) => tokenPrice.tokenAddress === networkConfig.weth.address,
+    );
+
+    if (wethPrice) {
+      tokenPrices.push({
+        ...wethPrice,
+        tokenAddress: networkConfig.eth.address,
+      });
+    }
+
+    return tokenPrices.filter((tokenPrice) => tokenPrice.price > 0.000000001);
+  }
+
   async getTokenDefinitions(): Promise<TokenDefinition[]> {
     const tokens = await this.prisma.prismaToken.findMany({
       where: { types: { some: { type: 'WHITE_LISTED' } } },

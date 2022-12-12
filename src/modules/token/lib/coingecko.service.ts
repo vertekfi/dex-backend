@@ -14,6 +14,7 @@ import { networkConfig } from 'src/modules/config/network-config';
 import { isAddress } from 'ethers/lib/utils';
 import { MappedToken, TokenDefinition } from '../token-types';
 import { TokenService } from '../../common/token/token.service';
+import { ConfigService } from 'src/modules/common/config.service';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -33,12 +34,12 @@ export class CoingeckoService {
   private readonly nativeAssetId: string;
   private readonly nativeAssetAddress: string;
 
-  constructor(private readonly tokenService: TokenService) {
+  constructor(private readonly config: ConfigService, private readonly tokenService: TokenService) {
     this.baseUrl = 'https://api.coingecko.com/api/v3';
     this.fiatParam = 'usd';
-    this.platformId = networkConfig.coingecko.platformId;
-    this.nativeAssetId = networkConfig.coingecko.nativeAssetId;
-    this.nativeAssetAddress = networkConfig.chain.nativeAssetAddress;
+    this.platformId = this.config.env.COINGECKO_PLATFORM_ID;
+    this.nativeAssetId = this.config.env.COINGECKO_NATIVE_ASSET_ID;
+    this.nativeAssetAddress = this.config.env.NATIVE_ASSET_ADDRESS;
   }
 
   async getNativeAssetPrice(): Promise<Price> {

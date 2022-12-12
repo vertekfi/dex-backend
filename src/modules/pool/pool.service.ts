@@ -204,12 +204,19 @@ export class PoolService {
   }
 
   async syncStakingForPools(poolStakingServices: PoolStakingService[]) {
+    if (!poolStakingServices.length) {
+      throw new Error('PoolService.updatePoolAprs not given updatePoolAprs params');
+    }
+
     await Promise.all(
       poolStakingServices.map((stakingService) => stakingService.syncStakingForPools()),
     );
   }
 
   async updatePoolAprs(aprServices: PoolAprService[]) {
+    if (!aprServices.length) {
+      throw new Error('PoolService.updatePoolAprs not given updatePoolAprs params');
+    }
     await this.poolAprUpdaterService.updatePoolAprs(aprServices);
   }
 

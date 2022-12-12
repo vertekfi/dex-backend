@@ -2,14 +2,16 @@ import * as _ from 'lodash';
 import { PrismaLastBlockSyncedCategory } from '@prisma/client';
 import { networkConfig } from '../../config/network-config';
 import VaultAbi from '../abi/Vault.json';
-import { getContractAt } from 'src/modules/common/web3/contract';
+
 import { BlockService } from 'src/modules/common/web3/block.service';
 import { PrismaService } from 'nestjs-prisma';
+import { ContractService } from 'src/modules/common/web3/contract.service';
 
 export class PoolSyncService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly blockService: BlockService,
+    private readonly contractService: ContractService,
   ) {}
 
   public async syncChangedPools(): Promise<{
@@ -45,12 +47,8 @@ export class PoolSyncService {
   }
 
   async getChangedPoolIds(startBlock: number, endBlock: number) {
-    const contract = getContractAt(networkConfig.balancer.vault, VaultAbi);
-    const events = await contract.queryFilter(
-      { address: networkConfig.balancer.vault },
-      startBlock,
-      endBlock,
-    );
+    const vault = this.contractService.getVault();
+    const events = await vault.queryFilter({ address: vault.address }, startBlock, endBlock);
 
     const filteredEvents = events.filter((event) =>
       ['PoolBalanceChanged', 'PoolBalanceManaged', 'Swap'].includes(event.event!),

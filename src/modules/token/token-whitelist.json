@@ -14,7 +14,7 @@
         "coingeckoPlatformId": "",
         "logoURI": "https://github.com/0xBriz/token-list/blob/main/images/aeq_token.png?raw=true",
         "useDexscreener": true,
-        "dexscreenPairAddress": ""
+        "dexscreenPairAddress": "0x7a09ddf458fda6e324a97d1a8e4304856fb3e702000200000000000000000000-0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5-0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
       },
       {
         "name": "Liquid Staking BNB",

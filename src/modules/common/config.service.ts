@@ -16,7 +16,6 @@ export interface Config {
   COINGECKO_PLATFORM_ID: string;
   PROTOCOL_TOKEN_ADDRESS: string;
   PROTOCOL_TOKEN_SYMBOL: string;
-  RPC_URL: string;
   HOST: string;
 }
 
@@ -59,7 +58,6 @@ export class ConfigService {
       COINGECKO_PLATFORM_ID: process.env.COINGECKO_PLATFORM_ID,
       PROTOCOL_TOKEN_ADDRESS: process.env.PROTOCOL_TOKEN_ADDRESS,
       PROTOCOL_TOKEN_SYMBOL: process.env.PROTOCOL_TOKEN_SYMBOL,
-      RPC_URL: process.env.RPC_URL,
     };
   }
 }
