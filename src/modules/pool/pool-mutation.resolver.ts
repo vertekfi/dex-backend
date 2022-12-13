@@ -8,11 +8,15 @@ import {
   QueryPoolGetUserSwapVolumeArgs,
 } from 'src/gql-addons';
 import { AdminGuard } from '../common/guards/admin.guard';
+import { PoolDataLoaderService } from './lib/pool-data-loader.service';
 import { PoolService } from './pool.service';
 
 @Resolver()
 export class PoolMutationResolver {
-  constructor(private poolService: PoolService) {}
+  constructor(
+    private readonly poolService: PoolService,
+    private readonly poolDataSync: PoolDataLoaderService,
+  ) {}
 
   @Mutation()
   @UseGuards(AdminGuard)
@@ -21,13 +25,22 @@ export class PoolMutationResolver {
   }
 
   @Mutation()
+  @UseGuards(AdminGuard)
   async poolSyncNewPoolsFromSubgraph() {
     return this.poolService.syncNewPoolsFromSubgraph();
   }
 
   @Mutation()
+  @UseGuards(AdminGuard)
   async poolLoadOnChainDataForAllPools() {
     await this.poolService.loadOnChainDataForAllPools();
+    return 'success';
+  }
+
+  @Mutation()
+  @UseGuards(AdminGuard)
+  async poolSyncSanityPoolData() {
+    await this.poolDataSync.syncPoolConfigData();
     return 'success';
   }
 

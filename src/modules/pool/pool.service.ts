@@ -20,7 +20,6 @@ import {
 import { GqlPoolMinimal } from 'src/graphql';
 import { AccountWeb3 } from '../common/types';
 import { RPC } from '../common/web3/rpc.provider';
-import { FEATURED_POOLS } from './data/home-screen-info';
 import { PoolGqlLoaderUtils } from './lib/gql-loader-utils.service';
 import { PoolCreatorService } from './lib/pool-creator.service';
 import { PoolGqlLoaderService } from './lib/pool-gql-loader.service';
@@ -34,6 +33,7 @@ import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
 import { PoolSyncService } from './lib/pool-sync.service';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
 import { CacheService } from '../common/cache.service';
+import { getPoolConfigData } from './lib/pool-utils';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -110,12 +110,11 @@ export class PoolService {
       return cached;
     }
 
-    // TODO: Need to store these somewhere else then instead of local
-    // Otherwise server restart needed just to update
+    const config = await getPoolConfigData(this.rpc.chainId);
     const pools = await this.prisma.prismaPool.findMany({
       where: {
         id: {
-          in: FEATURED_POOLS,
+          in: config.featuredPools || [],
         },
       },
       include: prismaPoolMinimal.include,

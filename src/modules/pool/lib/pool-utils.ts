@@ -1,6 +1,7 @@
 import { PrismaPoolType } from '@prisma/client';
 import { networkConfig } from '../../config/network-config';
 import { isSameAddress } from '@balancer-labs/sdk';
+import axios from 'axios';
 
 type PoolWithTypeAndFactory = {
   type: PrismaPoolType;
@@ -27,4 +28,11 @@ export function isComposableStablePool(pool: PoolWithTypeAndFactory) {
       isSameAddress(pool.factory || '', factory),
     ) !== undefined
   );
+}
+
+export async function getPoolConfigData(chainId: number) {
+  const url = 'https://raw.githubusercontent.com/aequinoxfi/pool-data-config/main/pool-data.json';
+  const { data } = await axios.get(url);
+
+  return data[String(chainId)];
 }
