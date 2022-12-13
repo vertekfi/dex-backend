@@ -121,19 +121,19 @@ export class PoolService {
       include: prismaPoolMinimal.include,
     });
 
-    const featured: GqlPoolFeaturedPoolGroup[] = pools.map((pool): GqlPoolFeaturedPoolGroup => {
+    const featured: GqlPoolFeaturedPoolGroup[] = pools.map((pool, i): GqlPoolFeaturedPoolGroup => {
       return {
         id: pool.id,
-        title: 'FLSFKSDFKD',
+        title: '',
         icon: '',
         items: [
-          {
-            __typename: 'GqlFeaturePoolGroupItemExternalLink',
-            id: '',
-            image: '',
-            buttonText: '',
-            buttonUrl: '',
-          },
+          // {
+          //   __typename: 'GqlFeaturePoolGroupItemExternalLink',
+          //   id: '',
+          //   image: '',
+          //   buttonText: '',
+          //   buttonUrl: '',
+          // },
           {
             __typename: 'GqlPoolMinimal',
             ...this.poolUtils.mapToMinimalGqlPool(pool),
@@ -141,6 +141,9 @@ export class PoolService {
         ],
       };
     });
+
+    this.cache.put(FEATURED_POOL_GROUPS_CACHE_KEY, featured, 60 * 5 * 1000);
+
     return featured;
   }
 
