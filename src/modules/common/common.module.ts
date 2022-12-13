@@ -17,11 +17,15 @@ import { ContractService } from './web3/contract.service';
 @Global()
 @Module({
   imports: [
-    CacheModule.register<ClientOpts>({
-      global: true,
-      store: redisStore,
-      // Store-specific configuration:
-      host: process.env.REDIS_URL,
+    CacheModule.registerAsync<ClientOpts>({
+      useFactory: () => {
+        return {
+          global: true,
+          // store: redisStore,
+          // // Store-specific configuration:
+          // host: process.env.REDIS_URL,
+        };
+      },
     }),
   ],
   providers: [

@@ -25,7 +25,7 @@ const NATIVE_IDS = {
 };
 
 const WRAPPED_NATIVE_ADDRESSES = {
-  5: '0xBd0be709AbE750641524fDECA1F49544440B7C0d',
+  5: '0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6',
   56: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
 };
 
@@ -33,8 +33,10 @@ const WRAPPED_NATIVE_ADDRESSES = {
 export class ConfigService {
   private _env: Config;
 
-  get env() {
-    return this._env;
+  get env(): Config {
+    return {
+      ...this._env,
+    };
   }
 
   constructor() {

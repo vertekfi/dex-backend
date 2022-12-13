@@ -123,10 +123,77 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       },
     },
   },
+  '5': {
+    chain: {
+      slug: 'goerli',
+      id: 5,
+      nativeAssetAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+      wrappedNativeAssetAddress: '0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6',
+    },
+    subgraphs: {
+      startDate: '2021-12-02',
+      balancer: 'https://api.thegraph.com/subgraphs/name/aequinoxfi/vertek-subgraph-goerli',
+      blocks: 'https://api.thegraph.com/subgraphs/name/beethovenxfi/fantom-blocks',
+      userBalances: 'https://api.thegraph.com/subgraphs/name/beethovenxfi/user-bpt-balances-fantom',
+      gauge: 'https://api.thegraph.com/subgraphs/name/aequinoxfi/gauges-goerli',
+    },
+    eth: {
+      address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+      addressFormatted: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+      symbol: 'BNB',
+      name: 'BNB',
+    },
+    weth: {
+      address: '0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6',
+      addressFormatted: '0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6',
+    },
+    coingecko: {
+      nativeAssetId: 'binancecoin',
+      platformId: 'bsc',
+    },
+    rpcUrl: 'https://eth-goerli.g.alchemy.com/v2/cK2OOgcOIjM2enbLpRfinpxq8hdY9aGU',
+    beetsPriceProviderRpcUrl:
+      'https://eth-goerli.g.alchemy.com/v2/cK2OOgcOIjM2enbLpRfinpxq8hdY9aGU',
+    beets: {
+      address: '0xb269A278E427478712e2AF0eBa728021157A2114',
+    },
+    bal: {
+      address: '',
+    },
+    balancer: {
+      vault: '0x84259CbD70aA17EB282Cb40666d2687Cd8E100AA',
+      composableStablePoolFactories: [],
+      weightedPoolV2Factories: [],
+      swapProtocolFeePercentage: 0.25,
+      yieldProtocolFeePercentage: 0.25,
+    },
+    multicall: '0xFDec6c30306F84eCC4196FA689974721fE863Dfc',
+    avgBlockSpeed: 3,
+    sor: {
+      main: {
+        url: 'https://seb3bxrechp46fx7h3d2ksmjce0minwk.lambda-url.ca-central-1.on.aws/',
+        maxPools: 8,
+        forceRefresh: false,
+        gasPrice: BigNumber.from(10),
+        swapGas: BigNumber.from('1000000'),
+      },
+      canary: {
+        url: 'https://22nltjhtfsyhecuudusuv2m5i40zeafa.lambda-url.eu-central-1.on.aws/',
+        maxPools: 8,
+        forceRefresh: false,
+        gasPrice: BigNumber.from(10),
+        swapGas: BigNumber.from('1000000'),
+      },
+    },
+  },
 };
 
 export const networkConfig = AllNetworkConfigs[process.env.CHAIN_ID];
 
 export function isBscNetwork() {
   return process.env.CHAIN_ID === '56';
+}
+
+export function isTestnet() {
+  return process.env.CHAIN_ID === '5';
 }
