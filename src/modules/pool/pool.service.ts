@@ -32,6 +32,10 @@ import { PoolAprService, PoolStakingService } from './pool-types';
 import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
 import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
 import { PoolSyncService } from './lib/pool-sync.service';
+import { prismaPoolMinimal } from 'prisma/prisma-types';
+import { CacheService } from '../common/cache.service';
+
+const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
 @Injectable()
 export class PoolService {
@@ -48,6 +52,7 @@ export class PoolService {
     private readonly balancerSubgraphService: BalancerSubgraphService,
     private readonly poolAprUpdaterService: PoolAprUpdaterService,
     private readonly poolSyncService: PoolSyncService,
+    private readonly cache: CacheService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -99,8 +104,44 @@ export class PoolService {
   }
 
   async getFeaturedPoolGroups(): Promise<GqlPoolFeaturedPoolGroup[]> {
-    const pools = FEATURED_POOLS.map((p) => {});
-    return [];
+    const cached: GqlPoolFeaturedPoolGroup[] = await this.cache.get(FEATURED_POOL_GROUPS_CACHE_KEY);
+
+    if (cached) {
+      return cached;
+    }
+
+    // TODO: Need to store these somewhere else then instead of local
+    // Otherwise server restart needed just to update
+    const pools = await this.prisma.prismaPool.findMany({
+      where: {
+        id: {
+          in: FEATURED_POOLS,
+        },
+      },
+      include: prismaPoolMinimal.include,
+    });
+
+    const featured: GqlPoolFeaturedPoolGroup[] = pools.map((pool): GqlPoolFeaturedPoolGroup => {
+      return {
+        id: pool.id,
+        title: 'FLSFKSDFKD',
+        icon: '',
+        items: [
+          {
+            __typename: 'GqlFeaturePoolGroupItemExternalLink',
+            id: '',
+            image: '',
+            buttonText: '',
+            buttonUrl: '',
+          },
+          {
+            __typename: 'GqlPoolMinimal',
+            ...this.poolUtils.mapToMinimalGqlPool(pool),
+          },
+        ],
+      };
+    });
+    return featured;
   }
 
   async getSnapshotsForAllPools(range: GqlPoolSnapshotDataRange) {

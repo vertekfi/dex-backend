@@ -1,7 +1,3 @@
 export const FEATURED_POOLS = [
-  {
-    icon: '',
-    id: '',
-    title: '',
-  },
+  '0x0d3a4645f00380bf3b149c5f4317f9a35e027349000200000000000000000002',
 ];
