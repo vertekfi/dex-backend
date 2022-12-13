@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaTokenCurrentPrice } from '@prisma/client';
+import { PrismaToken, PrismaTokenCurrentPrice } from '@prisma/client';
 import * as _ from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { CacheService } from '../cache.service';
@@ -27,6 +27,18 @@ export class TokenService {
   async getProtocolTokenPrice() {
     // return getDexPriceFromPair('bsc', '0x7a09ddf458fda6e324a97d1a8e4304856fb3e702000200000000000000000000-0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5-0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c')
     return '9';
+  }
+
+  async getTokens(addresses?: string[]): Promise<PrismaToken[]> {
+    let tokens: PrismaToken[] | null = await this.cache.get<PrismaToken[]>(ALL_TOKENS_CACHE_KEY);
+    if (!tokens) {
+      tokens = await this.prisma.prismaToken.findMany({});
+      this.cache.put(ALL_TOKENS_CACHE_KEY, tokens, 5 * 60 * 1000);
+    }
+    if (addresses) {
+      return tokens.filter((token) => addresses.includes(token.address));
+    }
+    return tokens;
   }
 
   async getWhiteListedCurrentTokenPrices(): Promise<PrismaTokenCurrentPrice[]> {
