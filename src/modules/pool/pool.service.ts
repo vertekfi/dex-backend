@@ -249,7 +249,7 @@ export class PoolService {
 
   async syncStakingForPools(poolStakingServices: PoolStakingService[]) {
     if (!poolStakingServices.length) {
-      throw new Error('PoolService.updatePoolAprs not given updatePoolAprs params');
+      throw new Error('PoolService.syncStakingForPools not given poolStakingServices params');
     }
 
     await Promise.all(
@@ -267,14 +267,18 @@ export class PoolService {
   async syncChangedPools() {
     const { startBlock, endBlock, latestBlock } = await this.poolSyncService.syncChangedPools();
 
-    const poolIds = await this.poolSyncService.getChangedPoolIds(startBlock, endBlock);
-    if (poolIds.length !== 0) {
-      console.log(`Syncing ${poolIds.length} pools`);
-      await this.updateOnChainDataForPools(poolIds, latestBlock);
+    console.log('startBlock: ' + startBlock);
+    console.log('endBlock: ' + endBlock);
+    console.log('latestBlock: ' + latestBlock);
 
-      const poolsWithNewSwaps = await this.syncSwapsForLast48Hours();
-      await this.updateVolumeAndFeeValuesForPools(poolsWithNewSwaps);
-    }
+    // const poolIds = await this.poolSyncService.getChangedPoolIds(startBlock, endBlock);
+    // if (poolIds.length !== 0) {
+    //   console.log(`Syncing ${poolIds.length} pools`);
+    //   await this.updateOnChainDataForPools(poolIds, latestBlock);
+
+    //   const poolsWithNewSwaps = await this.syncSwapsForLast48Hours();
+    //   await this.updateVolumeAndFeeValuesForPools(poolsWithNewSwaps);
+    // }
   }
 
   async realodAllPoolAprs(aprServices: PoolAprService[]) {

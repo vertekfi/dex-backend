@@ -6,7 +6,9 @@ import VaultAbi from '../abi/Vault.json';
 import { BlockService } from 'src/modules/common/web3/block.service';
 import { PrismaService } from 'nestjs-prisma';
 import { ContractService } from 'src/modules/common/web3/contract.service';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class PoolSyncService {
   constructor(
     private readonly prisma: PrismaService,

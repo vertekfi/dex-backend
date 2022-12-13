@@ -138,7 +138,7 @@ export class ScheduledJobService {
       },
     );
 
-    //every 30 seconds
+    // every 30 seconds
     this.scheduleJob('*/30 * * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
       await this.poolService.syncNewPoolsFromSubgraph();
     });
@@ -148,10 +148,10 @@ export class ScheduledJobService {
     //   await this.poolService.syncSanityPoolData();
     // });
 
-    // //every 5 minutes
-    // this.scheduleJob('*/5 * * * *', 'syncTokensFromPoolTokens', TEN_MINUTES_IN_MS, async () => {
-    //   await this.tokenService.syncSanityData();
-    // });
+    // every 5 minutes
+    this.scheduleJob('*/5 * * * *', 'syncTokensFromPoolTokens', TEN_MINUTES_IN_MS, async () => {
+      await this.tokenService.syncTokenData();
+    });
 
     //every 5 minutes
     this.scheduleJob(
@@ -175,9 +175,9 @@ export class ScheduledJobService {
 
     // every 5 minutes
     // TODO: check this
-    this.scheduleJob('*/5 * * * *', 'syncStakingForPools', ONE_MINUTE_IN_MS, async () => {
-      //  await this.poolService.syncStakingForPools([]);
-    });
+    // this.scheduleJob('*/5 * * * *', 'syncStakingForPools', ONE_MINUTE_IN_MS, async () => {
+    //   await this.poolService.syncStakingForPools([]);
+    // });
 
     this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
       await this.protocolService.cacheProtocolMetrics();
@@ -214,21 +214,10 @@ export class ScheduledJobService {
       });
   
   
-      this.scheduleJob('*!/5 * * * *', 'cache-fbeets-apr', async () => {
-          await beetsBarService.cacheFbeetsApr();
-      });
+
   
       this.scheduleJob('*!/5 * * * *', 'cache-tokens', async () => {
           await tokenService.cacheTokenDefinitions();
-      });
-  
-      //every 5 seconds
-      this.scheduleJob('*!/5 * * * * *', 'cache-beets-farms', async () => {
-          await beetsFarmService.cacheBeetsFarms();
-      });
-  
-      this.scheduleJob('*!/30 * * * * *', 'cache-beets-farms', async () => {
-          await beetsFarmService.cacheBeetsFarms();
       });
   
       //every 10 seconds
@@ -241,10 +230,7 @@ export class ScheduledJobService {
           await tokenPriceService.cacheBeetsPrice();
       });
   
-      this.scheduleJob('*!/10 * * * * *', 'cache-beets-farm-users', async () => {
-          await beetsFarmService.cacheBeetsFarmUsers();
-      });
-  
+
       this.scheduleJob('*!/30 * * * * *', 'cache-past-pools', async () => {
           await balancerService.cachePastPools();
       });
