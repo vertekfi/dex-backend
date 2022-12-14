@@ -2,8 +2,6 @@ import { CacheModule, Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 
 import { ConfigService } from './config.service';
-import type { ClientOpts } from 'redis';
-//import * as redisStore from 'cache-manager-redis-store';
 import { CacheService } from './cache.service';
 import { RpcProvider } from './web3/rpc.provider';
 import { BlockService } from './web3/block.service';
@@ -17,7 +15,7 @@ import { ContractService } from './web3/contract.service';
 @Global()
 @Module({
   imports: [
-    CacheModule.registerAsync<ClientOpts>({
+    CacheModule.registerAsync({
       useFactory: () => {
         return {
           global: true,

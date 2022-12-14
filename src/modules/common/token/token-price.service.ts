@@ -67,11 +67,20 @@ export class TokenPriceService {
       }));
   }
 
+  // include: {
+  //   types: true,
+  //   // fetch the last price stored
+  //   prices: { take: 1, orderBy: { timestamp: 'desc' } },
+  // },
+
   async updateTokenPrices(handlers: TokenPriceHandler[]): Promise<void> {
     const tokens = await this.prisma.prismaToken.findMany({
-      include: {
+      select: {
+        address: true,
+        symbol: true,
+        useDexscreener: true,
+        dexscreenPairAddress: true,
         types: true,
-        // fetch the last price stored
         prices: { take: 1, orderBy: { timestamp: 'desc' } },
       },
     });
@@ -88,6 +97,7 @@ export class TokenPriceService {
     // Break up for dexscreener and coingecko as needed. Currently only need screener for our degen shit
 
     for (const handler of handlers) {
+      console.log(handler.id);
       const accepted = await handler.getAcceptedTokens(tokensWithTypes);
       const acceptedTokens = tokensWithTypes.filter((token) => accepted.includes(token.address));
       let updated: string[] = [];
@@ -109,11 +119,11 @@ export class TokenPriceService {
       tokensWithTypes = tokensWithTypes.filter((token) => !updated.includes(token.address));
     }
 
-    await this.updateCandleStickData();
+    // await this.updateCandleStickData();
 
     // we only keep token prices for the last 24 hours
-    // const yesterday = moment().subtract(1, 'day').unix();
-    // await prisma.prismaTokenPrice.deleteMany({ where: { timestamp: { lt: yesterday } } });
+    const yesterday = moment().subtract(1, 'day').unix();
+    await this.prisma.prismaTokenPrice.deleteMany({ where: { timestamp: { lt: yesterday } } });
   }
 
   private async updateCandleStickData() {
