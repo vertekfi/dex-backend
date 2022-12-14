@@ -13,13 +13,15 @@ import { PoolService } from 'src/modules/pool/pool.service';
 import { networkConfig, DeploymentEnv } from '../../config/network-config';
 import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../utils/addresses';
 import { oldBnum } from '../../utils/old-big-number';
-import { GetSwapsInput, SwapInfo, SwapTypes, SwapV2 } from './type';
+import { SorApiService } from './api/sor-api.service';
+import { GetSwapsInput, Order, SwapInfo, SwapTypes, SwapV2 } from './types';
 
 @Injectable()
 export class BalancerSorService {
   constructor(
     private readonly poolService: PoolService,
     private readonly contractService: ContractService,
+    private readonly sorService: SorApiService,
   ) {}
 
   async getSwaps({
@@ -48,23 +50,25 @@ export class BalancerSorService {
       throw new Error('SOR: invalid swap amount input');
     }
 
-    const { data } = await axios.post<{ swapInfo: SwapInfo }>(
-      networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].url,
-      {
-        swapType,
-        tokenIn,
-        tokenOut,
-        swapAmountScaled,
-        swapOptions: {
-          maxPools:
-            swapOptions.maxPools || networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].maxPools,
-          forceRefresh:
-            swapOptions.forceRefresh ||
-            networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].forceRefresh,
-        },
-      },
-    );
-    const swapInfo = data.swapInfo;
+    // TODO: replace locally
+    // const { data } = await axios.post<{ swapInfo: SwapInfo }>(
+    //   networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].url,
+    //   {
+    //     swapType,
+    //     tokenIn,
+    //     tokenOut,
+    //     swapAmountScaled,
+    //     swapOptions: {
+    //       maxPools:
+    //         swapOptions.maxPools || networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].maxPools,
+    //       forceRefresh:
+    //         swapOptions.forceRefresh ||
+    //         networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].forceRefresh,
+    //     },
+    //   },
+    // );
+
+    // const swapInfo = data.swapInfo;
 
     /*const swapInfo = await balancerSdk.sor.getSwaps(
         tokenIn,
@@ -80,6 +84,22 @@ export class BalancerSorService {
             //TODO: support gas price and swap gas
         },
     );*/
+
+    const order: Order = {
+      sellToken: tokenIn,
+      buyToken: tokenOut,
+      orderKind: swapType,
+      amount: swapAmount,
+      gasPrice: '0',
+    };
+
+    const swapInfo = await this.sorService.getSorSwap(order, {
+      forceRefresh:
+        swapOptions.forceRefresh ||
+        networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].forceRefresh,
+      maxPools:
+        swapOptions.maxPools || networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].maxPools,
+    });
 
     const returnAmount = formatFixed(
       swapInfo.returnAmount,

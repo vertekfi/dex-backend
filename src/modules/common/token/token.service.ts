@@ -97,6 +97,17 @@ export class TokenService {
     }));
   }
 
+  async getToken(address: string) {
+    return this.prisma.prismaToken.findUnique({
+      where: {
+        address,
+      },
+      include: {
+        currentPrice: true,
+      },
+    });
+  }
+
   async getTokenPrices(): Promise<PrismaTokenCurrentPrice[]> {
     let tokenPrices = await this.cache.get<PrismaTokenCurrentPrice[]>(TOKEN_PRICES_CACHE_KEY);
     if (!tokenPrices) {

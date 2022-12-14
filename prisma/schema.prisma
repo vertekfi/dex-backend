@@ -161,6 +161,7 @@ model PrismaPoolLinearDynamicData {
 
 model PrismaPoolToken {
     id                  String              @id
+    chainId             Int?
     poolId              String
     pool                PrismaPool          @relation(fields:[poolId], references: [id])
 
@@ -304,9 +305,7 @@ model PrismaPoolStaking {
     pool                PrismaPool          @relation(fields:[poolId], references: [id])
     type                PrismaPoolStakingType
     address             String
-    farm                PrismaPoolStakingMasterChefFarm?
     gauge               PrismaPoolStakingGauge?
-    reliquary           PrismaPoolStakingReliquaryFarm?
 
     userStakedBalances  PrismaUserStakedBalance[]
 }
@@ -319,23 +318,9 @@ enum PrismaPoolStakingType {
     FRESH_BEETS
 }
 
-model PrismaPoolStakingMasterChefFarm {
-    id                  String              @id
-    stakingId           String              @unique
-    staking             PrismaPoolStaking   @relation(fields:[stakingId], references: [id])
-    beetsPerBlock       String
-    rewarders           PrismaPoolStakingMasterChefFarmRewarder[]
-}
 
-model PrismaPoolStakingMasterChefFarmRewarder {
-    id                  String              @id
-    farmId              String
-    farm                PrismaPoolStakingMasterChefFarm  @relation(fields:[farmId], references: [id])
 
-    address             String
-    tokenAddress        String
-    rewardPerSecond     String
-}
+
 
 model PrismaPoolStakingGauge {
     id                  String              @id
@@ -351,27 +336,6 @@ model PrismaPoolStakingGaugeReward{
     gauge               PrismaPoolStakingGauge @relation(fields:[gaugeId], references: [id])
     tokenAddress        String
     rewardPerSecond     String
-}
-
-
-model PrismaPoolStakingReliquaryFarm {
-    id                  String              @id
-    stakingId           String              @unique
-    staking             PrismaPoolStaking   @relation(fields:[stakingId], references: [id])
-    name                String
-    beetsPerSecond      String
-    levels              PrismaPoolStakingReliquaryFarmLevel[]
-}
-
-model PrismaPoolStakingReliquaryFarmLevel {
-    id                  String              @id
-    farmId              String
-    farm                PrismaPoolStakingReliquaryFarm  @relation(fields:[farmId], references: [id])
-    level               Int
-    balance             String
-    requiredMaturity    Int
-    allocationPoints    Int
-    apr                 Float
 }
 
 
@@ -396,6 +360,7 @@ model PrismaPoolSnapshot {
 
 
 model PrismaToken {
+    chainId             Int?
     address             String              @id
     symbol              String
     name                String
@@ -435,6 +400,7 @@ model PrismaTokenCurrentPrice {
     timestamp           Int
     price               Float
     coingecko           Boolean?
+    dexscreener         Boolean?
 }
 
 model PrismaTokenPrice {
@@ -444,6 +410,7 @@ model PrismaTokenPrice {
     timestamp           Int
     price               Float
     coingecko           Boolean?
+    dexscreener         Boolean?
 
     high                Float
     low                 Float
@@ -455,6 +422,7 @@ model PrismaTokenPrice {
 
 model PrismaTokenDynamicData {
     coingeckoId         String
+    dexscreenerPair     String?
     tokenAddress        String              @id
     token               PrismaToken         @relation(fields:[tokenAddress], references: [address])
     updatedAt           DateTime            @updatedAt

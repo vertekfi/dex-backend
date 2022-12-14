@@ -41,12 +41,20 @@ export enum PoolTypes {
   Gyro3,
 }
 
+export interface Order {
+  sellToken: string;
+  buyToken: string;
+  orderKind: string;
+  amount: string;
+  gasPrice: string;
+}
+
 export interface SwapOptions {
-  gasPrice: BigNumber;
-  swapGas: BigNumber;
-  timestamp: number;
+  gasPrice?: BigNumber;
+  swapGas?: BigNumber;
+  timestamp?: number;
   maxPools: number;
-  poolTypeFilter: PoolFilter;
+  poolTypeFilter?: PoolFilter;
   forceRefresh: boolean;
 }
 
@@ -130,6 +138,20 @@ export interface SwapV2 {
   userData: string;
 }
 
+export interface SerializedSwapInfo {
+  tokenAddresses: string[];
+  swaps: SwapV2[];
+  swapAmount: string;
+  swapAmountForSwaps?: string;
+  returnAmount: string;
+  returnAmountFromSwaps?: string;
+  returnAmountConsideringFees: string;
+  tokenIn: string;
+  tokenOut: string;
+  marketSp: string;
+  routes?: SwapInfoRoute[];
+}
+
 export interface SwapInfo {
   tokenAddresses: string[];
   swaps: SwapV2[];
@@ -152,7 +174,7 @@ export interface SwapInfoRoute {
   tokenOut: string;
   tokenOutAmount: string;
   share: number;
-  //hops in this route, properly ordered
+  // hops in this route, properly ordered
   hops: SwapInfoRouteHop[];
 }
 

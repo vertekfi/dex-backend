@@ -5,9 +5,6 @@
   "author": "",
   "private": true,
   "license": "MIT",
-  "engines": {
-    "node": "14.x"
-  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
@@ -31,7 +28,6 @@
     "prisma:studio": "npx prisma studio",
     "prisma:generate": "npx prisma generate",
     "prisma:generate:watch": "npx prisma generate --watch",
-    "postinstall": "npm run prisma:generate",
     "gen:types": "ts-node ./generate-typings.ts",
     "codegen": "graphql-codegen --config codegen.yml -r dotenv/config"
   },
@@ -50,7 +46,6 @@
     "axios": "^0.24.0",
     "bignumber.js": "^9.1.0",
     "cache-manager": "^4.1.0",
-    "cache-manager-redis-store": "^3.0.1",
     "compression": "^1.7.4",
     "dotenv": "^16.0.3",
     "ethers": "^5.7.2",
@@ -63,7 +58,6 @@
     "moment-timezone": "^0.5.39",
     "nestjs-prisma": "^0.19.0",
     "node-cron": "^3.0.2",
-    "redis": "^3.1.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
