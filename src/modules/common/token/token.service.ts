@@ -100,7 +100,7 @@ export class TokenService {
   async getToken(address: string) {
     return this.prisma.prismaToken.findUnique({
       where: {
-        address,
+        address: address.toLowerCase(),
       },
       include: {
         currentPrice: true,

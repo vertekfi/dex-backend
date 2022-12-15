@@ -60,7 +60,7 @@ export interface Order {
   buyToken: string;
   orderKind: string;
   amount: string;
-  gasPrice: string;
+  gasPrice: BigNumber;
 }
 
 export interface SwapOptions {
@@ -227,14 +227,14 @@ export enum PoolFilter {
   Stable = 'Stable',
   MetaStable = 'MetaStable',
   LBP = 'LiquidityBootstrapping',
-  Investment = 'Investment',
-  Element = 'Element',
-  AaveLinear = 'AaveLinear',
+  // Investment = 'Investment',
+  // Element = 'Element',
+  // AaveLinear = 'AaveLinear',
   StablePhantom = 'StablePhantom',
   ERC4626Linear = 'ERC4626Linear',
-  Gyro2 = 'Gyro2',
-  Gyro3 = 'Gyro3',
-  ComposableStable = 'ComposableStable',
+  // Gyro2 = 'Gyro2',
+  // Gyro3 = 'Gyro3',
+  // ComposableStable = 'ComposableStable',
 }
 
 export interface PoolBase {

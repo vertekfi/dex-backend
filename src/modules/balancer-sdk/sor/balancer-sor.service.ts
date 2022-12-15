@@ -89,7 +89,7 @@ export class BalancerSorService {
       buyToken: tokenOut,
       orderKind: swapType,
       amount: swapAmount, // TODO: Should this be swapAmountScaled using formatEther?
-      gasPrice: null,
+      gasPrice: BigNumber.from('14000000000'),
     };
 
     const swapInfo = await this.sorService.getSorSwap(order, {
@@ -102,9 +102,9 @@ export class BalancerSorService {
       this.getTokenDecimals(swapType === 'EXACT_IN' ? tokenOut : tokenIn, tokens),
     );
 
-    const pools = await this.poolService.getGqlPools({
-      where: { idIn: swapInfo.routes.map((route) => route.hops.map((hop) => hop.poolId)).flat() },
-    });
+    // const pools = await this.poolService.getGqlPools({
+    //   where: { idIn: swapInfo.routes.map((route) => route.hops.map((hop) => hop.poolId)).flat() },
+    // });
 
     const tokenInAmount = swapType === 'EXACT_IN' ? swapAmount : returnAmount;
     const tokenOutAmount = swapType === 'EXACT_IN' ? returnAmount : swapAmount;
@@ -112,6 +112,8 @@ export class BalancerSorService {
     const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
     const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
     const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
+
+    const routes = swapInfo.swaps.length ? [] : [];
 
     return {
       ...swapInfo,
@@ -131,13 +133,14 @@ export class BalancerSorService {
       returnAmountFromSwaps: swapInfo.returnAmountFromSwaps
         ? BigNumber.from(swapInfo.returnAmountFromSwaps).toString()
         : undefined,
-      routes: swapInfo.routes.map((route) => ({
-        ...route,
-        hops: route.hops.map((hop) => ({
-          ...hop,
-          pool: pools.find((pool) => pool.id === hop.poolId)!,
-        })),
-      })),
+      // routes: swapInfo.routes.map((route) => ({
+      //   ...route,
+      //   hops: route.hops.map((hop) => ({
+      //     ...hop,
+      //     pool: pools.find((pool) => pool.id === hop.poolId)!,
+      //   })),
+      // })),
+      routes: [],
       effectivePrice: effectivePrice.toString(),
       effectivePriceReversed: effectivePriceReversed.toString(),
       priceImpact: priceImpact.toString(),
@@ -205,6 +208,10 @@ export class BalancerSorService {
     };
   }
 
+  private async mapSwapRoutes() {
+    //
+  }
+
   private batchSwaps(
     assetArray: string[][],
     swaps: SwapV2[][],
@@ -245,8 +252,6 @@ export class BalancerSorService {
     if (tokenAddress === '0x0000000000000000000000000000000000000000') {
       return 18;
     }
-
-    console.log(tokens);
 
     const match = tokens.find((token) => getAddress(token.address) === getAddress(tokenAddress));
 

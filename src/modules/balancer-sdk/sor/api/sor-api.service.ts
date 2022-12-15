@@ -1,4 +1,3 @@
-import { BalancerSDK } from '@balancer-labs/sdk';
 import { formatFixed, parseFixed } from '@ethersproject/bignumber';
 import { Inject, Injectable } from '@nestjs/common';
 import { TokenService } from 'src/modules/common/token/token.service';
@@ -18,12 +17,25 @@ let log = console.log;
 
 @Injectable()
 export class SorApiService {
+  private readonly sor: SOR;
+
   constructor(
     @Inject(RPC) private rpc: AccountWeb3,
     private readonly tokenService: TokenService,
     private readonly poolDataService: SubgraphPoolDataService,
     private readonly sorPriceService: SorPriceService,
-  ) {}
+  ) {
+    this.sor = new SOR(
+      this.rpc.provider,
+      {
+        chainId: this.rpc.chainId,
+        vault: CONTRACT_MAP.VAULT[this.rpc.chainId],
+        weth: networkConfig.weth.address,
+      },
+      this.poolDataService,
+      this.sorPriceService,
+    );
+  }
 
   async getSorSwap(order: Order, options: SwapOptions): Promise<SerializedSwapInfo> {
     log(`Getting swap: ${JSON.stringify(order)}`);
@@ -41,17 +53,6 @@ export class SorApiService {
     //   //   poolDataService: dbPoolDataService
     //   // },
     // });
-
-    const sor = new SOR(
-      this.rpc.provider,
-      {
-        chainId: this.rpc.chainId,
-        vault: CONTRACT_MAP.VAULT[this.rpc.chainId],
-        weth: networkConfig.weth.address,
-      },
-      this.poolDataService,
-      this.sorPriceService,
-    );
 
     const { sellToken, buyToken, orderKind, amount, gasPrice } = order;
 
@@ -94,7 +95,7 @@ export class SorApiService {
     );
 
     log(`Price of sell token ${sellToken}: `, priceOfNativeAssetInSellToken);
-    sor.swapCostCalculator.setNativeAssetPriceInToken(
+    this.sor.swapCostCalculator.setNativeAssetPriceInToken(
       sellToken,
       priceOfNativeAssetInSellToken.toString(),
     );
@@ -119,8 +120,11 @@ export class SorApiService {
         36,
       ),
     );
+
+    console.log('priceOfNativeAssetInBuyToken: ' + priceOfNativeAssetInBuyToken.toString());
+
     log(`Price of buy token ${buyToken}: `, priceOfNativeAssetInBuyToken);
-    sor.swapCostCalculator.setNativeAssetPriceInToken(
+    this.sor.swapCostCalculator.setNativeAssetPriceInToken(
       buyToken,
       priceOfNativeAssetInBuyToken.toString(),
     );
@@ -129,7 +133,7 @@ export class SorApiService {
     const tokenOut = buyToken;
     const swapType = this.orderKindToSwapType(orderKind);
 
-    await sor.fetchPools();
+    await this.sor.fetchPools();
 
     const buyTokenSymbol = buyTokenDetails ? buyTokenDetails.symbol : buyToken;
     const sellTokenSymbol = sellTokenDetails ? sellTokenDetails.symbol : sellToken;
@@ -139,7 +143,11 @@ export class SorApiService {
     log(`Token In: ${tokenIn}`);
     log(`Token Out: ${tokenOut}`);
     log(`Amount: ${amount}`);
-    const swapInfo = await sor.getSwaps(sellToken, buyToken, swapType, amount, options);
+
+    const swapInfo = await this.sor.getSwaps(sellToken, buyToken, swapType, amount, options);
+
+    // TODO: basically need the pool ids for the pools involved in a swap to load up for the data for the "routes" property
+    // console.log(swapInfo.swaps);
 
     log(`SwapInfo: ${JSON.stringify(swapInfo)}`);
     log(swapInfo.swaps);
@@ -154,9 +162,9 @@ export class SorApiService {
 
   orderKindToSwapType(orderKind: string): SwapTypes {
     switch (orderKind) {
-      case 'sell':
+      case 'EXACT_IN':
         return SwapTypes.SwapExactIn;
-      case 'buy':
+      case 'EXACT_OUT':
         return SwapTypes.SwapExactOut;
       default:
         throw new Error(`invalid order kind ${orderKind}`);

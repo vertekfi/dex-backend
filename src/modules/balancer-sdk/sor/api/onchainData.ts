@@ -3,17 +3,17 @@ import { formatFixed } from '@ethersproject/bignumber';
 import { Provider } from '@ethersproject/providers';
 
 // TODO: decide whether we want to trim these ABIs down to the relevant functions
-import VaultAbi from '../../../pool/abi/Vault.json';
-import aTokenRateProvider from '../../../pool/abi/StaticATokenRateProvider.json';
-import WeightedPoolAbi from '../../../pool/abi/WeightedPool.json';
-import StablePoolAbi from '../../../pool/abi/StablePool.json';
-import MetaStablePoolAbi from '../../../pool/abi/MetaStablePool.json';
+import * as VaultAbi from '../../../pool/abi/Vault.json';
+import * as aTokenRateProvider from '../../../pool/abi/StaticATokenRateProvider.json';
+import * as WeightedPoolAbi from '../../../pool/abi/WeightedPool.json';
+import * as StablePoolAbi from '../../../pool/abi/StablePool.json';
+import * as MetaStablePoolAbi from '../../../pool/abi/MetaStablePool.json';
 import ElementPoolAbi from '../../../pool/abi/ConvergentCurvePool.json';
-import LinearPoolAbi from '../../../pool/abi/LinearPool.json';
-import StablePhantomPoolAbi from '../../../pool/abi/StablePhantomPool.json';
-import ComposableStablePoolAbi from '../../../pool/abi/ComposableStablePool.json';
+import * as LinearPoolAbi from '../../../pool/abi/LinearPool.json';
+// import StablePhantomPoolAbi from '../../../pool/abi/StablePhantomPool.json';
+// import ComposableStablePoolAbi from '../../../pool/abi/ComposableStablePool.json';
 // import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
-import LiquidityBootstrappingPoolAbi from '../../../pool/abi/LiquidityBootstrappingPool.json';
+import * as LiquidityBootstrappingPoolAbi from '../../../pool/abi/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
 import { PoolDataService, PoolFilter, SubgraphPoolBase } from '../types';
@@ -38,6 +38,7 @@ export async function getOnChainBalances(
         ...ElementPoolAbi,
         ...LinearPoolAbi,
         ...MetaStablePoolAbi,
+        ...LiquidityBootstrappingPoolAbi,
       ].map((row) => [row.name, row]),
     ),
   );
@@ -51,6 +52,8 @@ export async function getOnChainBalances(
       console.error(`Unknown pool type: ${pool.poolType} ${pool.id}`);
       return;
     }
+
+    console.log(pool.poolType);
 
     subgraphPools.push(pool);
 

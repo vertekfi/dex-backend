@@ -1,9 +1,7 @@
-import fetch from 'isomorphic-fetch';
+import * as fetch from 'isomorphic-fetch';
 import { PoolDataService, SubgraphPoolBase } from '../types';
-import { PoolOnChainDataService } from 'src/modules/common/pool/pool-on-chain-data.service';
 import { getOnChainBalances } from './onchainData';
 import { Inject, Injectable } from '@nestjs/common';
-import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
@@ -52,11 +50,7 @@ export const Query: { [chainId: number]: string } = {
 
 @Injectable()
 export class SubgraphPoolDataService implements PoolDataService {
-  constructor(
-    @Inject(RPC) private readonly rpc: AccountWeb3,
-  ) // private readonly onchainData: PoolOnChainDataService,
-  // private readonly balancerSubgraphService: BalancerSubgraphService,
-  {}
+  constructor(@Inject(RPC) private readonly rpc: AccountWeb3) {}
 
   async getPools(): Promise<SubgraphPoolBase[]> {
     const blockNumber = await this.rpc.provider.getBlockNumber();
