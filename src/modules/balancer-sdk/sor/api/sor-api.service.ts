@@ -6,6 +6,12 @@ import { AccountWeb3 } from 'src/modules/common/types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { Order, SerializedSwapInfo, SwapOptions, SwapTypes } from '../types';
 import { serializeSwapInfo } from '../utils/function-utils';
+import { SOR } from '@balancer-labs/sor';
+import { SubgraphPoolDataService } from './subgraphPoolDataService';
+import { CONTRACT_MAP } from 'src/modules/data/contracts';
+import { networkConfig } from 'src/modules/config/network-config';
+import { SorPriceService } from './sor-price.service';
+
 // import { SorApiUtils } from './sor-api-utils.service';
 
 let log = console.log;
@@ -14,7 +20,9 @@ let log = console.log;
 export class SorApiService {
   constructor(
     @Inject(RPC) private rpc: AccountWeb3,
-    private readonly tokenService: TokenService, // private readonly sorUtils: SorApiUtils,
+    private readonly tokenService: TokenService,
+    private readonly poolDataService: SubgraphPoolDataService,
+    private readonly sorPriceService: SorPriceService,
   ) {}
 
   async getSorSwap(order: Order, options: SwapOptions): Promise<SerializedSwapInfo> {
@@ -26,13 +34,24 @@ export class SorApiService {
     // dbPoolDataService doesn't work for swaps through the boosted pools, which
     // seems to be caused by incorrect priceRates. Needs further investigation.
 
-    const balancer = new BalancerSDK({
-      network: 56,
-      rpcUrl: this.rpc.rpcUrl,
-      // sor: {
-      //   poolDataService: dbPoolDataService
-      // },
-    });
+    // const balancer = new BalancerSDK({
+    //   network: 56,
+    //   rpcUrl: this.rpc.rpcUrl,
+    //   // sor: {
+    //   //   poolDataService: dbPoolDataService
+    //   // },
+    // });
+
+    const sor = new SOR(
+      this.rpc.provider,
+      {
+        chainId: this.rpc.chainId,
+        vault: CONTRACT_MAP.VAULT[this.rpc.chainId],
+        weth: networkConfig.weth.address,
+      },
+      this.poolDataService,
+      this.sorPriceService,
+    );
 
     const { sellToken, buyToken, orderKind, amount, gasPrice } = order;
 
@@ -75,7 +94,7 @@ export class SorApiService {
     );
 
     log(`Price of sell token ${sellToken}: `, priceOfNativeAssetInSellToken);
-    balancer.sor.swapCostCalculator.setNativeAssetPriceInToken(
+    sor.swapCostCalculator.setNativeAssetPriceInToken(
       sellToken,
       priceOfNativeAssetInSellToken.toString(),
     );
@@ -101,7 +120,7 @@ export class SorApiService {
       ),
     );
     log(`Price of buy token ${buyToken}: `, priceOfNativeAssetInBuyToken);
-    balancer.sor.swapCostCalculator.setNativeAssetPriceInToken(
+    sor.swapCostCalculator.setNativeAssetPriceInToken(
       buyToken,
       priceOfNativeAssetInBuyToken.toString(),
     );
@@ -110,7 +129,7 @@ export class SorApiService {
     const tokenOut = buyToken;
     const swapType = this.orderKindToSwapType(orderKind);
 
-    await balancer.sor.fetchPools();
+    await sor.fetchPools();
 
     const buyTokenSymbol = buyTokenDetails ? buyTokenDetails.symbol : buyToken;
     const sellTokenSymbol = sellTokenDetails ? sellTokenDetails.symbol : sellToken;
@@ -120,7 +139,7 @@ export class SorApiService {
     log(`Token In: ${tokenIn}`);
     log(`Token Out: ${tokenOut}`);
     log(`Amount: ${amount}`);
-    const swapInfo = await balancer.sor.getSwaps(sellToken, buyToken, swapType, amount, options);
+    const swapInfo = await sor.getSwaps(sellToken, buyToken, swapType, amount, options);
 
     log(`SwapInfo: ${JSON.stringify(swapInfo)}`);
     log(swapInfo.swaps);

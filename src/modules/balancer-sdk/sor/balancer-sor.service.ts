@@ -9,13 +9,11 @@ import { TokenAmountHumanReadable } from 'src/modules/common/types';
 import { ContractService } from 'src/modules/common/web3/contract.service';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { PoolService } from 'src/modules/pool/pool.service';
-import { networkConfig, DeploymentEnv } from '../../config/network-config';
+import { networkConfig } from '../../config/network-config';
 import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../utils/addresses';
 import { oldBnum } from '../../utils/old-big-number';
 import { SorApiService } from './api/sor-api.service';
-import { GetSwapsInput, Order, SwapInfo, SwapTypes, SwapV2 } from './types';
-import { SOR } from '@balancer-labs/sor';
-import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
+import { GetSwapsInput, Order, SwapTypes, SwapV2 } from './types';
 
 @Injectable()
 export class BalancerSorService {
