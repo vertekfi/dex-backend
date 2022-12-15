@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@balancer-labs/sdk": "^0.1.40",
+    "@balancer-labs/sor": "^4.0.1-beta.16",
     "@ethersproject/bignumber": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
     "@graphql-tools/schema": "^8.3.1",

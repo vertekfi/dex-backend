@@ -6,35 +6,33 @@ import { Inject } from '@nestjs/common';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
-import { MulticallExecuteResult, SUPPORTED_POOL_TYPES } from '../pool-types';
-import { isComposableStablePool, isWeightedPoolV2, isStablePool } from './pool-utils';
+import { MulticallExecuteResult, SUPPORTED_POOL_TYPES } from '../../pool/pool-types';
+import { isComposableStablePool, isWeightedPoolV2, isStablePool } from '../../pool/lib/pool-utils';
 import { PrismaService } from 'nestjs-prisma';
 import { WeiPerEther } from '@ethersproject/constants';
 
-import VaultAbi from '../abi/Vault.json';
-import aTokenRateProvider from '../abi/StaticATokenRateProvider.json';
-import WeightedPoolAbi from '../abi/WeightedPool.json';
-import StablePoolAbi from '../abi/StablePool.json';
-import MetaStablePool from '../abi/MetaStablePool.json';
-import ElementPoolAbi from '../abi/ConvergentCurvePool.json';
-import LinearPoolAbi from '../abi/LinearPool.json';
-import StablePhantomPoolAbi from '../abi/StablePhantomPool.json';
-import ComposableStablePoolAbi from '../abi/ComposableStablePool.json';
-import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
-import LiquidityBootstrappingPoolAbi from '../abi/LiquidityBootstrappingPool.json';
+import VaultAbi from '../../pool/abi/Vault.json';
+import aTokenRateProvider from '../../pool/abi/StaticATokenRateProvider.json';
+import WeightedPoolAbi from '../../pool/abi/WeightedPool.json';
+import StablePoolAbi from '../../pool/abi/StablePool.json';
+import MetaStablePool from '../../pool/abi/MetaStablePool.json';
+import ElementPoolAbi from '../../pool/abi/ConvergentCurvePool.json';
+import LinearPoolAbi from '../../pool/abi/LinearPool.json';
+import StablePhantomPoolAbi from '../../pool/abi/StablePhantomPool.json';
+import ComposableStablePoolAbi from '../../pool/abi/ComposableStablePool.json';
+// import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
+import LiquidityBootstrappingPoolAbi from '../../pool/abi/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 
 @Injectable()
 export class PoolOnChainDataService {
   constructor(
-    // private readonly multiAddress: string,
-    // private readonly vaultAddress: string,
+    @Inject(RPC) private rpc: AccountWeb3,
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
-    @Inject(RPC) private rpc: AccountWeb3,
   ) {}
 
-  async updateOnChainData(poolIds: string[], blockNumber: number): Promise<void> {
+  async updateOnChainData(poolIds: string[], blockNumber: number) {
     if (poolIds.length === 0) return;
 
     const tokenPrices = await this.tokenService.getTokenPrices();
@@ -158,11 +156,17 @@ export class PoolOnChainDataService {
     }
 
     const poolsOnChainDataArray = Object.entries(poolsOnChainData);
+    const dataPools = [];
 
     for (let index = 0; index < poolsOnChainDataArray.length; index++) {
       const [poolId, onchainData] = poolsOnChainDataArray[index];
       const pool = pools.find((pool) => pool.id === poolId)!;
       const { poolTokens } = onchainData;
+
+      dataPools.push({
+        poolId,
+        ...onchainData,
+      });
 
       try {
         if (isStablePool(pool.type)) {
@@ -176,7 +180,7 @@ export class PoolOnChainDataService {
           // amp is stored with 3 decimals of precision
           const amp = formatFixed(onchainData.amp[0], 3);
 
-          //only update if amp has changed
+          // only update if amp has changed
           if (!pool.stableDynamicData || pool.stableDynamicData.amp !== amp) {
             await this.prisma.prismaPoolStableDynamicData.upsert({
               where: { id: pool.id },
@@ -310,6 +314,8 @@ export class PoolOnChainDataService {
             });
           }
         }
+
+        return dataPools;
       } catch (e) {
         console.log('error syncing on chain data', e);
       }

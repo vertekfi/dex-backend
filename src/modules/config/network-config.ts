@@ -51,13 +51,11 @@ export interface NetworkConfig {
   };
   avgBlockSpeed: number;
   sor: {
-    [key in DeploymentEnv]: {
-      url: string;
-      maxPools: number;
-      forceRefresh: boolean;
-      gasPrice: BigNumber;
-      swapGas: BigNumber;
-    };
+    url: string;
+    maxPools: number;
+    forceRefresh: boolean;
+    gasPrice: BigNumber;
+    swapGas: BigNumber;
   };
 }
 
@@ -107,20 +105,11 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     multicall: '0xa4746ea7B23d91b7e73bAE42BaDbF786211fcA38',
     avgBlockSpeed: 3,
     sor: {
-      main: {
-        url: 'https://seb3bxrechp46fx7h3d2ksmjce0minwk.lambda-url.ca-central-1.on.aws/',
-        maxPools: 8,
-        forceRefresh: false,
-        gasPrice: BigNumber.from(10),
-        swapGas: BigNumber.from('1000000'),
-      },
-      canary: {
-        url: 'https://22nltjhtfsyhecuudusuv2m5i40zeafa.lambda-url.eu-central-1.on.aws/',
-        maxPools: 8,
-        forceRefresh: false,
-        gasPrice: BigNumber.from(10),
-        swapGas: BigNumber.from('1000000'),
-      },
+      url: 'https://seb3bxrechp46fx7h3d2ksmjce0minwk.lambda-url.ca-central-1.on.aws/',
+      maxPools: 8,
+      forceRefresh: false,
+      gasPrice: BigNumber.from(10),
+      swapGas: BigNumber.from('1000000'),
     },
   },
   '5': {
@@ -170,20 +159,11 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     multicall: '0xFDec6c30306F84eCC4196FA689974721fE863Dfc',
     avgBlockSpeed: 3,
     sor: {
-      main: {
-        url: 'https://seb3bxrechp46fx7h3d2ksmjce0minwk.lambda-url.ca-central-1.on.aws/',
-        maxPools: 8,
-        forceRefresh: false,
-        gasPrice: BigNumber.from(10),
-        swapGas: BigNumber.from('1000000'),
-      },
-      canary: {
-        url: 'https://22nltjhtfsyhecuudusuv2m5i40zeafa.lambda-url.eu-central-1.on.aws/',
-        maxPools: 8,
-        forceRefresh: false,
-        gasPrice: BigNumber.from(10),
-        swapGas: BigNumber.from('1000000'),
-      },
+      url: 'https://seb3bxrechp46fx7h3d2ksmjce0minwk.lambda-url.ca-central-1.on.aws/',
+      maxPools: 8,
+      forceRefresh: false,
+      gasPrice: BigNumber.from(10),
+      swapGas: BigNumber.from('1000000'),
     },
   },
 };

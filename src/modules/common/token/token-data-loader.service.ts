@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import axios from 'axios';
 import { isSameAddress } from '@balancer-labs/sdk';
+import { RPC } from '../web3/rpc.provider';
+import { AccountWeb3 } from '../types';
 
 @Injectable()
 export class TokenDataLoaderService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(RPC) private rpc: AccountWeb3, private readonly prisma: PrismaService) {}
 
   async syncTokenData() {
     const url = 'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json';
@@ -17,6 +19,7 @@ export class TokenDataLoaderService {
     for (const token of tokens) {
       const tokenAddress = token.address.toLowerCase();
       let tokenData = {
+        chainId: token.chainId,
         useDexscreener: token.useDexscreener,
         dexscreenPairAddress: token.dexscreenPairAddress,
       };

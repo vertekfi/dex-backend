@@ -212,12 +212,6 @@ export class PoolGqlLoaderUtils {
             let title = '';
 
             switch (group) {
-              case 'YEARN':
-                title = 'Yearn boosted APR';
-                break;
-              case 'REAPER':
-                title = 'Reaper boosted APR';
-                break;
               case 'OVERNIGHT':
                 title = 'Overnight boosted APR';
             }

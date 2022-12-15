@@ -2,9 +2,8 @@ import { FundManagement } from '@balancer-labs/sdk';
 import { parseFixed, formatFixed } from '@ethersproject/bignumber';
 import { Injectable } from '@nestjs/common';
 import { PrismaToken } from '@prisma/client';
-import axios from 'axios';
 import { BigNumber } from 'ethers';
-import { env } from 'process';
+import { getAddress } from 'ethers/lib/utils';
 import { GqlSorGetSwapsResponse, GqlSorSwapOptionsInput } from 'src/gql-addons';
 import { TokenAmountHumanReadable } from 'src/modules/common/types';
 import { ContractService } from 'src/modules/common/web3/contract.service';
@@ -15,6 +14,8 @@ import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../util
 import { oldBnum } from '../../utils/old-big-number';
 import { SorApiService } from './api/sor-api.service';
 import { GetSwapsInput, Order, SwapInfo, SwapTypes, SwapV2 } from './types';
+import { SOR } from '@balancer-labs/sor';
+import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 
 @Injectable()
 export class BalancerSorService {
@@ -89,16 +90,13 @@ export class BalancerSorService {
       sellToken: tokenIn,
       buyToken: tokenOut,
       orderKind: swapType,
-      amount: swapAmount,
-      gasPrice: '0',
+      amount: swapAmount, // TODO: Should this be swapAmountScaled using formatEther?
+      gasPrice: null,
     };
 
     const swapInfo = await this.sorService.getSorSwap(order, {
-      forceRefresh:
-        swapOptions.forceRefresh ||
-        networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].forceRefresh,
-      maxPools:
-        swapOptions.maxPools || networkConfig.sor[env.DEPLOYMENT_ENV as DeploymentEnv].maxPools,
+      forceRefresh: swapOptions.forceRefresh || networkConfig.sor.forceRefresh,
+      maxPools: swapOptions.maxPools || networkConfig.sor.maxPools,
     });
 
     const returnAmount = formatFixed(
@@ -250,8 +248,9 @@ export class BalancerSorService {
       return 18;
     }
 
-    tokenAddress = tokenAddress.toLowerCase();
-    const match = tokens.find((token) => token.address === tokenAddress);
+    console.log(tokens);
+
+    const match = tokens.find((token) => getAddress(token.address) === getAddress(tokenAddress));
 
     if (!match) {
       throw new Error('Unknown token: ' + tokenAddress);
