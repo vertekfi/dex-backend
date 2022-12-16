@@ -16,10 +16,10 @@ import aTokenRateProvider from '../../pool/abi/StaticATokenRateProvider.json';
 import WeightedPoolAbi from '../../pool/abi/WeightedPool.json';
 import StablePoolAbi from '../../pool/abi/StablePool.json';
 import MetaStablePool from '../../pool/abi/MetaStablePool.json';
-import ElementPoolAbi from '../../pool/abi/ConvergentCurvePool.json';
+// import ElementPoolAbi from '../../pool/abi/ConvergentCurvePool.json';
 import LinearPoolAbi from '../../pool/abi/LinearPool.json';
 import StablePhantomPoolAbi from '../../pool/abi/StablePhantomPool.json';
-import ComposableStablePoolAbi from '../../pool/abi/ComposableStablePool.json';
+//import ComposableStablePoolAbi from '../../pool/abi/ComposableStablePool.json';
 // import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
 import LiquidityBootstrappingPoolAbi from '../../pool/abi/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
@@ -56,12 +56,12 @@ export class PoolOnChainDataService {
           ...aTokenRateProvider,
           ...WeightedPoolAbi,
           ...StablePoolAbi,
-          ...ElementPoolAbi,
+          // ...ElementPoolAbi,
           ...LinearPoolAbi,
           ...LiquidityBootstrappingPoolAbi,
           ...StablePhantomPoolAbi,
           ...MetaStablePool,
-          ...ComposableStablePoolAbi,
+          //...ComposableStablePoolAbi,
           //...WeightedPoolV2Abi,
         ].map((row) => [row.name, row]),
       ),

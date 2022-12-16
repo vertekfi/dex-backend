@@ -53,7 +53,7 @@ export class SubgraphPoolDataService implements PoolDataService {
   constructor(@Inject(RPC) private readonly rpc: AccountWeb3) {}
 
   async getPools(): Promise<SubgraphPoolBase[]> {
-    const blockNumber = await this.rpc.provider.getBlockNumber();
+    // const blockNumber = await this.rpc.provider.getBlockNumber();
     // const pools = await this.balancerSubgraphService.getAllPools({
     //   block: { number: blockNumber },
     // });

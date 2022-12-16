@@ -8,7 +8,7 @@ import * as aTokenRateProvider from '../../../pool/abi/StaticATokenRateProvider.
 import * as WeightedPoolAbi from '../../../pool/abi/WeightedPool.json';
 import * as StablePoolAbi from '../../../pool/abi/StablePool.json';
 import * as MetaStablePoolAbi from '../../../pool/abi/MetaStablePool.json';
-import ElementPoolAbi from '../../../pool/abi/ConvergentCurvePool.json';
+// import ElementPoolAbi from '../../../pool/abi/ConvergentCurvePool.json';
 import * as LinearPoolAbi from '../../../pool/abi/LinearPool.json';
 // import StablePhantomPoolAbi from '../../../pool/abi/StablePhantomPool.json';
 // import ComposableStablePoolAbi from '../../../pool/abi/ComposableStablePool.json';
@@ -35,7 +35,7 @@ export async function getOnChainBalances(
         ...aTokenRateProvider,
         ...WeightedPoolAbi,
         ...StablePoolAbi,
-        ...ElementPoolAbi,
+        // ...ElementPoolAbi,
         ...LinearPoolAbi,
         ...MetaStablePoolAbi,
         ...LiquidityBootstrappingPoolAbi,
