@@ -1,8 +1,9 @@
 import { PrismaToken } from '@prisma/client';
-import { BigNumber } from '@ethersproject/bignumber';
+import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { BigNumber as OldBigNumber } from './utils/bignumber';
 import { GqlSorSwapType, GqlSorSwapOptionsInput } from 'src/gql-addons';
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { SwapType } from '@balancer-labs/sdk';
 
 export interface TokenPriceService {
   /**
@@ -20,7 +21,7 @@ export interface PoolDataService {
 export interface GetSwapsInput {
   tokenIn: string;
   tokenOut: string;
-  swapType: GqlSorSwapType;
+  swapType: SwapTypes;
   swapAmount: string;
   swapOptions: GqlSorSwapOptionsInput;
   tokens: PrismaToken[];
@@ -59,8 +60,9 @@ export interface Order {
   sellToken: string;
   buyToken: string;
   orderKind: string;
-  amount: string;
-  gasPrice: BigNumber;
+  amount: BigNumberish;
+  gasPrice?: BigNumber;
+  swapGas?: BigNumber;
 }
 
 export interface SwapOptions {
@@ -68,7 +70,7 @@ export interface SwapOptions {
   swapGas?: BigNumber;
   timestamp?: number;
   maxPools: number;
-  poolTypeFilter?: PoolFilter;
+  poolTypeFilter: PoolFilter;
   forceRefresh: boolean;
 }
 

@@ -56,21 +56,22 @@ export class SorApiService {
 
     const { sellToken, buyToken, orderKind, amount, gasPrice } = order;
 
-    const [sellTokenDetails, buyTokenDetails] = await Promise.all([
+    const [sellTokenDetails, buyTokenDetails, pools] = await Promise.all([
       this.tokenService.getToken(sellToken),
       this.tokenService.getToken(buyToken),
+      this.sor.fetchPools(),
     ]);
 
-    log(
-      `Sell token details for token ${this.rpc.chainId} ${sellToken}: ${JSON.stringify(
-        sellTokenDetails,
-      )}`,
-    );
-    log(
-      `Buy token details for token ${this.rpc.chainId} ${buyToken}: ${JSON.stringify(
-        buyTokenDetails,
-      )}`,
-    );
+    // log(
+    //   `Sell token details for token ${this.rpc.chainId} ${sellToken}: ${JSON.stringify(
+    //     sellTokenDetails,
+    //   )}`,
+    // );
+    // log(
+    //   `Buy token details for token ${this.rpc.chainId} ${buyToken}: ${JSON.stringify(
+    //     buyTokenDetails,
+    //   )}`,
+    //);
 
     // const nativeAssetPriceSymbol = this.sorUtils.getNativeAssetPriceSymbol(chainId);
     // let priceOfNativeAssetInSellToken = 0;
@@ -94,7 +95,8 @@ export class SorApiService {
       ),
     );
 
-    log(`Price of sell token ${sellToken}: `, priceOfNativeAssetInSellToken);
+    // log(`Price of sell token ${sellToken}: `, priceOfNativeAssetInSellToken);
+
     this.sor.swapCostCalculator.setNativeAssetPriceInToken(
       sellToken,
       priceOfNativeAssetInSellToken.toString(),
@@ -107,7 +109,7 @@ export class SorApiService {
     //   } else if (buyTokenDetails.price[nativeAssetPriceSymbol]) {
     //     priceOfNativeAssetInBuyToken = Number(
     //       formatFixed(
-    //         parseFixed('1', 72).div(parseFixed(buyTokenDetails.price[nativeAssetPriceSymbol], 36)),
+    //         parseFixed('1', 72).div(parseFixed(buyTokenDetails.currentPrice.price.toString(), 36)),
     //         36,
     //       ),
     //     );
@@ -121,9 +123,10 @@ export class SorApiService {
       ),
     );
 
-    console.log('priceOfNativeAssetInBuyToken: ' + priceOfNativeAssetInBuyToken.toString());
+    // log('priceOfNativeAssetInBuyToken: ' + priceOfNativeAssetInBuyToken.toString());
 
-    log(`Price of buy token ${buyToken}: `, priceOfNativeAssetInBuyToken);
+    // log(`Price of buy token ${buyToken}: `, priceOfNativeAssetInBuyToken);
+
     this.sor.swapCostCalculator.setNativeAssetPriceInToken(
       buyToken,
       priceOfNativeAssetInBuyToken.toString(),
@@ -133,29 +136,32 @@ export class SorApiService {
     const tokenOut = buyToken;
     const swapType = this.orderKindToSwapType(orderKind);
 
-    await this.sor.fetchPools();
+    const poolsFetched = await this.sor.fetchPools();
+    if (!poolsFetched) {
+      throw new Error('SOR Error fetching pools');
+    }
 
     const buyTokenSymbol = buyTokenDetails ? buyTokenDetails.symbol : buyToken;
     const sellTokenSymbol = sellTokenDetails ? sellTokenDetails.symbol : sellToken;
 
-    log(`${orderKind}ing ${amount} ${sellTokenSymbol}` + ` for ${buyTokenSymbol}`);
-    log(orderKind);
-    log(`Token In: ${tokenIn}`);
-    log(`Token Out: ${tokenOut}`);
-    log(`Amount: ${amount}`);
+    // log(`${orderKind}ing ${amount} ${sellTokenSymbol}` + ` for ${buyTokenSymbol}`);
+    // log(orderKind);
+    // log(`Token In: ${tokenIn}`);
+    // log(`Token Out: ${tokenOut}`);
+    // log(`Amount: ${amount}`);
 
     const swapInfo = await this.sor.getSwaps(sellToken, buyToken, swapType, amount, options);
 
     // TODO: basically need the pool ids for the pools involved in a swap to load up for the data for the "routes" property
-    // console.log(swapInfo.swaps);
+    // log(swapInfo.swaps);
 
-    log(`SwapInfo: ${JSON.stringify(swapInfo)}`);
-    log(swapInfo.swaps);
-    log(swapInfo.tokenAddresses);
-    log(swapInfo.returnAmount.toString());
+    // log(`SwapInfo: ${JSON.stringify(swapInfo)}`);
+    // log(swapInfo.swaps);
+    // log(swapInfo.tokenAddresses);
+    // log(swapInfo.returnAmount.toString());
 
     const serializedSwapInfo = serializeSwapInfo(swapInfo);
-    log(`Serialized SwapInfo: ${JSON.stringify(swapInfo)}`);
+    //log(`Serialized SwapInfo: ${JSON.stringify(swapInfo)}`);
 
     return serializedSwapInfo;
   }

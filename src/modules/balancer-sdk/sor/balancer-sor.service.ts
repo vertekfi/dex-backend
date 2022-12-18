@@ -1,11 +1,11 @@
-import { FundManagement } from '@balancer-labs/sdk';
+import { FundManagement, SwapType } from '@balancer-labs/sdk';
 import { parseFixed, formatFixed } from '@ethersproject/bignumber';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken } from '@prisma/client';
 import { BigNumber } from 'ethers';
-import { getAddress } from 'ethers/lib/utils';
+import { getAddress, parseUnits } from 'ethers/lib/utils';
 import { GqlSorGetSwapsResponse, GqlSorSwapOptionsInput } from 'src/gql-addons';
-import { TokenAmountHumanReadable } from 'src/modules/common/types';
+import { AccountWeb3, TokenAmountHumanReadable } from 'src/modules/common/types';
 import { ContractService } from 'src/modules/common/web3/contract.service';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { PoolService } from 'src/modules/pool/pool.service';
@@ -13,31 +13,44 @@ import { networkConfig } from '../../config/network-config';
 import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../utils/addresses';
 import { oldBnum } from '../../utils/old-big-number';
 import { SorApiService } from './api/sor-api.service';
-import { GetSwapsInput, Order, SwapTypes, SwapV2 } from './types';
+import { GetSwapsInput, Order, PoolFilter, SwapTypes, SwapV2 } from './types';
+import { TokenService } from 'src/modules/common/token/token.service';
+import { RPC } from 'src/modules/common/web3/rpc.provider';
+import { CONTRACT_MAP } from 'src/modules/data/contracts';
+import { SorPriceService } from './api/sor-price.service';
+import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
+import { SOR } from './impl/wrapper';
 
 @Injectable()
 export class BalancerSorService {
-  constructor(
-    private readonly poolService: PoolService,
-    private readonly contractService: ContractService,
-    private readonly sorService: SorApiService,
-  ) {}
+  private readonly sor: SOR;
 
-  async getSwaps({
-    tokenIn,
-    tokenOut,
-    swapType,
-    swapOptions,
-    swapAmount,
-    tokens,
-  }: GetSwapsInput): Promise<GqlSorGetSwapsResponse> {
+  constructor(
+    private readonly contractService: ContractService,
+    @Inject(RPC) private rpc: AccountWeb3,
+    private readonly tokenService: TokenService,
+    private readonly poolDataService: SubgraphPoolDataService,
+    private readonly sorPriceService: SorPriceService,
+  ) {
+    this.sor = new SOR(
+      this.rpc.provider,
+      {
+        chainId: this.rpc.chainId,
+        vault: CONTRACT_MAP.VAULT[this.rpc.chainId],
+        weth: networkConfig.weth.address,
+      },
+      this.poolDataService,
+      this.sorPriceService,
+    );
+  }
+
+  async getSwaps({ tokenIn, tokenOut, swapType, swapOptions, swapAmount, tokens }: GetSwapsInput) {
     tokenIn = replaceEthWithZeroAddress(tokenIn);
     tokenOut = replaceEthWithZeroAddress(tokenOut);
 
-    const tokenDecimals = this.getTokenDecimals(
-      swapType === 'EXACT_IN' ? tokenIn : tokenOut,
-      tokens,
-    );
+    const isExactInSwap = swapType === SwapTypes.SwapExactIn;
+
+    const tokenDecimals = this.getTokenDecimals(isExactInSwap ? tokenIn : tokenOut, tokens);
 
     let swapAmountScaled = BigNumber.from(`0`);
     try {
@@ -84,30 +97,51 @@ export class BalancerSorService {
         },
     );*/
 
-    const order: Order = {
-      sellToken: tokenIn,
-      buyToken: tokenOut,
-      orderKind: swapType,
-      amount: swapAmount, // TODO: Should this be swapAmountScaled using formatEther?
-      gasPrice: BigNumber.from('14000000000'),
-    };
+    // const order: Order = {
+    //   sellToken: tokenIn,
+    //   buyToken: tokenOut,
+    //   orderKind: swapType,
+    //   amount: swapAmountScaled, // TODO: Should this be swapAmountScaled using formatEther?
+    //   // Believe gas items are required looking at sor code
+    //   gasPrice: parseUnits('5', 'gwei'),
+    // };
 
-    const swapInfo = await this.sorService.getSorSwap(order, {
-      forceRefresh: swapOptions.forceRefresh || networkConfig.sor.forceRefresh,
-      maxPools: swapOptions.maxPools || networkConfig.sor.maxPools,
+    await this.sor.fetchPools();
+
+    const deez = await this.sor.getPools();
+    // console.log(deez);
+
+    // const swapInfo = await this.sor.getSwaps(tokenIn, tokenOut, swapType, swapAmount, {
+    //   forceRefresh: swapOptions.forceRefresh || networkConfig.sor.forceRefresh,
+    //   maxPools: swapOptions.maxPools || networkConfig.sor.maxPools,
+    //   poolTypeFilter: PoolFilter.All,
+    //   gasPrice: parseUnits('5', 'gwei'),
+    // });
+
+    const swapInfo = await this.sor.getSwaps(tokenIn, tokenOut, swapType, swapAmount, {
+      forceRefresh: true,
+      maxPools: 8,
+      poolTypeFilter: PoolFilter.All,
+      gasPrice: parseUnits('5', 'gwei'),
     });
+
+    // console.log('SorService: swapInfo');
+    // console.log(swapInfo);
 
     const returnAmount = formatFixed(
       swapInfo.returnAmount,
-      this.getTokenDecimals(swapType === 'EXACT_IN' ? tokenOut : tokenIn, tokens),
+      this.getTokenDecimals(isExactInSwap ? tokenOut : tokenIn, tokens),
     );
 
     // const pools = await this.poolService.getGqlPools({
     //   where: { idIn: swapInfo.routes.map((route) => route.hops.map((hop) => hop.poolId)).flat() },
     // });
 
-    const tokenInAmount = swapType === 'EXACT_IN' ? swapAmount : returnAmount;
-    const tokenOutAmount = swapType === 'EXACT_IN' ? returnAmount : swapAmount;
+    const tokenInAmount = isExactInSwap ? swapAmount : returnAmount;
+    const tokenOutAmount = isExactInSwap ? returnAmount : swapAmount;
+
+    // console.log('tokenInAmount: ' + tokenInAmount);
+    // console.log('tokenOutAmount: ' + tokenOutAmount);
 
     const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
     const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
@@ -166,7 +200,7 @@ export class BalancerSorService {
         tokenIn: tokensIn[i].address,
         swapAmount: tokensIn[i].amount,
         tokenOut,
-        swapType: 'EXACT_IN',
+        swapType: SwapTypes.SwapExactIn,
         swapOptions,
         tokens,
       });

@@ -53,8 +53,6 @@ export async function getOnChainBalances(
       return;
     }
 
-    console.log(pool.poolType);
-
     subgraphPools.push(pool);
 
     multiPool.call(`${pool.id}.poolTokens`, vaultAddress, 'getPoolTokens', [pool.id]);

@@ -70,41 +70,33 @@ export class SubgraphPoolDataService implements PoolDataService {
     const { data } = await response.json();
     const pools: SubgraphPoolBase[] = data.pools;
 
-    // const subgraphPools: SubgraphPoolBase[] = pools.map((pool): SubgraphPoolBase => {
-    //   const poolType = pool.poolType;
-    //   return {
-    //     id: pool.id,
-    //     address: pool.address,
-    //     poolType: pool.poolType,
-    //     swapFee: pool.swapFee,
-    //     swapEnabled: pool.swapEnabled,
-    //     totalShares: pool.totalShares,
-    //     amp: poolType === 'Stable' ? pool.amp : null,
-    //     tokens: pool.tokens.map((t) => {
-    //       return {
-    //         id: t.id,
-    //         symbol: t.symbol,
-    //         name: t.name,
-    //         decimals: t.decimals,
-    //         address: t.address,
-    //         balance: t.balance,
-    //         invested: t.invested,
-    //         weight: poolType === 'Weighted' ? t.weight : null,
-    //         priceRate: t.priceRate,
-    //       };
-    //     }),
-    //     tokensList: pool.tokens.map((t) => t.address),
-    //   };
-    // });
-
-    // const poolsWithChainData = await this.onchainData.updateOnChainData(
-    //   pools.map((p) => p.id),
-    //   blockNumber,
-    // );
+    const subgraphPools: SubgraphPoolBase[] = pools.map((pool): SubgraphPoolBase => {
+      const poolType = pool.poolType;
+      return {
+        id: pool.id,
+        address: pool.address,
+        poolType: pool.poolType,
+        swapFee: pool.swapFee,
+        swapEnabled: pool.swapEnabled,
+        totalShares: pool.totalShares,
+        amp: poolType === 'Stable' ? pool.amp : null,
+        tokens: pool.tokens.map((t) => {
+          return {
+            decimals: t.decimals,
+            address: t.address,
+            balance: t.balance,
+            weight: poolType === 'Weighted' ? t.weight : null,
+            priceRate: t.priceRate,
+          };
+        }),
+        tokensList: pool.tokens.map((t) => t.address),
+        totalWeight: pool.totalWeight,
+      };
+    });
 
     // if (config.onchain) {
     return getOnChainBalances(
-      pools ?? [],
+      subgraphPools ?? [],
       CONTRACT_MAP.MULTICALL[this.rpc.chainId],
       CONTRACT_MAP.VAULT[this.rpc.chainId],
       this.rpc.provider,
