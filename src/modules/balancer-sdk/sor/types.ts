@@ -21,7 +21,7 @@ export interface PoolDataService {
 export interface GetSwapsInput {
   tokenIn: string;
   tokenOut: string;
-  swapType: SwapTypes;
+  swapType: GqlSorSwapType;
   swapAmount: string;
   swapOptions: GqlSorSwapOptionsInput;
   tokens: PrismaToken[];

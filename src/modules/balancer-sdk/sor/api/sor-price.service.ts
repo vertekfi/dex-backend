@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { parseUnits } from 'ethers/lib/utils';
 import { PrismaService } from 'nestjs-prisma';
 import { getDexPriceFromPair } from 'src/modules/common/token/dexscreener';
 import { AccountWeb3 } from 'src/modules/common/types';
@@ -29,27 +30,14 @@ export class SorPriceService implements TokenPriceService {
     return 'usd';
   }
 
+  nativeAddress;
+
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
   ) {}
 
   async getNativeAssetPriceInToken(tokenAddress: string): Promise<string> {
-    const ethPerToken = await this.getTokenPriceInNativeAsset(tokenAddress);
-
-    // We get the price of token in terms of ETH
-    // We want the price of 1 ETH in terms of the token base units
-    const nativePrice = `${1 / parseFloat(ethPerToken)}`;
-    console.log('nativePrice: ' + nativePrice);
-    return nativePrice;
-  }
-
-  /**
-   * @dev Assumes that the native asset has 18 decimals
-   * @param tokenAddress - the address of the token contract
-   * @returns the price of 1 ETH in terms of the token base units
-   */
-  async getTokenPriceInNativeAsset(tokenAddress: string): Promise<string> {
     try {
       const token = await this.prisma.prismaToken.findUniqueOrThrow({
         where: {
@@ -58,11 +46,40 @@ export class SorPriceService implements TokenPriceService {
       });
 
       if (token.useDexscreener) {
+        const wbnbPair = '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16';
+        const nativeInfo = await getDexPriceFromPair('bsc', wbnbPair);
+        console.log(nativeInfo);
+        const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
+        console.log(info);
+        return parseUnits(String(nativeInfo.priceNum / info.priceNum)).toString();
+      }
+    } catch (error) {
+      console.log('Error getting price from coingecko');
+    }
+  }
+
+  /**
+   * @dev Assumes that the native asset has 18 decimals
+   * @param tokenAddress - the address of the token contract
+   * @returns the price of 1 ETH in terms of the token base units
+   */
+  private async getTokenPriceInNativeAsset(tokenAddress: string): Promise<string> {
+    try {
+      const token = await this.prisma.prismaToken.findUniqueOrThrow({
+        where: {
+          address: tokenAddress,
+        },
+      });
+
+      if (token.useDexscreener) {
+        const wbnbPair = '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16';
+        const nativeInfo = await getDexPriceFromPair('bsc', wbnbPair);
+        console.log(nativeInfo);
         const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
         console.log(info);
         return String(info.priceNum);
       } else {
-        const endpoint = `https://api.coingecko.com/api/v3/simple/token_price/${this.platformId}?contract_addresses=${tokenAddress}&vs_currencies=${this.nativeAssetId}`;
+        const endpoint = `https://api.coingecko.com/api/v3/simple/token_price/${this.platformId}?contract_addresses=0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE&vs_currencies=${this.nativeAssetId}`;
 
         const response = await fetch(endpoint, {
           headers: {

@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash.clonedeep';
+import { cloneDeep } from 'lodash';
 import { PRICE_ERROR_TOLERANCE } from '../config';
 import { BigNumber as OldBigNumber, bnum, ZERO, ONE, INFINITY } from '../utils/bignumber';
 import { SwapTypes, NewPath, Swap } from '../types';

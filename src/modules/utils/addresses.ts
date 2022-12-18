@@ -10,7 +10,7 @@ export function replaceEthWithZeroAddress(address: string) {
     return AddressZero;
   }
 
-  return address;
+  return address.toLowerCase();
 }
 
 export function replaceZeroAddressWithEth(address: string) {

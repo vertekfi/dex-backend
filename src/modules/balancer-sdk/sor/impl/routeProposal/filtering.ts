@@ -47,14 +47,17 @@ export function filterPoolsOfInterest(
     const containsTokenIn = tokenListSet.has(tokenIn.toLowerCase());
     const containsTokenOut = tokenListSet.has(tokenOut.toLowerCase());
 
+    console.log('tokenIn: ' + tokenIn);
+    console.log('tokenOut: ' + tokenOut);
     console.log('containsTokenIn: ' + containsTokenIn);
     console.log('containsTokenOut: ' + containsTokenOut);
+    console.log(tokenListSet.values());
 
     // This is a direct pool as has both tokenIn and tokenOut
     if (containsTokenIn && containsTokenOut) {
       console.log('filterPoolsOfInterest: direct pool, returning nothing');
       directPools[pool.id] = pool;
-      return [directPools, [], []];
+      return;
     }
 
     if (maxPools > 1) {
@@ -72,8 +75,8 @@ export function filterPoolsOfInterest(
     }
   });
 
-  console.log('filterPoolsOfInterest: directPools');
-  console.log(directPools);
+  // console.log('filterPoolsOfInterest: directPools');
+  // console.log(directPools);
 
   return [directPools, hopsIn, hopsOut];
 }

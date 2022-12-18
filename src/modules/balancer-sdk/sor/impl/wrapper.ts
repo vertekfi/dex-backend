@@ -102,13 +102,14 @@ export class SOR {
       this.useBpt = useBpts;
     }
 
-    console.log('SOR: swapOptions');
-    console.log(swapOptions);
+    // console.log('SOR: swapOptions');
+    // console.log(swapOptions);
 
     const pools: SubgraphPoolBase[] = this.poolCacher.getPools(useBpts);
     const filteredPools = filterPoolsByType(pools, options.poolTypeFilter);
 
-    console.log(filteredPools);
+    // console.log('SOR:getSwaps filteredPools = ');
+    // console.log(filteredPools);
 
     const wrappedInfo = await getWrappedInfo(
       this.provider,
@@ -119,8 +120,8 @@ export class SOR {
       BigNumber.from(swapAmount),
     );
 
-    console.log('SOR: wrappedInfo');
-    console.log(wrappedInfo);
+    // console.log('SOR: wrappedInfo');
+    // console.log(wrappedInfo);
 
     let swapInfo: SwapInfo = await this.processSwaps(
       wrappedInfo.tokenIn.addressForSwaps,
@@ -180,8 +181,8 @@ export class SOR {
       swapOptions,
     );
 
-    console.log('SOR: candidatePaths');
-    console.log(paths);
+    // console.log('SOR: candidatePaths');
+    // console.log(paths);
 
     if (paths.length == 0) return cloneDeep(EMPTY_SWAPINFO);
 

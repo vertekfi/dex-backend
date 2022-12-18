@@ -40,15 +40,15 @@ export class RouteProposer {
     // forceRefresh can be set to force fresh processing of paths/prices
     if (!swapOptions.forceRefresh && !!cache) {
       // Using pre-processed data from cache
-      console.log('getCandidatePaths: returning from cache');
-      console.log(cache);
+      // console.log('getCandidatePaths: returning from cache');
+      // console.log(cache);
       return cache.paths;
     }
 
     const poolsAllDict = parseToPoolsDict(pools, swapOptions.timestamp);
 
-    console.log('SOR -> getCandidatePaths: poolsAllDict');
-    console.log(poolsAllDict);
+    // console.log('SOR -> getCandidatePaths: poolsAllDict');
+    // console.log(poolsAllDict);
 
     const [directPools, hopsIn, hopsOut] = filterPoolsOfInterest(
       poolsAllDict,
