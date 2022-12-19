@@ -47,11 +47,11 @@ export function filterPoolsOfInterest(
     const containsTokenIn = tokenListSet.has(tokenIn.toLowerCase());
     const containsTokenOut = tokenListSet.has(tokenOut.toLowerCase());
 
-    console.log('tokenIn: ' + tokenIn);
-    console.log('tokenOut: ' + tokenOut);
-    console.log('containsTokenIn: ' + containsTokenIn);
-    console.log('containsTokenOut: ' + containsTokenOut);
-    console.log(tokenListSet.values());
+    // console.log('tokenIn: ' + tokenIn);
+    // console.log('tokenOut: ' + tokenOut);
+    // console.log('containsTokenIn: ' + containsTokenIn);
+    // console.log('containsTokenOut: ' + containsTokenOut);
+    // console.log(tokenListSet.values());
 
     // This is a direct pool as has both tokenIn and tokenOut
     if (containsTokenIn && containsTokenOut) {

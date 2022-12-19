@@ -4,7 +4,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken } from '@prisma/client';
 import { BigNumber } from 'ethers';
 import { getAddress, parseUnits } from 'ethers/lib/utils';
-import { GqlSorGetSwapsResponse, GqlSorSwapOptionsInput, GqlSorSwapType } from 'src/gql-addons';
+import {
+  GqlSorGetSwapsResponse,
+  GqlSorSwapOptionsInput,
+  GqlSorSwapRoute,
+  GqlSorSwapRouteHop,
+  GqlSorSwapType,
+} from 'src/gql-addons';
 import { AccountWeb3, TokenAmountHumanReadable } from 'src/modules/common/types';
 import { ContractService } from 'src/modules/common/web3/contract.service';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
@@ -37,6 +43,7 @@ export class BalancerSorService {
     private readonly poolDataService: SubgraphPoolDataService,
     private readonly sorPriceService: SorPriceService,
     private readonly prisma: PrismaService,
+    private readonly poolService: PoolService,
   ) {
     this.sor = new SOR(
       this.rpc.provider,
@@ -134,8 +141,8 @@ export class BalancerSorService {
       options,
     );
 
-    // console.log('SorService: swapInfo result =');
-    // console.log(swapInfo);
+    console.log('SorService: swapInfo result =');
+    console.log(swapInfo);
 
     const returnAmount = formatFixed(
       swapInfo.returnAmount,
@@ -149,7 +156,53 @@ export class BalancerSorService {
     const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
     const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
 
-    const routes = swapInfo.swaps.length ? [] : [];
+    // Will be cached at this point
+    const pools = await this.sor.getPools();
+    const hops: GqlSorSwapRouteHop[] = [];
+
+    const poolIds = swapInfo.swaps.map((path) => path.poolId);
+
+    const gqlPoolsProms = poolIds.map((id) => this.poolService.getGqlPool(id));
+    const gqlPools = await Promise.all(gqlPoolsProms);
+
+    // TODO: Probably already a method on the sor to extract the routing/hop info for a given swap
+
+    gqlPools.forEach((pool) => {
+      const hop: GqlSorSwapRouteHop = {
+        poolId: pool.id,
+        pool: {
+          id: pool.id,
+          address: pool.address,
+          decimals: pool.decimals,
+          createTime: pool.createTime,
+          name: pool.name,
+          type: pool.type,
+          symbol: pool.symbol,
+          dynamicData: pool.dynamicData,
+          allTokens: pool.allTokens,
+          displayTokens: pool.displayTokens,
+        },
+        tokenIn,
+        tokenOut,
+        tokenInAmount,
+        tokenOutAmount,
+      };
+
+      hops.push(hop);
+    });
+
+    // TODO: Probably already a method on the sor to extract the routing/hop info for a given swap
+
+    const routes = swapInfo.swaps.map((path): GqlSorSwapRoute => {
+      return {
+        tokenIn,
+        tokenOut,
+        tokenInAmount,
+        tokenOutAmount: formatFixed(path.returnAmount),
+        share: 0,
+        hops,
+      };
+    });
 
     return {
       ...swapInfo,
@@ -176,7 +229,7 @@ export class BalancerSorService {
       //     pool: pools.find((pool) => pool.id === hop.poolId)!,
       //   })),
       // })),
-      routes: [],
+      routes,
       effectivePrice: effectivePrice.toString(),
       effectivePriceReversed: effectivePriceReversed.toString(),
       priceImpact: priceImpact.toString(),
