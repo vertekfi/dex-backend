@@ -8,6 +8,11 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export enum GqlSorSwapType {
+    EXACT_IN = "EXACT_IN",
+    EXACT_OUT = "EXACT_OUT"
+}
+
 export enum GqlPoolMinimalType {
     WEIGHTED = "WEIGHTED",
     STABLE = "STABLE",
@@ -76,6 +81,38 @@ export enum GqlPoolSnapshotDataRange {
     ALL_TIME = "ALL_TIME"
 }
 
+export enum GqlContentNewsItemSource {
+    twitter = "twitter",
+    discord = "discord",
+    medium = "medium"
+}
+
+export enum GqlTokenChartDataRange {
+    SEVEN_DAY = "SEVEN_DAY",
+    THIRTY_DAY = "THIRTY_DAY"
+}
+
+export enum GqlTokenType {
+    WHITE_LISTED = "WHITE_LISTED",
+    BPT = "BPT",
+    PHANTOM_BPT = "PHANTOM_BPT",
+    LINEAR_WRAPPED_TOKEN = "LINEAR_WRAPPED_TOKEN"
+}
+
+export enum GqlUserSnapshotDataRange {
+    THIRTY_DAYS = "THIRTY_DAYS",
+    NINETY_DAYS = "NINETY_DAYS",
+    ONE_HUNDRED_EIGHTY_DAYS = "ONE_HUNDRED_EIGHTY_DAYS",
+    ONE_YEAR = "ONE_YEAR",
+    ALL_TIME = "ALL_TIME"
+}
+
+export interface GqlSorSwapOptionsInput {
+    timestamp?: Nullable<number>;
+    maxPools?: Nullable<number>;
+    forceRefresh?: Nullable<boolean>;
+}
+
 export interface GqlTokenAmountHumanReadable {
     address: string;
     amount: AmountHumanReadable;
@@ -142,6 +179,8 @@ export interface GqlPoolTokenBase {
 
 export interface IQuery {
     __typename?: 'IQuery';
+    sorGetSwaps(tokenIn: string, tokenOut: string, swapType: GqlSorSwapType, swapAmount: BigDecimal, swapOptions: GqlSorSwapOptionsInput): GqlSorGetSwapsResponse | Promise<GqlSorGetSwapsResponse>;
+    sorGetBatchSwapForTokensIn(tokensIn: GqlTokenAmountHumanReadable[], tokenOut: string, swapOptions: GqlSorSwapOptionsInput): GqlSorGetBatchSwapForTokensInResponse | Promise<GqlSorGetBatchSwapForTokensInResponse>;
     poolGetPool(id: string): GqlPoolBase | Promise<GqlPoolBase>;
     poolGetPools(first?: Nullable<number>, skip?: Nullable<number>, orderBy?: Nullable<GqlPoolOrderBy>, orderDirection?: Nullable<GqlPoolOrderDirection>, where?: Nullable<GqlPoolFilter>, textSearch?: Nullable<string>): GqlPoolMinimal[] | Promise<GqlPoolMinimal[]>;
     poolGetPoolsCount(first?: Nullable<number>, skip?: Nullable<number>, orderBy?: Nullable<GqlPoolOrderBy>, orderDirection?: Nullable<GqlPoolOrderDirection>, where?: Nullable<GqlPoolFilter>, textSearch?: Nullable<string>): number | Promise<number>;
@@ -154,10 +193,92 @@ export interface IQuery {
     poolGetSnapshots(id: string, range: GqlPoolSnapshotDataRange): GqlPoolSnapshot[] | Promise<GqlPoolSnapshot[]>;
     poolGetAllPoolsSnapshots(range: GqlPoolSnapshotDataRange): GqlPoolSnapshot[] | Promise<GqlPoolSnapshot[]>;
     poolGetLinearPools(): GqlPoolLinear[] | Promise<GqlPoolLinear[]>;
+    beetsGetBeetsPrice(): string | Promise<string>;
+    protocolMetrics(): GqlProtocolMetrics | Promise<GqlProtocolMetrics>;
+    latestSyncedBlocks(): GqlLatestSyncedBlocks | Promise<GqlLatestSyncedBlocks>;
+    blocksGetBlocksPerDay(): number | Promise<number>;
+    blocksGetAverageBlockTime(): number | Promise<number>;
+    contentGetNewsItems(): Nullable<GqlContentNewsItem>[] | Promise<Nullable<GqlContentNewsItem>[]>;
+    tokenGetTokens(): GqlToken[] | Promise<GqlToken[]>;
+    tokenGetCurrentPrices(): GqlTokenPrice[] | Promise<GqlTokenPrice[]>;
+    tokenGetHistoricalPrices(addresses: string[]): GqlHistoricalTokenPrice[] | Promise<GqlHistoricalTokenPrice[]>;
+    tokenGetTokensDynamicData(addresses: string[]): GqlTokenDynamicData[] | Promise<GqlTokenDynamicData[]>;
+    tokenGetTokenDynamicData(address: string): Nullable<GqlTokenDynamicData> | Promise<Nullable<GqlTokenDynamicData>>;
+    tokenGetRelativePriceChartData(tokenIn: string, tokenOut: string, range: GqlTokenChartDataRange): GqlTokenPriceChartDataItem[] | Promise<GqlTokenPriceChartDataItem[]>;
+    tokenGetPriceChartData(address: string, range: GqlTokenChartDataRange): GqlTokenPriceChartDataItem[] | Promise<GqlTokenPriceChartDataItem[]>;
+    tokenGetCandlestickChartData(address: string, range: GqlTokenChartDataRange): GqlTokenCandlestickChartDataItem[] | Promise<GqlTokenCandlestickChartDataItem[]>;
+    tokenGetTokenData(address: string): Nullable<GqlTokenData> | Promise<Nullable<GqlTokenData>>;
+    tokenGetTokensData(addresses: string[]): GqlTokenData[] | Promise<GqlTokenData[]>;
+    userGetPoolBalances(): GqlUserPoolBalance[] | Promise<GqlUserPoolBalance[]>;
+    userGetFbeetsBalance(): GqlUserFbeetsBalance | Promise<GqlUserFbeetsBalance>;
+    userGetStaking(): GqlPoolStaking[] | Promise<GqlPoolStaking[]>;
+    userGetPoolJoinExits(first?: Nullable<number>, skip?: Nullable<number>, poolId: string): GqlPoolJoinExit[] | Promise<GqlPoolJoinExit[]>;
+    userGetSwaps(first?: Nullable<number>, skip?: Nullable<number>, poolId: string): GqlPoolSwap[] | Promise<GqlPoolSwap[]>;
+    userGetPortfolioSnapshots(days: number): GqlUserPortfolioSnapshot[] | Promise<GqlUserPortfolioSnapshot[]>;
+}
+
+export interface GqlSorGetSwapsResponse {
+    __typename?: 'GqlSorGetSwapsResponse';
+    tokenIn: string;
+    tokenOut: string;
+    tokenAddresses: string[];
+    swapType: GqlSorSwapType;
+    swaps: GqlSorSwap[];
+    tokenInAmount: AmountHumanReadable;
+    tokenOutAmount: AmountHumanReadable;
+    swapAmount: AmountHumanReadable;
+    swapAmountScaled: BigDecimal;
+    swapAmountForSwaps?: Nullable<BigDecimal>;
+    returnAmount: AmountHumanReadable;
+    returnAmountScaled: BigDecimal;
+    returnAmountFromSwaps?: Nullable<BigDecimal>;
+    returnAmountConsideringFees: BigDecimal;
+    marketSp: string;
+    routes: GqlSorSwapRoute[];
+    effectivePrice: AmountHumanReadable;
+    effectivePriceReversed: AmountHumanReadable;
+    priceImpact: AmountHumanReadable;
+}
+
+export interface GqlSorSwap {
+    __typename?: 'GqlSorSwap';
+    poolId: string;
+    assetInIndex: number;
+    assetOutIndex: number;
+    amount: string;
+    userData: string;
+}
+
+export interface GqlSorSwapRoute {
+    __typename?: 'GqlSorSwapRoute';
+    tokenIn: string;
+    tokenInAmount: BigDecimal;
+    tokenOut: string;
+    tokenOutAmount: BigDecimal;
+    share: number;
+    hops: GqlSorSwapRouteHop[];
+}
+
+export interface GqlSorSwapRouteHop {
+    __typename?: 'GqlSorSwapRouteHop';
+    tokenIn: string;
+    tokenInAmount: BigDecimal;
+    tokenOut: string;
+    tokenOutAmount: BigDecimal;
+    poolId: string;
+    pool: GqlPoolMinimal;
+}
+
+export interface GqlSorGetBatchSwapForTokensInResponse {
+    __typename?: 'GqlSorGetBatchSwapForTokensInResponse';
+    tokenOutAmount: AmountHumanReadable;
+    swaps: GqlSorSwap[];
+    assets: string[];
 }
 
 export interface IMutation {
     __typename?: 'IMutation';
+    syncGaugeData(): string | Promise<string>;
     poolSyncAllPoolsFromSubgraph(): string[] | Promise<string[]>;
     poolSyncNewPoolsFromSubgraph(): string[] | Promise<string[]>;
     poolLoadOnChainDataForAllPools(): string | Promise<string>;
@@ -180,6 +301,20 @@ export interface IMutation {
     poolSyncPool(poolId: string): string | Promise<string>;
     poolReloadPoolNestedTokens(poolId: string): string | Promise<string>;
     poolReloadAllTokenNestedPoolIds(): string | Promise<string>;
+    protocolCacheMetrics(): string | Promise<string>;
+    tokenReloadTokenPrices(): Nullable<boolean> | Promise<Nullable<boolean>>;
+    tokenSyncTokenDefinitions(): string | Promise<string>;
+    tokenSyncTokenDynamicData(): string | Promise<string>;
+    tokenInitChartData(tokenAddress: string): string | Promise<string>;
+    tokenDeletePrice(tokenAddress: string, timestamp: number): boolean | Promise<boolean>;
+    tokenDeleteTokenType(tokenAddress: string, type: GqlTokenType): string | Promise<string>;
+    userSyncBalance(poolId: string): string | Promise<string>;
+    userSyncBalanceAllPools(): string | Promise<string>;
+    userInitWalletBalancesForAllPools(): string | Promise<string>;
+    userInitWalletBalancesForPool(poolId: string): string | Promise<string>;
+    userSyncChangedWalletBalancesForAllPools(): string | Promise<string>;
+    userInitStakedBalances(stakingTypes: GqlPoolStakingType[]): string | Promise<string>;
+    userSyncChangedStakedBalances(): string | Promise<string>;
 }
 
 export interface GqlPoolMinimal {
@@ -773,6 +908,159 @@ export interface GqlPoolTokenDisplay {
     symbol: string;
     weight?: Nullable<BigDecimal>;
     nestedTokens?: Nullable<GqlPoolTokenDisplay[]>;
+}
+
+export interface GqlProtocolMetrics {
+    __typename?: 'GqlProtocolMetrics';
+    totalLiquidity: BigDecimal;
+    totalSwapVolume: BigDecimal;
+    totalSwapFee: BigDecimal;
+    poolCount: BigInt;
+    swapFee24h: BigDecimal;
+    swapVolume24h: BigDecimal;
+}
+
+export interface GqlLatestSyncedBlocks {
+    __typename?: 'GqlLatestSyncedBlocks';
+    userWalletSyncBlock: BigInt;
+    userStakeSyncBlock: BigInt;
+    poolSyncBlock: BigInt;
+}
+
+export interface GqlContentNewsItem {
+    __typename?: 'GqlContentNewsItem';
+    id: string;
+    timestamp: string;
+    url: string;
+    text: string;
+    source: GqlContentNewsItemSource;
+    image?: Nullable<string>;
+    discussionUrl?: Nullable<string>;
+}
+
+export interface GqlTokenPrice {
+    __typename?: 'GqlTokenPrice';
+    address: string;
+    price: number;
+}
+
+export interface GqlHistoricalTokenPrice {
+    __typename?: 'GqlHistoricalTokenPrice';
+    address: string;
+    prices: GqlHistoricalTokenPriceEntry[];
+}
+
+export interface GqlHistoricalTokenPriceEntry {
+    __typename?: 'GqlHistoricalTokenPriceEntry';
+    timestamp: string;
+    price: number;
+}
+
+export interface GqlToken {
+    __typename?: 'GqlToken';
+    address: string;
+    name: string;
+    description?: Nullable<string>;
+    symbol: string;
+    decimals: number;
+    chainId: number;
+    websiteUrl?: Nullable<string>;
+    discordUrl?: Nullable<string>;
+    telegramUrl?: Nullable<string>;
+    twitterUsername?: Nullable<string>;
+    logoURI?: Nullable<string>;
+    priority: number;
+    tradable: boolean;
+}
+
+export interface GqlTokenDynamicData {
+    __typename?: 'GqlTokenDynamicData';
+    id: string;
+    tokenAddress: string;
+    price: number;
+    ath: number;
+    atl: number;
+    marketCap?: Nullable<string>;
+    fdv?: Nullable<string>;
+    high24h: number;
+    low24h: number;
+    priceChange24h: number;
+    priceChangePercent24h: number;
+    priceChangePercent7d?: Nullable<number>;
+    priceChangePercent14d?: Nullable<number>;
+    priceChangePercent30d?: Nullable<number>;
+    updatedAt: string;
+}
+
+export interface GqlTokenCandlestickChartDataItem {
+    __typename?: 'GqlTokenCandlestickChartDataItem';
+    id: string;
+    timestamp: number;
+    open: AmountHumanReadable;
+    high: AmountHumanReadable;
+    low: AmountHumanReadable;
+    close: AmountHumanReadable;
+}
+
+export interface GqlTokenPriceChartDataItem {
+    __typename?: 'GqlTokenPriceChartDataItem';
+    id: string;
+    timestamp: number;
+    price: AmountHumanReadable;
+}
+
+export interface GqlTokenData {
+    __typename?: 'GqlTokenData';
+    id: string;
+    tokenAddress: string;
+    description?: Nullable<string>;
+    websiteUrl?: Nullable<string>;
+    discordUrl?: Nullable<string>;
+    telegramUrl?: Nullable<string>;
+    twitterUsername?: Nullable<string>;
+}
+
+export interface GqlUserPoolBalance {
+    __typename?: 'GqlUserPoolBalance';
+    poolId: string;
+    tokenAddress: string;
+    tokenPrice: number;
+    totalBalance: AmountHumanReadable;
+    walletBalance: AmountHumanReadable;
+    stakedBalance: AmountHumanReadable;
+}
+
+export interface GqlUserFbeetsBalance {
+    __typename?: 'GqlUserFbeetsBalance';
+    id: string;
+    totalBalance: AmountHumanReadable;
+    walletBalance: AmountHumanReadable;
+    stakedBalance: AmountHumanReadable;
+}
+
+export interface GqlUserPortfolioSnapshot {
+    __typename?: 'GqlUserPortfolioSnapshot';
+    timestamp: number;
+    walletBalance: AmountHumanReadable;
+    gaugeBalance: AmountHumanReadable;
+    farmBalance: AmountHumanReadable;
+    totalBalance: AmountHumanReadable;
+    totalValueUSD: AmountHumanReadable;
+    fees24h: AmountHumanReadable;
+    totalFees: AmountHumanReadable;
+    pools: GqlUserPoolSnapshot[];
+}
+
+export interface GqlUserPoolSnapshot {
+    __typename?: 'GqlUserPoolSnapshot';
+    timestamp: number;
+    percentShare: number;
+    walletBalance: AmountHumanReadable;
+    gaugeBalance: AmountHumanReadable;
+    farmBalance: AmountHumanReadable;
+    totalBalance: AmountHumanReadable;
+    totalValueUSD: AmountHumanReadable;
+    fees24h: AmountHumanReadable;
 }
 
 export type GqlBigNumber = any;
