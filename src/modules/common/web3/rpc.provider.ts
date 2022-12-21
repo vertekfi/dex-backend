@@ -18,6 +18,10 @@ export const RpcProvider: Provider = {
       throw 'Chain id?';
     }
 
+    if (!rpcUrl) {
+      throw new Error('RPC URL not provided.');
+    }
+
     const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
     await provider.ready;
     console.log('Using RPC: ' + rpcUrl);
