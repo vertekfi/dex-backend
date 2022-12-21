@@ -5,7 +5,7 @@ hooks:
 generates:
   src/modules/subgraphs/balancer/generated/balancer-subgraph-types.ts:
     schema: ${BALANCER_SUBGRAPH}
-    documents: 'modules/subgraphs/balancer/balancer-subgraph-queries.graphql'
+    documents: 'src/modules/subgraphs/balancer/balancer-subgraph-queries.graphql'
     plugins:
       - typescript
       - typescript-operations

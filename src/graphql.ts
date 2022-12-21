@@ -212,8 +212,8 @@ export interface IQuery {
     userGetPoolBalances(): GqlUserPoolBalance[] | Promise<GqlUserPoolBalance[]>;
     userGetFbeetsBalance(): GqlUserFbeetsBalance | Promise<GqlUserFbeetsBalance>;
     userGetStaking(): GqlPoolStaking[] | Promise<GqlPoolStaking[]>;
-    userGetPoolJoinExits(first?: Nullable<number>, skip?: Nullable<number>, poolId: string): GqlPoolJoinExit[] | Promise<GqlPoolJoinExit[]>;
-    userGetSwaps(first?: Nullable<number>, skip?: Nullable<number>, poolId: string): GqlPoolSwap[] | Promise<GqlPoolSwap[]>;
+    userGetPoolJoinExits(first: number, skip: number, poolId: string): GqlPoolJoinExit[] | Promise<GqlPoolJoinExit[]>;
+    userGetSwaps(first: number, skip: number, poolId: string): GqlPoolSwap[] | Promise<GqlPoolSwap[]>;
     userGetPortfolioSnapshots(days: number): GqlUserPortfolioSnapshot[] | Promise<GqlUserPortfolioSnapshot[]>;
 }
 
