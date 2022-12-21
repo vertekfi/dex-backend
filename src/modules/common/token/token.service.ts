@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken, PrismaTokenCurrentPrice } from '@prisma/client';
 import * as _ from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
@@ -9,6 +9,8 @@ import { TokenDataLoaderService } from './token-data-loader.service';
 import { getPriceHandlers } from '../../token/lib/token-price-handlers';
 import { TokenPriceService } from './token-price.service';
 import { TokenDefinition } from '../../token/token-types';
+import { RPC } from '../web3/rpc.provider';
+import { AccountWeb3 } from '../types';
 
 const TOKEN_PRICES_CACHE_KEY = 'token:prices:current';
 const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
@@ -17,6 +19,7 @@ const ALL_TOKENS_CACHE_KEY = 'tokens:all';
 @Injectable()
 export class TokenService {
   constructor(
+    @Inject(RPC) private rpc: AccountWeb3,
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
     private readonly tokenPriceService: TokenPriceService,
@@ -68,7 +71,7 @@ export class TokenService {
 
   async getTokenDefinitions(): Promise<TokenDefinition[]> {
     const tokens = await this.prisma.prismaToken.findMany({
-      where: { types: { some: { type: 'WHITE_LISTED' } } },
+      where: { chainId: this.rpc.chainId, types: { some: { type: 'WHITE_LISTED' } } },
       include: { types: true },
       orderBy: { priority: 'desc' },
     });
