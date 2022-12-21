@@ -90,12 +90,17 @@ export class BalancerSorService {
         },
     );*/
 
+    // console.log(tokenIn);
+    // console.log(tokenOut);
+
     const [tokenInfoIn, tokenInfoOut] = await Promise.all([
       this.getToken(tokenIn),
       this.getToken(tokenOut),
     ]);
 
-    console.log(tokenInfoIn.price);
+    console.log(tokenInfoIn);
+    console.log(tokenInfoOut);
+
     const priceOfNativeAssetInBuyToken = Number(
       formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoIn.price, 36)), 36),
     );
@@ -103,7 +108,7 @@ export class BalancerSorService {
     const priceOfNativeAssetInSellToken = Number(
       formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoOut.price, 36)), 36),
     );
-
+    // 0x3416cF6C708Da44DB2624D63ea0AAef7113527C6
     await Promise.all([
       this.sor.swapCostCalculator.setNativeAssetPriceInToken(
         tokenIn,
@@ -157,7 +162,7 @@ export class BalancerSorService {
     const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
 
     // Will be cached at this point
-    const pools = await this.sor.getPools();
+    // const pools = await this.sor.getPools();
     const hops: GqlSorSwapRouteHop[] = [];
 
     const poolIds = swapInfo.swaps.map((path) => path.poolId);
@@ -198,7 +203,7 @@ export class BalancerSorService {
         tokenIn,
         tokenOut,
         tokenInAmount,
-        tokenOutAmount: formatFixed(path.returnAmount),
+        tokenOutAmount: path.returnAmount,
         share: 0,
         hops,
       };
@@ -303,8 +308,20 @@ export class BalancerSorService {
         address,
       },
     });
+    if (!token) {
+      throw new Error('Unknown token: ' + address);
+    }
+
+    console.log(token);
 
     if (token.useDexscreener) {
+      if (address === '0xb269a278e427478712e2af0eba728021157a2114') {
+        return {
+          // TODO: testing
+          ...token,
+          price: '9',
+        };
+      }
       const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
       return {
         ...token,

@@ -1,5 +1,5 @@
 import { UserPoolBalance } from '../user-types';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { parseUnits } from 'ethers/lib/utils';
 import { formatFixed } from '@ethersproject/bignumber';
 import { PrismaPoolStaking } from '@prisma/client';

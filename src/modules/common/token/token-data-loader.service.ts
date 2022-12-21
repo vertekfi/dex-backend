@@ -41,7 +41,7 @@ export class TokenDataLoaderService {
         update: {
           name: token.name,
           symbol: token.symbol,
-          //use set to ensure we overwrite the underlying value if it is removed from list
+          // use set to ensure we overwrite the underlying value if it is removed from list
           logoURI: { set: token.logoURI || null },
           priority: token.priority,
           coingeckoPlatformId: { set: token.coingeckoPlatformId?.toLowerCase() || null },
