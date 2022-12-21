@@ -160,6 +160,16 @@ export class PoolService {
     );
   }
 
+  async syncPoolTotalShares() {
+    const items = await this.prisma.prismaPoolDynamicData.findMany({});
+    for (const item of items) {
+      await this.prisma.prismaPoolDynamicData.update({
+        where: { id: item.id },
+        data: { totalSharesNum: parseFloat(item.totalShares) },
+      });
+    }
+  }
+
   async reloadStakingForAllPools(
     stakingTypes: PrismaPoolStakingType[],
     poolStakingServices: PoolStakingService[],
