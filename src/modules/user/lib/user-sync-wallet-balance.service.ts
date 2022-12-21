@@ -169,7 +169,7 @@ export class UserSyncWalletBalanceService {
 
     const balances = await Multicaller.fetchBalances({
       multicallAddress: networkConfig.multicall,
-      provider: jsonRpcProvider,
+      rpc: this.rpc,
       balancesToFetch,
     });
 
@@ -202,7 +202,7 @@ export class UserSyncWalletBalanceService {
 
     const balances = await Multicaller.fetchBalances({
       multicallAddress: networkConfig.multicall,
-      provider: this.rpc.provider,
+      rpc: this.rpc,
       balancesToFetch,
     });
 

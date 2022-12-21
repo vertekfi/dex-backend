@@ -18,12 +18,13 @@ import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
 import { PoolDataService, PoolFilter, SubgraphPoolBase } from '../types';
 import { isSameAddress } from '@balancer-labs/sdk';
+import { AccountWeb3 } from 'src/modules/common/types';
 
 export async function getOnChainBalances(
   subgraphPoolsOriginal: SubgraphPoolBase[],
   multiAddress: string,
   vaultAddress: string,
-  provider: Provider,
+  rpc: AccountWeb3,
 ): Promise<SubgraphPoolBase[]> {
   if (subgraphPoolsOriginal.length === 0) return subgraphPoolsOriginal;
 
@@ -43,7 +44,7 @@ export async function getOnChainBalances(
     ),
   );
 
-  const multiPool = new Multicaller(multiAddress, provider, abis);
+  const multiPool = new Multicaller(rpc, abis);
 
   const supportedPoolTypes: string[] = Object.values(PoolFilter);
   const subgraphPools: SubgraphPoolBase[] = [];
@@ -184,22 +185,22 @@ export async function getOnChainBalances(
 PoolDataService to fetch onchain balances of Gyro3 pool.
 (Fetching all pools off a fork is too intensive)
 */
-export class OnChainPoolDataService implements PoolDataService {
-  constructor(
-    private readonly config: {
-      multiAddress: string;
-      vaultAddress: string;
-      provider: JsonRpcProvider;
-      pools: SubgraphPoolBase[];
-    },
-  ) {}
+// export class OnChainPoolDataService implements PoolDataService {
+//   constructor(
+//     private readonly config: {
+//       multiAddress: string;
+//       vaultAddress: string;
+//       provider: JsonRpcProvider;
+//       pools: SubgraphPoolBase[];
+//     },
+//   ) {}
 
-  public async getPools(): Promise<SubgraphPoolBase[]> {
-    return getOnChainBalances(
-      this.config.pools,
-      this.config.multiAddress,
-      this.config.vaultAddress,
-      this.config.provider,
-    );
-  }
-}
+//   public async getPools(): Promise<SubgraphPoolBase[]> {
+//     return getOnChainBalances(
+//       this.config.pools,
+//       this.config.multiAddress,
+//       this.config.vaultAddress,
+//       this.config.provider,
+//     );
+//   }
+// }

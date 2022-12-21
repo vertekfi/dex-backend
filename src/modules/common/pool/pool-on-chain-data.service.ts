@@ -11,17 +11,17 @@ import { isComposableStablePool, isWeightedPoolV2, isStablePool } from '../../po
 import { PrismaService } from 'nestjs-prisma';
 import { WeiPerEther } from '@ethersproject/constants';
 
-import VaultAbi from '../../pool/abi/Vault.json';
-import aTokenRateProvider from '../../pool/abi/StaticATokenRateProvider.json';
-import WeightedPoolAbi from '../../pool/abi/WeightedPool.json';
-import StablePoolAbi from '../../pool/abi/StablePool.json';
-import MetaStablePool from '../../pool/abi/MetaStablePool.json';
-// import ElementPoolAbi from '../../pool/abi/ConvergentCurvePool.json';
-import LinearPoolAbi from '../../pool/abi/LinearPool.json';
-import StablePhantomPoolAbi from '../../pool/abi/StablePhantomPool.json';
+import * as VaultAbi from '../../pool/abi/Vault.json';
+import * as aTokenRateProvider from '../../pool/abi/StaticATokenRateProvider.json';
+import * as WeightedPoolAbi from '../../pool/abi/WeightedPool.json';
+import * as StablePoolAbi from '../../pool/abi/StablePool.json';
+import * as MetaStablePool from '../../pool/abi/MetaStablePool.json';
+// import  * as ElementPoolAbi from '../../pool/abi/ConvergentCurvePool.json';
+import * as LinearPoolAbi from '../../pool/abi/LinearPool.json';
+import * as StablePhantomPoolAbi from '../../pool/abi/StablePhantomPool.json';
 //import ComposableStablePoolAbi from '../../pool/abi/ComposableStablePool.json';
 // import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
-import LiquidityBootstrappingPoolAbi from '../../pool/abi/LiquidityBootstrappingPool.json';
+import * as LiquidityBootstrappingPoolAbi from '../../pool/abi/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 
 @Injectable()
@@ -67,17 +67,9 @@ export class PoolOnChainDataService {
       ),
     );
 
-    const multiPool = new Multicaller(
-      CONTRACT_MAP.MULTICALL[this.rpc.chainId],
-      this.rpc.provider,
-      abis,
-    );
+    const multiPool = new Multicaller(this.rpc, abis);
 
     pools.forEach((pool) => {
-      //   if (!SUPPORTED_POOL_TYPES.includes(pool.type || '')) {
-      //     console.error(`Unknown pool type: ${pool.type} ${pool.id}`);
-      //     return;
-      //   }
       if (!SUPPORTED_POOL_TYPES.includes(pool.type)) {
         console.error(`Unknown pool type: ${pool.type} ${pool.id}`);
         return;

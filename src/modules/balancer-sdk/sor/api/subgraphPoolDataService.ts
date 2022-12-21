@@ -99,7 +99,7 @@ export class SubgraphPoolDataService implements PoolDataService {
       subgraphPools ?? [],
       CONTRACT_MAP.MULTICALL[this.rpc.chainId],
       CONTRACT_MAP.VAULT[this.rpc.chainId],
-      this.rpc.provider,
+      this.rpc,
     );
     //}
 

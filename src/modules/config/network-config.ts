@@ -41,6 +41,7 @@ export interface NetworkConfig {
   balancer: {
     vault: string;
     weightedPoolV2Factories: string[];
+    weightedPoolFactories: string[];
     composableStablePoolFactories: string[];
     yieldProtocolFeePercentage: number;
     swapProtocolFeePercentage: number;
@@ -98,7 +99,8 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     balancer: {
       vault: '0xEE1c8DbfBf958484c6a4571F5FB7b99B74A54AA7',
       composableStablePoolFactories: [],
-      weightedPoolV2Factories: ['0x7aFB1Fff22D2EAbC5d256187472bF1989CDE2f97'],
+      weightedPoolV2Factories: [],
+      weightedPoolFactories: ['0x7aFB1Fff22D2EAbC5d256187472bF1989CDE2f97'],
       swapProtocolFeePercentage: 0.25,
       yieldProtocolFeePercentage: 0.25,
     },
@@ -152,7 +154,8 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     balancer: {
       vault: '0x84259CbD70aA17EB282Cb40666d2687Cd8E100AA',
       composableStablePoolFactories: [],
-      weightedPoolV2Factories: ['0xDE1b1D8a94b909976eC252d7b73BAA8F10B7d8e1'],
+      weightedPoolV2Factories: [],
+      weightedPoolFactories: ['0xDE1b1D8a94b909976eC252d7b73BAA8F10B7d8e1'],
       swapProtocolFeePercentage: 0.25,
       yieldProtocolFeePercentage: 0.25,
     },

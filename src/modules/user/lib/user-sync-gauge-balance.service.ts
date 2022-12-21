@@ -93,7 +93,7 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
     const startBlock = status.blockNumber + 1;
     const endBlock = latestBlock - startBlock > 2_000 ? startBlock + 2_000 : latestBlock;
 
-    const multicall = new Multicaller(networkConfig.multicall, jsonRpcProvider, LiqGaugeV5abi);
+    const multicall = new Multicaller(this.rpc, LiqGaugeV5abi);
 
     // the multicall response will be merged into this object
     let response: {

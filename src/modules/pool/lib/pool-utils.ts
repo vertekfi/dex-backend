@@ -21,6 +21,15 @@ export function isWeightedPoolV2(pool: PoolWithTypeAndFactory) {
   );
 }
 
+export function isWeightedPool(pool: PoolWithTypeAndFactory) {
+  return (
+    pool.type === 'WEIGHTED' &&
+    networkConfig.balancer.weightedPoolFactories.find((factory) =>
+      isSameAddress(pool.factory || '', factory),
+    ) !== undefined
+  );
+}
+
 export function isComposableStablePool(pool: PoolWithTypeAndFactory) {
   return (
     pool.type === 'PHANTOM_STABLE' &&

@@ -5,6 +5,8 @@ import { Provider } from '@ethersproject/providers';
 import _ from 'lodash';
 import ERC20Abi from './abi/ERC20.json';
 import { BigNumber } from 'ethers';
+import { CONTRACT_MAP } from 'src/modules/data/contracts';
+import { AccountWeb3 } from '../types';
 
 export interface MulticallUserBalance {
   erc20Address: string;
@@ -13,23 +15,20 @@ export interface MulticallUserBalance {
 }
 
 export class Multicaller {
-  private multiAddress: string;
-  private provider: Provider;
   private interface: Interface;
   public options: any = {};
   private calls: [string, string, any][] = [];
   private paths: any[] = [];
+  rpc: AccountWeb3;
 
   constructor(
-    multiAddress: string,
-    provider: Provider,
+    rpc: AccountWeb3,
     abi: string | Array<Fragment | JsonFragment | string>,
     options = {},
   ) {
-    this.multiAddress = multiAddress;
-    this.provider = provider;
     this.interface = new Interface(abi);
     this.options = options;
+    this.rpc = rpc;
   }
 
   call(path: string, address: string, functionName: string, params?: any[]): Multicaller {
@@ -57,11 +56,11 @@ export class Multicaller {
 
   private async executeMulticall(): Promise<Result[]> {
     const multi = new Contract(
-      this.multiAddress,
+      CONTRACT_MAP.MULTICALL_V1[this.rpc.chainId],
       [
         'function aggregate(tuple[](address target, bytes callData) memory calls) public view returns (uint256 blockNumber, bytes[] memory returnData)',
       ],
-      this.provider,
+      this.rpc.provider,
     );
 
     const [, res] = await multi.aggregate(
@@ -71,6 +70,8 @@ export class Multicaller {
       ]),
       this.options,
     );
+
+    console.log(res);
 
     return res.map((result: any, i: number) =>
       this.interface.decodeFunctionResult(this.calls[i][1], result),
@@ -82,19 +83,18 @@ export class Multicaller {
   }
 
   public static async fetchBalances({
-    multicallAddress,
-    provider,
+    rpc,
     balancesToFetch,
   }: {
     multicallAddress: string;
-    provider: Provider;
+    rpc: AccountWeb3;
     balancesToFetch: { erc20Address: string; userAddress: string }[];
   }): Promise<MulticallUserBalance[]> {
     const chunks = _.chunk(balancesToFetch, 100);
     let data: MulticallUserBalance[] = [];
 
     for (const chunk of chunks) {
-      const multicall = new Multicaller(multicallAddress, provider, ERC20Abi);
+      const multicall = new Multicaller(rpc, ERC20Abi);
 
       for (const { erc20Address, userAddress } of chunk) {
         multicall.call(`${erc20Address}.${userAddress}`, erc20Address, 'balanceOf', [userAddress]);
