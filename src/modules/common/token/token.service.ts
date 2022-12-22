@@ -29,7 +29,7 @@ export class TokenService {
 
   async getProtocolTokenPrice() {
     // return getDexPriceFromPair('bsc', '0x7a09ddf458fda6e324a97d1a8e4304856fb3e702000200000000000000000000-0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5-0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c')
-    return '9';
+    return this.tokenPriceService.getProtocolTokenPrice();
   }
 
   async getTokens(addresses?: string[]): Promise<PrismaToken[]> {

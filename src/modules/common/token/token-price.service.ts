@@ -7,10 +7,25 @@ import * as _ from 'lodash';
 import { TokenPriceHandler } from '../../token/token-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { getDexPriceFromPair } from './dexscreener';
+import { getAddress } from 'ethers/lib/utils';
 
 @Injectable()
 export class TokenPriceService {
   constructor(private prisma: PrismaService) {}
+
+  async getProtocolTokenPrice() {
+    // return getDexPriceFromPair('bsc', '0x7a09ddf458fda6e324a97d1a8e4304856fb3e702000200000000000000000000-0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5-0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c')
+    return '9';
+  }
+
+  async tryCachePriceForToken(address: string) {
+    try {
+      return this.getPriceForToken(await this.getCurrentTokenPrices(), address);
+    } catch (error) {
+      console.error('tryCachePriceForToken failed');
+      return 0;
+    }
+  }
 
   getPriceForToken(tokenPrices: PrismaTokenCurrentPrice[], tokenAddress: string): number {
     const tokenPrice = tokenPrices.find(

@@ -199,6 +199,7 @@ export interface IQuery {
     blocksGetBlocksPerDay(): number | Promise<number>;
     blocksGetAverageBlockTime(): number | Promise<number>;
     contentGetNewsItems(): Nullable<GqlContentNewsItem>[] | Promise<Nullable<GqlContentNewsItem>[]>;
+    getRewardPools(): Nullable<RewardPool>[] | Promise<Nullable<RewardPool>[]>;
     tokenGetTokens(): GqlToken[] | Promise<GqlToken[]>;
     tokenGetCurrentPrices(): GqlTokenPrice[] | Promise<GqlTokenPrice[]>;
     tokenGetHistoricalPrices(addresses: string[]): GqlHistoricalTokenPrice[] | Promise<GqlHistoricalTokenPrice[]>;
@@ -936,6 +937,47 @@ export interface GqlContentNewsItem {
     source: GqlContentNewsItemSource;
     image?: Nullable<string>;
     discussionUrl?: Nullable<string>;
+}
+
+export interface RewardPool {
+    __typename?: 'RewardPool';
+    address: string;
+    amountStaked: string;
+    amountStakedValue: string;
+    startBlock: number;
+    endBlock: number;
+    blocksRemaining: string;
+    isPartnerPool: boolean;
+    rewardToken: RewardPoolRewardToken;
+    userInfo?: Nullable<RewardPoolUserInfo>;
+    aprs: RewardPoolAprs;
+}
+
+export interface RewardPoolRewardToken {
+    __typename?: 'RewardPoolRewardToken';
+    address: string;
+    name: string;
+    symbol: string;
+    logoURI: string;
+    rewardPerBlock: string;
+}
+
+export interface RewardPoolAprs {
+    __typename?: 'RewardPoolAprs';
+    apr: string;
+    daily: string;
+}
+
+export interface RewardPoolUserInfo {
+    __typename?: 'RewardPoolUserInfo';
+    poolAddress: string;
+    amountDeposited: string;
+    amountDepositedFull: string;
+    depositValue: string;
+    hasPendingRewards: boolean;
+    pendingRewards: string;
+    pendingRewardValue: string;
+    percentageOwned: string;
 }
 
 export interface GqlTokenPrice {

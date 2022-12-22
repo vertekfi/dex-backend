@@ -1,3 +1,5 @@
+import { RewardPool } from 'src/graphql';
+
 export type ProtocolMetrics = {
   poolCount: string;
   swapFee24h: string;
@@ -12,3 +14,17 @@ export type LatestsSyncedBlocks = {
   userStakeSyncBlock: string;
   poolSyncBlock: string;
 };
+
+export interface PoolFilter {
+  id: string;
+  title: string;
+  pools: string[];
+}
+
+export interface ProtocolConfigData {
+  featuredPools: string[];
+  incentivizedPools: string[];
+  blacklistedPools: string[];
+  poolFilters: PoolFilter[];
+  rewardPools: RewardPool[];
+}

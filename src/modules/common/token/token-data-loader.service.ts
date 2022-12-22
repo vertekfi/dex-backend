@@ -5,16 +5,14 @@ import axios from 'axios';
 import { isSameAddress } from '@balancer-labs/sdk';
 import { RPC } from '../web3/rpc.provider';
 import { AccountWeb3 } from '../types';
+import { getProtocolTokenList } from 'src/modules/protocol/utils';
 
 @Injectable()
 export class TokenDataLoaderService {
   constructor(@Inject(RPC) private rpc: AccountWeb3, private readonly prisma: PrismaService) {}
 
   async syncTokenData() {
-    const url = 'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json';
-    const { data } = await axios.get(url);
-
-    const tokens = data[url].tokens;
+    const tokens = await getProtocolTokenList();
 
     for (const token of tokens) {
       const tokenAddress = token.address.toLowerCase();

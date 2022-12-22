@@ -13,6 +13,7 @@ import { GaugeModule } from './modules/gauge/gauge.module';
 import { WorkerModule } from './modules/worker/worker.module';
 import { ScheduledJobService } from './modules/worker/scheduled-job.service';
 import { BalancerSdkModule } from './modules/balancer-sdk/balancer-sdk.module';
+import { RewardPoolModule } from './modules/reward-pools/reward-pool.module';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -55,6 +56,7 @@ if (process.env.NODE_ENV === 'production') {
     GaugeModule,
     WorkerModule,
     BalancerSdkModule,
+    RewardPoolModule,
   ],
   providers: [],
 })

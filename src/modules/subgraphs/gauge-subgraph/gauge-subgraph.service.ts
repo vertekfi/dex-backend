@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClient } from 'graphql-request';
 import { ConfigService } from 'src/modules/common/config.service';
-import { networkConfig } from '../../config/network-config';
 import {
   GaugeLiquidityGaugesQueryVariables,
   GaugeSharesQueryVariables,
@@ -37,11 +36,6 @@ export class GaugeSubgraphService {
   async getAllGaugeShares(args: GaugeSharesQueryVariables) {
     const sharesQuery = await this.sdk.GaugeShares(args);
     return sharesQuery.gaugeShares;
-  }
-
-  async getStreamers() {
-    const streamersQuery = await this.sdk.GaugeStreamers();
-    return streamersQuery.streamers;
   }
 
   async getMetadata() {

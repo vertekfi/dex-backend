@@ -1,0 +1,41 @@
+extend type Query {
+  getRewardPools: [RewardPool]!
+}
+
+type RewardPool {
+  address: String!
+  amountStaked: String!
+  amountStakedValue: String!
+  startBlock: Int!
+  endBlock: Int!
+  blocksRemaining: String!
+  isPartnerPool: Boolean!
+
+  rewardToken: RewardPoolRewardToken!
+  userInfo: RewardPoolUserInfo
+  aprs: RewardPoolAprs!
+}
+
+type RewardPoolRewardToken {
+  address: String!
+  name: String!
+  symbol: String!
+  logoURI: String!
+  rewardPerBlock: String!
+}
+
+type RewardPoolAprs {
+  apr: String!
+  daily: String!
+}
+
+type RewardPoolUserInfo {
+  poolAddress: String!
+  amountDeposited: String!
+  amountDepositedFull: String!
+  depositValue: String!
+  hasPendingRewards: Boolean!
+  pendingRewards: String!
+  pendingRewardValue: String!
+  percentageOwned: String!
+}
