@@ -19,6 +19,7 @@ const REWARD_POOL_KEY = 'REWARD_POOL_KEY';
 
 interface RewardPoolMulicalResult {
   rewardPerBlock: BigNumber;
+  startBlock: BigNumber;
   bonusEndBlock: BigNumber;
 }
 
@@ -38,15 +39,12 @@ export class RewardPoolService {
     }
 
     const { rewardPools } = await getProtocolConfigDataForChain(this.rpc.chainId);
-    // const pools = await this.getAllPools<IRewardPool[]>();
-    await this.getPoolInfo(rewardPools);
-    // await this.cache.set(REWARD_POOL_KEY, pools, 30);
-    // return pools;
-
-    return [];
+    const pools = await this.getPoolInfo(rewardPools);
+    await this.cache.set(REWARD_POOL_KEY, pools, 30);
+    return pools;
   }
 
-  private async getPoolInfo(pools: RewardPool[]) {
+  private async getPoolInfo(pools: RewardPool[]): Promise<RewardPool[]> {
     // get block and price once
     const [blockNumber, tokenPrice] = await Promise.all([
       this.rpc.provider.getBlockNumber(),
@@ -60,6 +58,7 @@ export class RewardPoolService {
 
     for (const pool of pools) {
       poolDataMulticall.call(`${pool.address}.rewardPerBlock`, pool.address, 'rewardPerBlock');
+      poolDataMulticall.call(`${pool.address}.startBlock`, pool.address, 'startBlock');
       poolDataMulticall.call(`${pool.address}.bonusEndBlock`, pool.address, 'bonusEndBlock');
       balancesMulticall.call(`${pool.address}.balanceOf`, protocolToken.address, 'balanceOf', [
         pool.address,
@@ -67,6 +66,7 @@ export class RewardPoolService {
     }
 
     let poolsOnChainData = {} as Record<string, RewardPoolMulicalResult>;
+    // keep as an object instead of array then for quick lookup below then
     let balancesOnChainData = {} as Record<string, { balanceOf: BigNumber }>;
     try {
       [poolsOnChainData, balancesOnChainData] = await Promise.all([
@@ -79,9 +79,7 @@ export class RewardPoolService {
     }
 
     const poolsOnChainDataArray = Object.entries(poolsOnChainData);
-    console.log(balancesOnChainData);
-
-    const dataPools = [];
+    const dataPools: RewardPool[] = [];
 
     let i = 0;
     for (const results of poolsOnChainDataArray) {
@@ -96,6 +94,7 @@ export class RewardPoolService {
       pool.amountStakedValue = Number(totalDepositsNum * protocolTokenPrice).toFixed(4);
 
       // remaining time
+      pool.startBlock = data.startBlock.toNumber();
       pool.endBlock = data.bonusEndBlock.toNumber();
       const blocksRemaining = pool.endBlock - blockNumber;
       pool.blocksRemaining = blocksRemaining > 0 ? commify(blocksRemaining) : '0';
@@ -105,15 +104,16 @@ export class RewardPoolService {
       const rewardTokenPrice = await this.pricing.tryCachePriceForToken(pool.rewardToken.address);
       pool.aprs = this.getRewardRates(rewardTokenPrice, rewardPerBlock, Number(pool.amountStaked));
 
-      dataPools.push(pool);
+      pool.isPartnerPool = pool.isPartnerPool || false;
+
+      dataPools.push({
+        ...pool,
+      });
 
       i++;
     }
 
-    console.log(dataPools);
-    // return pools;
-
-    return [];
+    return dataPools;
   }
 
   private getRewardRates(price: number, rewardPerBlock: number, totalDeposits: number) {
