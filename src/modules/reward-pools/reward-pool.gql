@@ -1,5 +1,6 @@
 extend type Query {
-  getRewardPools: [RewardPool]!
+  # optional user to allow quicker queries with user data in one shot
+  getRewardPools(user: String): [RewardPool]!
 }
 
 type RewardPool {
@@ -22,6 +23,7 @@ type RewardPoolRewardToken {
   symbol: String!
   logoURI: String!
   rewardPerBlock: String!
+  price: Int!
 }
 
 type RewardPoolAprs {

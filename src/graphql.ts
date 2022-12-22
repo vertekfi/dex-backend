@@ -199,7 +199,7 @@ export interface IQuery {
     blocksGetBlocksPerDay(): number | Promise<number>;
     blocksGetAverageBlockTime(): number | Promise<number>;
     contentGetNewsItems(): Nullable<GqlContentNewsItem>[] | Promise<Nullable<GqlContentNewsItem>[]>;
-    getRewardPools(): Nullable<RewardPool>[] | Promise<Nullable<RewardPool>[]>;
+    getRewardPools(user?: Nullable<string>): Nullable<RewardPool>[] | Promise<Nullable<RewardPool>[]>;
     tokenGetTokens(): GqlToken[] | Promise<GqlToken[]>;
     tokenGetCurrentPrices(): GqlTokenPrice[] | Promise<GqlTokenPrice[]>;
     tokenGetHistoricalPrices(addresses: string[]): GqlHistoricalTokenPrice[] | Promise<GqlHistoricalTokenPrice[]>;
@@ -960,6 +960,7 @@ export interface RewardPoolRewardToken {
     symbol: string;
     logoURI: string;
     rewardPerBlock: string;
+    price: number;
 }
 
 export interface RewardPoolAprs {
