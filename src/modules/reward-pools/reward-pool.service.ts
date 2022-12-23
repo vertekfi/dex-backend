@@ -25,8 +25,10 @@ interface RewardPoolMulicalResult {
 }
 
 interface UserInfoMulticallResult {
-  amount: BigNumber;
-  pendingRewards: BigNumber;
+  userInfo: {
+    amount: BigNumber;
+  };
+  pendingReward: BigNumber;
 }
 
 @Injectable()
@@ -169,11 +171,11 @@ export class RewardPoolService {
       return pools;
     }
 
-    const userMulitcall = new Multicaller(this.rpc, []);
+    const userMulitcall = new Multicaller(this.rpc, poolAbi);
 
     for (const pool of pools) {
       userMulitcall.call(`${pool.address}.userInfo`, pool.address, 'userInfo', [user]);
-      userMulitcall.call(`${pool.address}.pendingRewards`, pool.address, 'pendingRewards', [user]);
+      userMulitcall.call(`${pool.address}.pendingReward`, pool.address, 'pendingReward', [user]);
       // const percentageOwned = Number(userDeposit) / Number(formatEther(totalDeposits));
     }
 
@@ -193,14 +195,14 @@ export class RewardPoolService {
 
       let data: RewardPoolUserInfo;
 
-      if (userData.amount.gt(0)) {
-        const pendingStr = formatEther(userData.pendingRewards);
-        const userDeposit = formatEther(userData.amount);
+      if (userData.userInfo.amount.gt(0)) {
+        const pendingStr = formatEther(userData.pendingReward);
+        const userDeposit = formatEther(userData.userInfo.amount);
         const userDepositNum = Number(userDeposit);
 
         data = {
           poolAddress: pool.address,
-          hasPendingRewards: userData.pendingRewards.gt(0),
+          hasPendingRewards: userData.pendingReward.gt(0),
           pendingRewards: Number(pendingStr).toFixed(8),
           pendingRewardValue: (pool.rewardToken.price * Number(pendingStr)).toFixed(2),
           amountDeposited: userDepositNum.toFixed(4),
