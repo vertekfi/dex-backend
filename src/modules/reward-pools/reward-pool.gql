@@ -3,6 +3,10 @@ extend type Query {
   getRewardPools(user: String): [RewardPool]!
 }
 
+extend type Mutation {
+  doStakes: Boolean!
+}
+
 type RewardPool {
   address: String!
   amountStaked: String!

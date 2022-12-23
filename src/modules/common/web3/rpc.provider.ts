@@ -25,10 +25,19 @@ export const RpcProvider: Provider = {
     const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
     await provider.ready;
     console.log('Using RPC: ' + rpcUrl);
+
+    let wallet: ethers.Wallet = null;
+
+    if (process.env.NODE_ENV === 'development') {
+      wallet = new ethers.Wallet(process.env.DEV_KEY);
+      wallet = wallet.connect(provider);
+    }
+
     return {
       provider,
       chainId,
       rpcUrl,
+      wallet,
     };
   },
   inject: [ConfigService],

@@ -13,7 +13,8 @@ import { BLOCKS_PER_DAY } from '../utils/blocks';
 import * as poolAbi from './abis/RewardPool.json';
 import * as erc20Abi from '../common/web3/abi/ERC20.json';
 import { BigNumber } from 'ethers';
-import { convertToFormatEthNumber } from '../common/web3/utils';
+import { convertToFormatEthNumber, doTransaction, MAX_UINT256 } from '../common/web3/utils';
+import { parseEther } from 'ethers/lib/utils';
 
 const REWARD_POOL_KEY = 'REWARD_POOL_KEY';
 
@@ -49,7 +50,21 @@ export class RewardPoolService {
   //     return pools;
   //   }
 
-  async getPoolsWithUserData(user: string) {
+  async doStakes() {
+    const amount = parseEther('100');
+    const { rewardPools } = await getProtocolConfigDataForChain(this.rpc.chainId);
+
+    const protocolToken = this.contracts.getProtocolToken();
+    for (const pool of rewardPools) {
+      const contract = new Contract(pool.address, poolAbi, this.rpc.wallet);
+      await doTransaction(await protocolToken.approve(pool.address, MAX_UINT256));
+      await doTransaction(await contract.deposit(amount));
+    }
+
+    return true;
+  }
+
+  async getPoolsWithUserData(user?: string) {
     // get block and price once to start
     const [blockNumber, tokenPrice] = await Promise.all([
       this.rpc.provider.getBlockNumber(),
@@ -57,11 +72,8 @@ export class RewardPoolService {
     ]);
 
     const protocolTokenPrice = Number(tokenPrice);
-
     const { rewardPools } = await getProtocolConfigDataForChain(this.rpc.chainId);
     const pools = await this.getPoolInfo(rewardPools, protocolTokenPrice, blockNumber);
-
-    //  pools = await this.getPools();
 
     if (!user) {
       pools.forEach((pool) => {
