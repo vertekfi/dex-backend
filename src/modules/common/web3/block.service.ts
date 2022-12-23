@@ -9,8 +9,8 @@ import { CacheService } from '../cache.service';
 import { getDailyTimestampsForDays, getDailyTimestampsWithBuffer } from 'src/modules/utils/time';
 import { OrderDirection } from 'src/modules/subgraphs/balancer/balancer-subgraph-types';
 import { BlockFragment } from './types';
+import { BLOCKS_PER_DAY } from 'src/modules/utils/blocks';
 
-const BSC_BLOCKS_PER_DAY = 28880;
 const DAILY_BLOCKS_CACHE_KEY = 'block-subgraph_daily-blocks';
 
 @Injectable()
@@ -22,8 +22,8 @@ export class BlockService {
 
   // Not sure if this will need to actually be a subgraph
   // If we ever went multi chain then yes
-  async getBlocksPerDay() {
-    return BSC_BLOCKS_PER_DAY;
+  getBlocksPerDay() {
+    return BLOCKS_PER_DAY[this.rpc.chainId];
   }
 
   async getBlockNumber() {
@@ -36,7 +36,7 @@ export class BlockService {
 
   async getBlockFrom24HoursAgo(): Promise<ethers.providers.Block> {
     const blockNumber = await this.rpc.provider.getBlockNumber();
-    return await this.rpc.provider.getBlock(blockNumber - BSC_BLOCKS_PER_DAY);
+    return await this.rpc.provider.getBlock(blockNumber - this.getBlocksPerDay());
   }
 
   async getDailyBlocks(numDays: number): Promise<BlockFragment[]> {

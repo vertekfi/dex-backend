@@ -303,6 +303,7 @@ export interface IMutation {
     poolReloadPoolNestedTokens(poolId: string): string | Promise<string>;
     poolReloadAllTokenNestedPoolIds(): string | Promise<string>;
     protocolCacheMetrics(): string | Promise<string>;
+    doStakes(): boolean | Promise<boolean>;
     tokenReloadTokenPrices(): Nullable<boolean> | Promise<Nullable<boolean>>;
     tokenSyncTokenDefinitions(): string | Promise<string>;
     tokenSyncTokenDynamicData(): string | Promise<string>;
@@ -947,6 +948,7 @@ export interface RewardPool {
     startBlock: number;
     endBlock: number;
     blocksRemaining: string;
+    daysRemaining: string;
     isPartnerPool: boolean;
     rewardToken: RewardPoolRewardToken;
     userInfo?: Nullable<RewardPoolUserInfo>;
@@ -960,7 +962,7 @@ export interface RewardPoolRewardToken {
     symbol: string;
     logoURI: string;
     rewardPerBlock: string;
-    price: number;
+    price?: Nullable<number>;
 }
 
 export interface RewardPoolAprs {

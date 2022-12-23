@@ -15,6 +15,7 @@ import * as erc20Abi from '../common/web3/abi/ERC20.json';
 import { BigNumber } from 'ethers';
 import { convertToFormatEthNumber, doTransaction, MAX_UINT256 } from '../common/web3/utils';
 import { parseEther } from 'ethers/lib/utils';
+import { BlockService } from '../common/web3/block.service';
 
 const REWARD_POOL_KEY = 'REWARD_POOL_KEY';
 
@@ -35,9 +36,10 @@ interface UserInfoMulticallResult {
 export class RewardPoolService {
   constructor(
     @Inject(RPC) private rpc: AccountWeb3,
-    private pricing: TokenPriceService,
-    private cache: CacheService,
-    private contracts: ContractService,
+    private readonly pricing: TokenPriceService,
+    private readonly cache: CacheService,
+    private readonly contracts: ContractService,
+    private readonly blockService: BlockService,
   ) {}
 
   //   async getPools(): Promise<RewardPool[]> {
@@ -93,6 +95,12 @@ export class RewardPoolService {
     protocolTokenPrice: number,
     blockNumber: number,
   ): Promise<RewardPool[]> {
+    // TODO: All this cache check stuff can be put in a custom decorator
+    const cached = await this.cache.get<RewardPool[]>(REWARD_POOL_KEY);
+    if (cached) {
+      return cached;
+    }
+
     const protocolToken = this.contracts.getProtocolToken();
 
     const poolDataMulticall = new Multicaller(this.rpc, poolAbi);
@@ -140,6 +148,12 @@ export class RewardPoolService {
       pool.endBlock = data.bonusEndBlock.toNumber();
       const blocksRemaining = pool.endBlock - blockNumber;
       pool.blocksRemaining = blocksRemaining > 0 ? commify(blocksRemaining) : '0';
+
+      const daysRemaining =
+        blocksRemaining > 0
+          ? (blocksRemaining / this.blockService.getBlocksPerDay()).toFixed(0)
+          : '0';
+      pool.daysRemaining = daysRemaining;
 
       // reward info
       const rewardPerBlock = convertToFormatEthNumber(data.rewardPerBlock);
