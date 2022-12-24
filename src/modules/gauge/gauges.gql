@@ -1,3 +1,132 @@
+extend type Query {
+  getLiquidityGauges: [LiquidityGauge]!
+}
+
 extend type Mutation {
   syncGaugeData: String!
+}
+
+type VotingEscrow {
+  " VotingEscrow contract address "
+  id: ID!
+
+  " Amount of B-80BAL-20WETH BPT locked "
+  stakedSupply: BigDecimal!
+
+  " List of veBAL locks created "
+  locks: [VotingEscrowLock!]
+}
+
+type VotingEscrowLock {
+  " Equal to: <userAdress>-<votingEscrow> "
+  id: ID!
+
+  " Reference to User entity "
+  user: User!
+
+  " Timestamp at which B-80BAL-20WETH BPT can be unlocked by user [seconds] "
+  unlockTime: BigInt
+
+  " Amount of B-80BAL-20WETH BPT the user has locked "
+  lockedBalance: BigDecimal!
+
+  " Reference to VotingEscrow entity "
+  votingEscrowID: VotingEscrow!
+  updatedAt: Int!
+}
+
+type LiquidityGauge {
+  " LiquidityGauge contract address "
+  id: ID!
+
+  " ERC20 token symbol "
+  symbol: String!
+
+  # " Reference to Pool entity "
+  # pool: Pool
+
+  " Address of the pool (lp_token of the gauge) "
+  poolAddress: Bytes!
+
+  " Pool ID if lp_token is a Balancer pool; null otherwise "
+  poolId: Bytes
+
+  " Whether Balancer DAO killed the gauge "
+  isKilled: Boolean!
+
+  " Total of BPTs users have staked in the LiquidityGauge "
+  totalSupply: BigDecimal!
+
+  " List of user shares "
+  shares: [GaugeShare!]
+
+  " List of reward tokens depositted in the gauge "
+  tokens: [RewardToken!]
+}
+
+type GaugeShare {
+  " Equal to: <userAddress>-<gaugeAddress> "
+  id: ID!
+
+  " Reference to User entity "
+  user: User!
+
+  " User's balance of gauge deposit tokens "
+  balance: BigDecimal!
+}
+
+type RewardToken {
+  " Equal to: <tokenAddress>-<gaugeAddress> "
+  id: ID!
+
+  " ERC20 token symbol - empty string if call to symbol() reverts "
+  symbol: String!
+
+  " ERC20 token decimals - zero if call to decimals() reverts "
+  decimals: Int!
+
+  " Rate of reward tokens streamed per second "
+  rate: BigDecimal
+
+  " Timestamp at which finishes the period of rewards "
+  periodFinish: BigInt
+
+  " Amount of reward tokens that has been deposited into the gauge "
+  totalDeposited: BigDecimal!
+}
+
+type GaugeType {
+  " Type ID "
+  id: ID!
+
+  " Name of the type - empty string if call reverts "
+  name: String!
+}
+
+type GaugeVote {
+  " Equal to: <userAddress>-<gaugeAddress> "
+  id: ID!
+
+  " Reference to User entity "
+  user: User!
+
+  " Weight of veBAL power user has used to vote "
+  weight: BigDecimal
+
+  " Timestamp at which user voted [seconds] "
+  timestamp: BigInt
+}
+
+type User {
+  " User address "
+  id: ID!
+
+  " List of votes on gauges "
+  gaugeVotes: [GaugeVote!]
+
+  " List of gauge the user has shares "
+  gaugeShares: [GaugeShare!]
+
+  " List of locks the user created "
+  votingLocks: [VotingEscrowLock!]
 }
