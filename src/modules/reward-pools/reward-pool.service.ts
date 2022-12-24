@@ -222,7 +222,7 @@ export class RewardPoolService {
           amountDeposited: userDepositNum.toFixed(4),
           depositValue: (userDepositNum * protocolTokenPrice).toFixed(2),
           amountDepositedFull: userDeposit,
-          percentageOwned: (userDepositNum / Number(pool.amountStaked)).toFixed(4),
+          percentageOwned: ((userDepositNum / Number(pool.amountStaked)) * 100).toFixed(2),
         };
       } else {
         data = this._getDefaultUserValues(pool.address);
