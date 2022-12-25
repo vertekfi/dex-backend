@@ -8,7 +8,6 @@ import { AccountWeb3 } from '../common/types';
 import { ContractService } from '../common/web3/contract.service';
 import { Multicaller } from '../common/web3/multicaller';
 import { RPC } from '../common/web3/rpc.provider';
-import { getProtocolConfigDataForChain } from '../protocol/utils';
 import { BLOCKS_PER_DAY } from '../utils/blocks';
 import * as poolAbi from './abis/RewardPool.json';
 import * as erc20Abi from '../common/web3/abi/ERC20.json';
@@ -16,6 +15,7 @@ import { BigNumber } from 'ethers';
 import { convertToFormatEthNumber, doTransaction, MAX_UINT256 } from '../common/web3/utils';
 import { parseEther } from 'ethers/lib/utils';
 import { BlockService } from '../common/web3/block.service';
+import { ProtocolService } from '../protocol/protocol.service';
 
 const REWARD_POOL_KEY = 'REWARD_POOL_KEY';
 
@@ -40,6 +40,7 @@ export class RewardPoolService {
     private readonly cache: CacheService,
     private readonly contracts: ContractService,
     private readonly blockService: BlockService,
+    private readonly protocolService: ProtocolService,
   ) {}
 
   //   async getPools(): Promise<RewardPool[]> {
@@ -56,7 +57,7 @@ export class RewardPoolService {
 
   async doStakes() {
     const amount = parseEther('100');
-    const { rewardPools } = await getProtocolConfigDataForChain(this.rpc.chainId);
+    const { rewardPools } = await this.protocolService.getProtocolConfigDataForChain();
 
     const protocolToken = this.contracts.getProtocolToken();
     for (const pool of rewardPools) {
@@ -76,7 +77,7 @@ export class RewardPoolService {
     ]);
 
     const protocolTokenPrice = Number(tokenPrice);
-    const { rewardPools } = await getProtocolConfigDataForChain(this.rpc.chainId);
+    const { rewardPools } = await this.protocolService.getProtocolConfigDataForChain();
     const pools = await this.getPoolInfo(rewardPools, protocolTokenPrice, blockNumber);
 
     if (!user) {

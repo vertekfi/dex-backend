@@ -1,18 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
-import axios from 'axios';
 import { isSameAddress } from '@balancer-labs/sdk';
 import { RPC } from '../web3/rpc.provider';
 import { AccountWeb3 } from '../types';
-import { getProtocolTokenList } from 'src/modules/protocol/utils';
+import { ProtocolService } from 'src/modules/protocol/protocol.service';
 
 @Injectable()
 export class TokenDataLoaderService {
-  constructor(@Inject(RPC) private rpc: AccountWeb3, private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(RPC) private rpc: AccountWeb3,
+    private readonly prisma: PrismaService,
+    private readonly protocolService: ProtocolService,
+  ) {}
 
   async syncTokenData() {
-    const tokens = await getProtocolTokenList();
+    const tokens = await this.protocolService.getProtocolTokenList();
 
     for (const token of tokens) {
       const tokenAddress = token.address.toLowerCase();

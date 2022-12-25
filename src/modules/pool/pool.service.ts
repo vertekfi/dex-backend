@@ -33,7 +33,7 @@ import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
 import { PoolSyncService } from './lib/pool-sync.service';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
 import { CacheService } from '../common/cache.service';
-import { getProtocolConfigDataForChain } from '../protocol/utils';
+import { ProtocolService } from '../protocol/protocol.service';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -53,6 +53,7 @@ export class PoolService {
     private readonly poolAprUpdaterService: PoolAprUpdaterService,
     private readonly poolSyncService: PoolSyncService,
     private readonly cache: CacheService,
+    private readonly protocolService: ProtocolService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -110,7 +111,7 @@ export class PoolService {
       return cached;
     }
 
-    const config = await getProtocolConfigDataForChain(this.rpc.chainId);
+    const config = await this.protocolService.getProtocolConfigDataForChain();
     const pools = await this.prisma.prismaPool.findMany({
       where: {
         id: {

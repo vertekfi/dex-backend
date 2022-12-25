@@ -1,22 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as moment from 'moment-timezone';
 import * as _ from 'lodash';
 
 import { CacheService } from '../common/cache.service';
 import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
-import { LatestsSyncedBlocks, ProtocolMetrics } from './types';
+import { LatestsSyncedBlocks, ProtocolConfigData, ProtocolMetrics } from './types';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaLastBlockSyncedCategory, PrismaUserBalanceType } from '@prisma/client';
+import axios from 'axios';
+import { RPC } from '../common/web3/rpc.provider';
+import { AccountWeb3 } from '../common/types';
 
 export const PROTOCOL_METRICS_CACHE_KEY = 'protocol:metrics';
 
 @Injectable()
 export class ProtocolService {
   constructor(
+    @Inject(RPC) private rpc: AccountWeb3,
     private readonly cache: CacheService,
     private readonly balancerSubgraphService: BalancerSubgraphService,
     private readonly prisma: PrismaService,
   ) {}
+
+  async getProtocolConfigDataForChain(): Promise<ProtocolConfigData> {
+    const url = 'https://raw.githubusercontent.com/vertekfi/pool-data-config/main/pool-data.json';
+    const { data } = await axios.get(url);
+    return data[String(this.rpc.chainId)];
+  }
+
+  async getProtocolTokenList() {
+    const url = 'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json';
+    const { data } = await axios.get(url);
+
+    return data[url].tokens.filter((tk) => tk.chainId === this.rpc.chainId);
+  }
 
   async getMetrics(): Promise<ProtocolMetrics> {
     const cached = await this.cache.get<ProtocolMetrics>(PROTOCOL_METRICS_CACHE_KEY);

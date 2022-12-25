@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ProtocolService } from '../protocol/protocol.service';
 import { GaugeSubgraphService } from '../subgraphs/gauge-subgraph/gauge-subgraph.service';
 import {
   GaugeLiquidityGaugesQueryVariables,
@@ -8,7 +9,10 @@ import { GaugeShare, GaugeUserShare } from './types';
 
 @Injectable()
 export class GaugeService {
-  constructor(private readonly gaugeSubgraphService: GaugeSubgraphService) {}
+  constructor(
+    private readonly gaugeSubgraphService: GaugeSubgraphService,
+    private readonly protocolService: ProtocolService,
+  ) {}
 
   async getAllGaugeAddresses(): Promise<string[]> {
     return await this.gaugeSubgraphService.getAllGaugeAddresses();
@@ -16,6 +20,8 @@ export class GaugeService {
 
   async getAllGauges(args: GaugeLiquidityGaugesQueryVariables) {
     const gauges = await this.gaugeSubgraphService.getAllGauges(args);
+
+    const protoData = await this.protocolService.getProtocolConfigDataForChain();
 
     return gauges.map(({ id, poolId, totalSupply, shares, tokens }) => ({
       id,

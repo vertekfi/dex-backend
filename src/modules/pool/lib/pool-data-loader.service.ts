@@ -1,10 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaPoolCategoryType } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
-import { AccountWeb3 } from 'src/modules/common/types';
-import { RPC } from 'src/modules/common/web3/rpc.provider';
+import { ProtocolService } from 'src/modules/protocol/protocol.service';
 import { PoolFilter } from 'src/modules/protocol/types';
-import { getProtocolConfigDataForChain } from 'src/modules/protocol/utils';
 
 interface PoolDataConfig {
   incentivizedPools: string[];
@@ -15,12 +13,12 @@ interface PoolDataConfig {
 @Injectable()
 export class PoolDataLoaderService {
   constructor(
-    @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
+    private readonly protocolService: ProtocolService,
   ) {}
 
   async syncPoolConfigData() {
-    const response: PoolDataConfig = await getProtocolConfigDataForChain(this.rpc.chainId);
+    const response: PoolDataConfig = await this.protocolService.getProtocolConfigDataForChain();
 
     const config: PoolDataConfig = {
       incentivizedPools: response?.incentivizedPools ?? [],
