@@ -45,6 +45,7 @@ export class GaugeService {
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
 
+    // TODO: Need to double check subgraph. Think we only add gauges from GaugeController events
     return gauges
       .filter((g) => protoData.gauges.includes(g.poolId))
       .map(({ id, poolId, totalSupply, shares, tokens }) => ({
