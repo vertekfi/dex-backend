@@ -1,17 +1,21 @@
 import { formatUnits } from '@ethersproject/units';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { sub } from 'date-fns';
 import { bnum } from 'src/modules/balancer-sdk/sor/impl/utils/bignumber';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { BalMulticaller } from 'src/modules/common/web3/bal-multicall';
 import { ContractService } from 'src/modules/common/web3/contract.service';
+import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { TokenPrices } from 'src/modules/token/token-types-old';
 import { toUnixTimestamp } from 'src/modules/utils/time';
 
 @Injectable()
 export class VeBalAprCalc {
-  constructor(private account: AccountWeb3, private readonly contractService: ContractService) {}
+  constructor(
+    @Inject(RPC) private rpc: AccountWeb3,
+    private readonly contractService: ContractService,
+  ) {}
 
   public async calc(totalLiquidity: string, totalSupply: string, prices: TokenPrices) {
     const { balAmount, veBalCurrentSupply } = await this.getData();
@@ -31,14 +35,14 @@ export class VeBalAprCalc {
   }> {
     const epochBeforeLast = toUnixTimestamp(this.getPreviousEpoch(1).getTime());
     const multicaller = new BalMulticaller(
-      CONTRACT_MAP.MULTICALL[this.account.chainId],
-      this.account.provider,
+      CONTRACT_MAP.MULTICALL[this.rpc.chainId],
+      this.rpc.provider,
     );
 
     multicaller
       .call({
         key: 'balAmount',
-        address: CONTRACT_MAP.FEE_DISTRIBUTOR[this.account.chainId],
+        address: CONTRACT_MAP.FEE_DISTRIBUTOR[this.rpc.chainId],
         function: 'getTokensDistributedInWeek',
         abi: [
           'function getTokensDistributedInWeek(address, uint256) public view returns (uint256)',
