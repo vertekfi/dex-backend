@@ -3,6 +3,8 @@ import * as moment from 'moment-timezone';
 export const ONE_MINUTE_SECONDS = 60 * 1000;
 export const FIVE_MINUTES_SECONDS = 5 * ONE_MINUTE_SECONDS;
 
+export const ONE_SECOND_MS = 1000;
+
 export const ONE_DAY_SECONDS = 86400;
 
 export function timestampRoundedUpToNearestHour(m: moment.Moment = moment()): number {
@@ -66,4 +68,8 @@ export function getDailyTimestampsWithBuffer(numDays: number): number[] {
   }
 
   return timestamps;
+}
+
+export function toUnixTimestamp(jsTimestamp: number): number {
+  return Math.round(jsTimestamp / ONE_SECOND_MS);
 }

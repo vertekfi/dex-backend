@@ -16,6 +16,11 @@ export const PROTOCOL_METRICS_CACHE_KEY = 'protocol:metrics';
 export const PROTOCOL_CONFIG_CACHE_KEY = 'protocol:config';
 export const PROTOCOL_TOKENLIST_CACHE_KEY = 'protocol:tokenlist';
 
+const MAIN_POOL_IDS = {
+  5: '0xa5d4313d76020d51446634366666c6c1f051efd8000200000000000000000004',
+  56: '',
+};
+
 @Injectable()
 export class ProtocolService {
   constructor(
@@ -24,6 +29,10 @@ export class ProtocolService {
     private readonly balancerSubgraphService: BalancerSubgraphService,
     private readonly prisma: PrismaService,
   ) {}
+
+  getMainPoolId(): string {
+    return MAIN_POOL_IDS[this.rpc.chainId];
+  }
 
   async getProtocolConfigDataForChain(): Promise<ProtocolConfigData> {
     const cached = await this.cache.get<ProtocolConfigData>(PROTOCOL_CONFIG_CACHE_KEY);
