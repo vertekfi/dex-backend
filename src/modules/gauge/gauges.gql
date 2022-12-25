@@ -3,7 +3,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  syncGaugeData: String!
+  syncGaugeData: Boolean!
 }
 
 type VotingEscrow {
