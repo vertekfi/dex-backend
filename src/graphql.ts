@@ -181,6 +181,7 @@ export interface IQuery {
     __typename?: 'IQuery';
     sorGetSwaps(tokenIn: string, tokenOut: string, swapType: GqlSorSwapType, swapAmount: BigDecimal, swapOptions: GqlSorSwapOptionsInput): GqlSorGetSwapsResponse | Promise<GqlSorGetSwapsResponse>;
     sorGetBatchSwapForTokensIn(tokensIn: GqlTokenAmountHumanReadable[], tokenOut: string, swapOptions: GqlSorSwapOptionsInput): GqlSorGetBatchSwapForTokensInResponse | Promise<GqlSorGetBatchSwapForTokensInResponse>;
+    getLiquidityGauges(): Nullable<LiquidityGauge>[] | Promise<Nullable<LiquidityGauge>[]>;
     poolGetPool(id: string): GqlPoolBase | Promise<GqlPoolBase>;
     poolGetPools(first?: Nullable<number>, skip?: Nullable<number>, orderBy?: Nullable<GqlPoolOrderBy>, orderDirection?: Nullable<GqlPoolOrderDirection>, where?: Nullable<GqlPoolFilter>, textSearch?: Nullable<string>): GqlPoolMinimal[] | Promise<GqlPoolMinimal[]>;
     poolGetPoolsCount(first?: Nullable<number>, skip?: Nullable<number>, orderBy?: Nullable<GqlPoolOrderBy>, orderDirection?: Nullable<GqlPoolOrderDirection>, where?: Nullable<GqlPoolFilter>, textSearch?: Nullable<string>): number | Promise<number>;
@@ -317,6 +318,81 @@ export interface IMutation {
     userSyncChangedWalletBalancesForAllPools(): string | Promise<string>;
     userInitStakedBalances(stakingTypes: GqlPoolStakingType[]): string | Promise<string>;
     userSyncChangedStakedBalances(): string | Promise<string>;
+}
+
+export interface VotingEscrow {
+    __typename?: 'VotingEscrow';
+    id: string;
+    stakedSupply: BigDecimal;
+    locks?: Nullable<VotingEscrowLock[]>;
+}
+
+export interface VotingEscrowLock {
+    __typename?: 'VotingEscrowLock';
+    id: string;
+    user: User;
+    unlockTime?: Nullable<BigInt>;
+    lockedBalance: BigDecimal;
+    votingEscrowID: VotingEscrow;
+    updatedAt: number;
+}
+
+export interface LiquidityGauge {
+    __typename?: 'LiquidityGauge';
+    id: string;
+    symbol: string;
+    pool?: Nullable<GaugePoolInfo>;
+    address: string;
+    poolId?: Nullable<string>;
+    isKilled: boolean;
+    totalSupply: BigDecimal;
+    shares?: Nullable<GaugeShare[]>;
+    tokens?: Nullable<RewardToken[]>;
+}
+
+export interface GaugePoolInfo {
+    __typename?: 'GaugePoolInfo';
+    poolId: string;
+    address: string;
+}
+
+export interface GaugeShare {
+    __typename?: 'GaugeShare';
+    id: string;
+    user: User;
+    balance: BigDecimal;
+}
+
+export interface RewardToken {
+    __typename?: 'RewardToken';
+    id: string;
+    symbol: string;
+    decimals: number;
+    rate?: Nullable<BigDecimal>;
+    periodFinish?: Nullable<BigInt>;
+    totalDeposited: BigDecimal;
+}
+
+export interface GaugeType {
+    __typename?: 'GaugeType';
+    id: string;
+    name: string;
+}
+
+export interface GaugeVote {
+    __typename?: 'GaugeVote';
+    id: string;
+    user: User;
+    weight?: Nullable<BigDecimal>;
+    timestamp?: Nullable<BigInt>;
+}
+
+export interface User {
+    __typename?: 'User';
+    id: string;
+    gaugeVotes?: Nullable<GaugeVote[]>;
+    gaugeShares?: Nullable<GaugeShare[]>;
+    votingLocks?: Nullable<VotingEscrowLock[]>;
 }
 
 export interface GqlPoolMinimal {

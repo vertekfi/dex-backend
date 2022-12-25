@@ -17,8 +17,6 @@ query GaugeLiquidityGauges(
     totalSupply
     tokens {
       id
-      name
-      address
       decimals
       symbol
     }
@@ -46,8 +44,6 @@ query GaugeUserGauges($userAddress: ID!) {
         id
         poolId
         tokens {
-          name
-          address
           decimals
           symbol
         }

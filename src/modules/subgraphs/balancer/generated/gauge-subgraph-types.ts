@@ -28,22 +28,27 @@ export type Block_Height = {
   number_gte?: InputMaybe<Scalars['Int']>;
 };
 
-export enum Chain {
-  Arbitrum = 'Arbitrum',
-  Polygon = 'Polygon',
-}
-
 export type Gauge = {
   __typename?: 'Gauge';
+  /**  Timestamp at which Balancer DAO added the gauge to GaugeController [seconds]  */
+  addedTimestamp: Scalars['Int'];
+  /**  Address of the gauge  */
   address: Scalars['Bytes'];
+  /**  Equal to: <gaugeAddress>-<typeID>  */
   id: Scalars['ID'];
+  /**  Reference to LiquidityGauge  */
+  liquidityGauge?: Maybe<LiquidityGauge>;
+  /**  Type of the gauge  */
   type: GaugeType;
 };
 
 export type GaugeFactory = {
   __typename?: 'GaugeFactory';
+  /**  List of gauges created through the factory  */
   gauges?: Maybe<Array<LiquidityGauge>>;
+  /**  Factory contract address  */
   id: Scalars['ID'];
+  /**  Number of gauges created through the factory  */
   numGauges: Scalars['Int'];
 };
 
@@ -85,9 +90,13 @@ export enum GaugeFactory_OrderBy {
 
 export type GaugeShare = {
   __typename?: 'GaugeShare';
+  /**  User's balance of gauge deposit tokens  */
   balance: Scalars['BigDecimal'];
+  /**  Reference to LiquidityGauge entity  */
   gauge: LiquidityGauge;
+  /**  Equal to: <userAddress>-<gaugeAddress>  */
   id: Scalars['ID'];
+  /**  Reference to User entity  */
   user: User;
 };
 
@@ -163,7 +172,9 @@ export enum GaugeShare_OrderBy {
 
 export type GaugeType = {
   __typename?: 'GaugeType';
+  /**  Type ID  */
   id: Scalars['ID'];
+  /**  Name of the type - empty string if call reverts  */
   name: Scalars['String'];
 };
 
@@ -207,10 +218,15 @@ export enum GaugeType_OrderBy {
 
 export type GaugeVote = {
   __typename?: 'GaugeVote';
-  gauge: LiquidityGauge;
+  /**  Reference to Gauge entity  */
+  gauge: Gauge;
+  /**  Equal to: <userAddress>-<gaugeAddress>  */
   id: Scalars['ID'];
+  /**  Timestamp at which user voted [seconds]  */
   timestamp?: Maybe<Scalars['BigInt']>;
+  /**  Reference to User entity  */
   user: User;
+  /**  Weight of veBAL power user has used to vote  */
   weight?: Maybe<Scalars['BigDecimal']>;
 };
 
@@ -218,7 +234,7 @@ export type GaugeVote_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   gauge?: InputMaybe<Scalars['String']>;
-  gauge_?: InputMaybe<LiquidityGauge_Filter>;
+  gauge_?: InputMaybe<Gauge_Filter>;
   gauge_contains?: InputMaybe<Scalars['String']>;
   gauge_contains_nocase?: InputMaybe<Scalars['String']>;
   gauge_ends_with?: InputMaybe<Scalars['String']>;
@@ -296,6 +312,14 @@ export enum GaugeVote_OrderBy {
 export type Gauge_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  addedTimestamp?: InputMaybe<Scalars['Int']>;
+  addedTimestamp_gt?: InputMaybe<Scalars['Int']>;
+  addedTimestamp_gte?: InputMaybe<Scalars['Int']>;
+  addedTimestamp_in?: InputMaybe<Array<Scalars['Int']>>;
+  addedTimestamp_lt?: InputMaybe<Scalars['Int']>;
+  addedTimestamp_lte?: InputMaybe<Scalars['Int']>;
+  addedTimestamp_not?: InputMaybe<Scalars['Int']>;
+  addedTimestamp_not_in?: InputMaybe<Array<Scalars['Int']>>;
   address?: InputMaybe<Scalars['Bytes']>;
   address_contains?: InputMaybe<Scalars['Bytes']>;
   address_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -310,6 +334,27 @@ export type Gauge_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  liquidityGauge?: InputMaybe<Scalars['String']>;
+  liquidityGauge_?: InputMaybe<LiquidityGauge_Filter>;
+  liquidityGauge_contains?: InputMaybe<Scalars['String']>;
+  liquidityGauge_contains_nocase?: InputMaybe<Scalars['String']>;
+  liquidityGauge_ends_with?: InputMaybe<Scalars['String']>;
+  liquidityGauge_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  liquidityGauge_gt?: InputMaybe<Scalars['String']>;
+  liquidityGauge_gte?: InputMaybe<Scalars['String']>;
+  liquidityGauge_in?: InputMaybe<Array<Scalars['String']>>;
+  liquidityGauge_lt?: InputMaybe<Scalars['String']>;
+  liquidityGauge_lte?: InputMaybe<Scalars['String']>;
+  liquidityGauge_not?: InputMaybe<Scalars['String']>;
+  liquidityGauge_not_contains?: InputMaybe<Scalars['String']>;
+  liquidityGauge_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  liquidityGauge_not_ends_with?: InputMaybe<Scalars['String']>;
+  liquidityGauge_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  liquidityGauge_not_in?: InputMaybe<Array<Scalars['String']>>;
+  liquidityGauge_not_starts_with?: InputMaybe<Scalars['String']>;
+  liquidityGauge_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  liquidityGauge_starts_with?: InputMaybe<Scalars['String']>;
+  liquidityGauge_starts_with_nocase?: InputMaybe<Scalars['String']>;
   type?: InputMaybe<Scalars['String']>;
   type_?: InputMaybe<GaugeType_Filter>;
   type_contains?: InputMaybe<Scalars['String']>;
@@ -334,21 +379,38 @@ export type Gauge_Filter = {
 };
 
 export enum Gauge_OrderBy {
+  AddedTimestamp = 'addedTimestamp',
   Address = 'address',
   Id = 'id',
+  LiquidityGauge = 'liquidityGauge',
   Type = 'type',
 }
 
 export type LiquidityGauge = {
   __typename?: 'LiquidityGauge';
+  /**  Factory contract address  */
   factory: GaugeFactory;
+  /**  Reference to Gauge entity - created when LiquidityGauge is added to GaugeController */
+  gauge?: Maybe<Gauge>;
+  /**  LiquidityGauge contract address  */
   id: Scalars['ID'];
+  /**  Whether Balancer DAO killed the gauge  */
+  isKilled: Scalars['Boolean'];
+  /**  Whether the LiquidityGauge is the most recent added to GaugeController  */
+  isPreferentialGauge: Scalars['Boolean'];
+  /**  Reference to Pool entity  */
+  pool?: Maybe<Pool>;
+  /**  Address of the pool (lp_token of the gauge)  */
   poolAddress: Scalars['Bytes'];
-  poolId: Scalars['Bytes'];
+  /**  Pool ID if lp_token is a Balancer pool; null otherwise  */
+  poolId?: Maybe<Scalars['Bytes']>;
+  /**  List of user shares  */
   shares?: Maybe<Array<GaugeShare>>;
-  streamer: Streamer;
+  /**  ERC20 token symbol  */
   symbol: Scalars['String'];
+  /**  List of reward tokens depositted in the gauge  */
   tokens?: Maybe<Array<RewardToken>>;
+  /**  Total of BPTs users have staked in the LiquidityGauge  */
   totalSupply: Scalars['BigDecimal'];
 };
 
@@ -392,6 +454,27 @@ export type LiquidityGauge_Filter = {
   factory_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   factory_starts_with?: InputMaybe<Scalars['String']>;
   factory_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  gauge?: InputMaybe<Scalars['String']>;
+  gauge_?: InputMaybe<Gauge_Filter>;
+  gauge_contains?: InputMaybe<Scalars['String']>;
+  gauge_contains_nocase?: InputMaybe<Scalars['String']>;
+  gauge_ends_with?: InputMaybe<Scalars['String']>;
+  gauge_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  gauge_gt?: InputMaybe<Scalars['String']>;
+  gauge_gte?: InputMaybe<Scalars['String']>;
+  gauge_in?: InputMaybe<Array<Scalars['String']>>;
+  gauge_lt?: InputMaybe<Scalars['String']>;
+  gauge_lte?: InputMaybe<Scalars['String']>;
+  gauge_not?: InputMaybe<Scalars['String']>;
+  gauge_not_contains?: InputMaybe<Scalars['String']>;
+  gauge_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  gauge_not_ends_with?: InputMaybe<Scalars['String']>;
+  gauge_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  gauge_not_in?: InputMaybe<Array<Scalars['String']>>;
+  gauge_not_starts_with?: InputMaybe<Scalars['String']>;
+  gauge_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  gauge_starts_with?: InputMaybe<Scalars['String']>;
+  gauge_starts_with_nocase?: InputMaybe<Scalars['String']>;
   id?: InputMaybe<Scalars['ID']>;
   id_gt?: InputMaybe<Scalars['ID']>;
   id_gte?: InputMaybe<Scalars['ID']>;
@@ -400,6 +483,15 @@ export type LiquidityGauge_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  isKilled?: InputMaybe<Scalars['Boolean']>;
+  isKilled_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isKilled_not?: InputMaybe<Scalars['Boolean']>;
+  isKilled_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isPreferentialGauge?: InputMaybe<Scalars['Boolean']>;
+  isPreferentialGauge_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isPreferentialGauge_not?: InputMaybe<Scalars['Boolean']>;
+  isPreferentialGauge_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  pool?: InputMaybe<Scalars['String']>;
   poolAddress?: InputMaybe<Scalars['Bytes']>;
   poolAddress_contains?: InputMaybe<Scalars['Bytes']>;
   poolAddress_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -412,28 +504,27 @@ export type LiquidityGauge_Filter = {
   poolId_not?: InputMaybe<Scalars['Bytes']>;
   poolId_not_contains?: InputMaybe<Scalars['Bytes']>;
   poolId_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  pool_?: InputMaybe<Pool_Filter>;
+  pool_contains?: InputMaybe<Scalars['String']>;
+  pool_contains_nocase?: InputMaybe<Scalars['String']>;
+  pool_ends_with?: InputMaybe<Scalars['String']>;
+  pool_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  pool_gt?: InputMaybe<Scalars['String']>;
+  pool_gte?: InputMaybe<Scalars['String']>;
+  pool_in?: InputMaybe<Array<Scalars['String']>>;
+  pool_lt?: InputMaybe<Scalars['String']>;
+  pool_lte?: InputMaybe<Scalars['String']>;
+  pool_not?: InputMaybe<Scalars['String']>;
+  pool_not_contains?: InputMaybe<Scalars['String']>;
+  pool_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  pool_not_ends_with?: InputMaybe<Scalars['String']>;
+  pool_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  pool_not_in?: InputMaybe<Array<Scalars['String']>>;
+  pool_not_starts_with?: InputMaybe<Scalars['String']>;
+  pool_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  pool_starts_with?: InputMaybe<Scalars['String']>;
+  pool_starts_with_nocase?: InputMaybe<Scalars['String']>;
   shares_?: InputMaybe<GaugeShare_Filter>;
-  streamer?: InputMaybe<Scalars['String']>;
-  streamer_?: InputMaybe<Streamer_Filter>;
-  streamer_contains?: InputMaybe<Scalars['String']>;
-  streamer_contains_nocase?: InputMaybe<Scalars['String']>;
-  streamer_ends_with?: InputMaybe<Scalars['String']>;
-  streamer_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  streamer_gt?: InputMaybe<Scalars['String']>;
-  streamer_gte?: InputMaybe<Scalars['String']>;
-  streamer_in?: InputMaybe<Array<Scalars['String']>>;
-  streamer_lt?: InputMaybe<Scalars['String']>;
-  streamer_lte?: InputMaybe<Scalars['String']>;
-  streamer_not?: InputMaybe<Scalars['String']>;
-  streamer_not_contains?: InputMaybe<Scalars['String']>;
-  streamer_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  streamer_not_ends_with?: InputMaybe<Scalars['String']>;
-  streamer_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  streamer_not_in?: InputMaybe<Array<Scalars['String']>>;
-  streamer_not_starts_with?: InputMaybe<Scalars['String']>;
-  streamer_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  streamer_starts_with?: InputMaybe<Scalars['String']>;
-  streamer_starts_with_nocase?: InputMaybe<Scalars['String']>;
   symbol?: InputMaybe<Scalars['String']>;
   symbol_contains?: InputMaybe<Scalars['String']>;
   symbol_contains_nocase?: InputMaybe<Scalars['String']>;
@@ -467,11 +558,14 @@ export type LiquidityGauge_Filter = {
 
 export enum LiquidityGauge_OrderBy {
   Factory = 'factory',
+  Gauge = 'gauge',
   Id = 'id',
+  IsKilled = 'isKilled',
+  IsPreferentialGauge = 'isPreferentialGauge',
+  Pool = 'pool',
   PoolAddress = 'poolAddress',
   PoolId = 'poolId',
   Shares = 'shares',
-  Streamer = 'streamer',
   Symbol = 'symbol',
   Tokens = 'tokens',
   TotalSupply = 'totalSupply',
@@ -481,6 +575,92 @@ export enum LiquidityGauge_OrderBy {
 export enum OrderDirection {
   Asc = 'asc',
   Desc = 'desc',
+}
+
+export type Pool = {
+  __typename?: 'Pool';
+  /**  Address of the pool (lp_token of the gauge)  */
+  address: Scalars['Bytes'];
+  /**  List of gauges created for the pool  */
+  gauges?: Maybe<Array<LiquidityGauge>>;
+  /**  List of the pool's gauges addresses  */
+  gaugesList: Array<Scalars['Bytes']>;
+  /**  Address of the pool (lp_token of the gauge)  */
+  id: Scalars['ID'];
+  /**  Pool ID if lp_token is a Balancer pool; null otherwise  */
+  poolId?: Maybe<Scalars['Bytes']>;
+  /**  Most recent, unkilled gauge in the GaugeController  */
+  preferentialGauge?: Maybe<LiquidityGauge>;
+};
+
+export type PoolGaugesArgs = {
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<LiquidityGauge_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<LiquidityGauge_Filter>;
+};
+
+export type Pool_Filter = {
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  address?: InputMaybe<Scalars['Bytes']>;
+  address_contains?: InputMaybe<Scalars['Bytes']>;
+  address_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  address_not?: InputMaybe<Scalars['Bytes']>;
+  address_not_contains?: InputMaybe<Scalars['Bytes']>;
+  address_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  gaugesList?: InputMaybe<Array<Scalars['Bytes']>>;
+  gaugesList_contains?: InputMaybe<Array<Scalars['Bytes']>>;
+  gaugesList_contains_nocase?: InputMaybe<Array<Scalars['Bytes']>>;
+  gaugesList_not?: InputMaybe<Array<Scalars['Bytes']>>;
+  gaugesList_not_contains?: InputMaybe<Array<Scalars['Bytes']>>;
+  gaugesList_not_contains_nocase?: InputMaybe<Array<Scalars['Bytes']>>;
+  gauges_?: InputMaybe<LiquidityGauge_Filter>;
+  id?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  poolId?: InputMaybe<Scalars['Bytes']>;
+  poolId_contains?: InputMaybe<Scalars['Bytes']>;
+  poolId_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  poolId_not?: InputMaybe<Scalars['Bytes']>;
+  poolId_not_contains?: InputMaybe<Scalars['Bytes']>;
+  poolId_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  preferentialGauge?: InputMaybe<Scalars['String']>;
+  preferentialGauge_?: InputMaybe<LiquidityGauge_Filter>;
+  preferentialGauge_contains?: InputMaybe<Scalars['String']>;
+  preferentialGauge_contains_nocase?: InputMaybe<Scalars['String']>;
+  preferentialGauge_ends_with?: InputMaybe<Scalars['String']>;
+  preferentialGauge_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  preferentialGauge_gt?: InputMaybe<Scalars['String']>;
+  preferentialGauge_gte?: InputMaybe<Scalars['String']>;
+  preferentialGauge_in?: InputMaybe<Array<Scalars['String']>>;
+  preferentialGauge_lt?: InputMaybe<Scalars['String']>;
+  preferentialGauge_lte?: InputMaybe<Scalars['String']>;
+  preferentialGauge_not?: InputMaybe<Scalars['String']>;
+  preferentialGauge_not_contains?: InputMaybe<Scalars['String']>;
+  preferentialGauge_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  preferentialGauge_not_ends_with?: InputMaybe<Scalars['String']>;
+  preferentialGauge_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  preferentialGauge_not_in?: InputMaybe<Array<Scalars['String']>>;
+  preferentialGauge_not_starts_with?: InputMaybe<Scalars['String']>;
+  preferentialGauge_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  preferentialGauge_starts_with?: InputMaybe<Scalars['String']>;
+  preferentialGauge_starts_with_nocase?: InputMaybe<Scalars['String']>;
+};
+
+export enum Pool_OrderBy {
+  Address = 'address',
+  Gauges = 'gauges',
+  GaugesList = 'gaugesList',
+  Id = 'id',
+  PoolId = 'poolId',
+  PreferentialGauge = 'preferentialGauge',
 }
 
 export type Query = {
@@ -499,12 +679,10 @@ export type Query = {
   gauges: Array<Gauge>;
   liquidityGauge?: Maybe<LiquidityGauge>;
   liquidityGauges: Array<LiquidityGauge>;
+  pool?: Maybe<Pool>;
+  pools: Array<Pool>;
   rewardToken?: Maybe<RewardToken>;
   rewardTokens: Array<RewardToken>;
-  rootGauge?: Maybe<RootGauge>;
-  rootGauges: Array<RootGauge>;
-  streamer?: Maybe<Streamer>;
-  streamers: Array<Streamer>;
   user?: Maybe<User>;
   users: Array<User>;
   votingEscrow?: Maybe<VotingEscrow>;
@@ -613,6 +791,22 @@ export type QueryLiquidityGaugesArgs = {
   where?: InputMaybe<LiquidityGauge_Filter>;
 };
 
+export type QueryPoolArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+export type QueryPoolsArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Pool_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<Pool_Filter>;
+};
+
 export type QueryRewardTokenArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
@@ -627,38 +821,6 @@ export type QueryRewardTokensArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<RewardToken_Filter>;
-};
-
-export type QueryRootGaugeArgs = {
-  block?: InputMaybe<Block_Height>;
-  id: Scalars['ID'];
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-export type QueryRootGaugesArgs = {
-  block?: InputMaybe<Block_Height>;
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<RootGauge_OrderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  skip?: InputMaybe<Scalars['Int']>;
-  subgraphError?: _SubgraphErrorPolicy_;
-  where?: InputMaybe<RootGauge_Filter>;
-};
-
-export type QueryStreamerArgs = {
-  block?: InputMaybe<Block_Height>;
-  id: Scalars['ID'];
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-export type QueryStreamersArgs = {
-  block?: InputMaybe<Block_Height>;
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<Streamer_OrderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  skip?: InputMaybe<Scalars['Int']>;
-  subgraphError?: _SubgraphErrorPolicy_;
-  where?: InputMaybe<Streamer_Filter>;
 };
 
 export type QueryUserArgs = {
@@ -711,25 +873,25 @@ export type QueryVotingEscrowsArgs = {
 
 export type RewardToken = {
   __typename?: 'RewardToken';
-  address: Scalars['Bytes'];
+  /**  ERC20 token decimals - zero if call to decimals() reverts  */
   decimals: Scalars['Int'];
+  /**  Reference to LiquidityGauge entity  */
   gauge: LiquidityGauge;
+  /**  Equal to: <tokenAddress>-<gaugeAddress>  */
   id: Scalars['ID'];
-  name: Scalars['String'];
-  streamer?: Maybe<Streamer>;
+  /**  Timestamp at which finishes the period of rewards  */
+  periodFinish?: Maybe<Scalars['BigInt']>;
+  /**  Rate of reward tokens streamed per second  */
+  rate?: Maybe<Scalars['BigDecimal']>;
+  /**  ERC20 token symbol - empty string if call to symbol() reverts  */
   symbol: Scalars['String'];
+  /**  Amount of reward tokens that has been deposited into the gauge  */
   totalDeposited: Scalars['BigDecimal'];
 };
 
 export type RewardToken_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
-  address?: InputMaybe<Scalars['Bytes']>;
-  address_contains?: InputMaybe<Scalars['Bytes']>;
-  address_in?: InputMaybe<Array<Scalars['Bytes']>>;
-  address_not?: InputMaybe<Scalars['Bytes']>;
-  address_not_contains?: InputMaybe<Scalars['Bytes']>;
-  address_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
   decimals?: InputMaybe<Scalars['Int']>;
   decimals_gt?: InputMaybe<Scalars['Int']>;
   decimals_gte?: InputMaybe<Scalars['Int']>;
@@ -767,47 +929,22 @@ export type RewardToken_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
-  name?: InputMaybe<Scalars['String']>;
-  name_contains?: InputMaybe<Scalars['String']>;
-  name_contains_nocase?: InputMaybe<Scalars['String']>;
-  name_ends_with?: InputMaybe<Scalars['String']>;
-  name_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  name_gt?: InputMaybe<Scalars['String']>;
-  name_gte?: InputMaybe<Scalars['String']>;
-  name_in?: InputMaybe<Array<Scalars['String']>>;
-  name_lt?: InputMaybe<Scalars['String']>;
-  name_lte?: InputMaybe<Scalars['String']>;
-  name_not?: InputMaybe<Scalars['String']>;
-  name_not_contains?: InputMaybe<Scalars['String']>;
-  name_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  name_not_ends_with?: InputMaybe<Scalars['String']>;
-  name_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  name_not_in?: InputMaybe<Array<Scalars['String']>>;
-  name_not_starts_with?: InputMaybe<Scalars['String']>;
-  name_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  name_starts_with?: InputMaybe<Scalars['String']>;
-  name_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  streamer?: InputMaybe<Scalars['String']>;
-  streamer_?: InputMaybe<Streamer_Filter>;
-  streamer_contains?: InputMaybe<Scalars['String']>;
-  streamer_contains_nocase?: InputMaybe<Scalars['String']>;
-  streamer_ends_with?: InputMaybe<Scalars['String']>;
-  streamer_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  streamer_gt?: InputMaybe<Scalars['String']>;
-  streamer_gte?: InputMaybe<Scalars['String']>;
-  streamer_in?: InputMaybe<Array<Scalars['String']>>;
-  streamer_lt?: InputMaybe<Scalars['String']>;
-  streamer_lte?: InputMaybe<Scalars['String']>;
-  streamer_not?: InputMaybe<Scalars['String']>;
-  streamer_not_contains?: InputMaybe<Scalars['String']>;
-  streamer_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  streamer_not_ends_with?: InputMaybe<Scalars['String']>;
-  streamer_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  streamer_not_in?: InputMaybe<Array<Scalars['String']>>;
-  streamer_not_starts_with?: InputMaybe<Scalars['String']>;
-  streamer_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  streamer_starts_with?: InputMaybe<Scalars['String']>;
-  streamer_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  periodFinish?: InputMaybe<Scalars['BigInt']>;
+  periodFinish_gt?: InputMaybe<Scalars['BigInt']>;
+  periodFinish_gte?: InputMaybe<Scalars['BigInt']>;
+  periodFinish_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  periodFinish_lt?: InputMaybe<Scalars['BigInt']>;
+  periodFinish_lte?: InputMaybe<Scalars['BigInt']>;
+  periodFinish_not?: InputMaybe<Scalars['BigInt']>;
+  periodFinish_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  rate?: InputMaybe<Scalars['BigDecimal']>;
+  rate_gt?: InputMaybe<Scalars['BigDecimal']>;
+  rate_gte?: InputMaybe<Scalars['BigDecimal']>;
+  rate_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  rate_lt?: InputMaybe<Scalars['BigDecimal']>;
+  rate_lte?: InputMaybe<Scalars['BigDecimal']>;
+  rate_not?: InputMaybe<Scalars['BigDecimal']>;
+  rate_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   symbol?: InputMaybe<Scalars['String']>;
   symbol_contains?: InputMaybe<Scalars['String']>;
   symbol_contains_nocase?: InputMaybe<Scalars['String']>;
@@ -839,114 +976,13 @@ export type RewardToken_Filter = {
 };
 
 export enum RewardToken_OrderBy {
-  Address = 'address',
   Decimals = 'decimals',
   Gauge = 'gauge',
   Id = 'id',
-  Name = 'name',
-  Streamer = 'streamer',
+  PeriodFinish = 'periodFinish',
+  Rate = 'rate',
   Symbol = 'symbol',
   TotalDeposited = 'totalDeposited',
-}
-
-export type RootGauge = {
-  __typename?: 'RootGauge';
-  chain: Chain;
-  id: Scalars['ID'];
-  recipient: Scalars['Bytes'];
-};
-
-export type RootGauge_Filter = {
-  /** Filter for the block changed event. */
-  _change_block?: InputMaybe<BlockChangedFilter>;
-  chain?: InputMaybe<Chain>;
-  chain_in?: InputMaybe<Array<Chain>>;
-  chain_not?: InputMaybe<Chain>;
-  chain_not_in?: InputMaybe<Array<Chain>>;
-  id?: InputMaybe<Scalars['ID']>;
-  id_gt?: InputMaybe<Scalars['ID']>;
-  id_gte?: InputMaybe<Scalars['ID']>;
-  id_in?: InputMaybe<Array<Scalars['ID']>>;
-  id_lt?: InputMaybe<Scalars['ID']>;
-  id_lte?: InputMaybe<Scalars['ID']>;
-  id_not?: InputMaybe<Scalars['ID']>;
-  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
-  recipient?: InputMaybe<Scalars['Bytes']>;
-  recipient_contains?: InputMaybe<Scalars['Bytes']>;
-  recipient_in?: InputMaybe<Array<Scalars['Bytes']>>;
-  recipient_not?: InputMaybe<Scalars['Bytes']>;
-  recipient_not_contains?: InputMaybe<Scalars['Bytes']>;
-  recipient_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
-};
-
-export enum RootGauge_OrderBy {
-  Chain = 'chain',
-  Id = 'id',
-  Recipient = 'recipient',
-}
-
-export type Streamer = {
-  __typename?: 'Streamer';
-  address: Scalars['Bytes'];
-  gauge: LiquidityGauge;
-  id: Scalars['ID'];
-  rewardTokens?: Maybe<Array<RewardToken>>;
-};
-
-export type StreamerRewardTokensArgs = {
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<RewardToken_OrderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  skip?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<RewardToken_Filter>;
-};
-
-export type Streamer_Filter = {
-  /** Filter for the block changed event. */
-  _change_block?: InputMaybe<BlockChangedFilter>;
-  address?: InputMaybe<Scalars['Bytes']>;
-  address_contains?: InputMaybe<Scalars['Bytes']>;
-  address_in?: InputMaybe<Array<Scalars['Bytes']>>;
-  address_not?: InputMaybe<Scalars['Bytes']>;
-  address_not_contains?: InputMaybe<Scalars['Bytes']>;
-  address_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
-  gauge?: InputMaybe<Scalars['String']>;
-  gauge_?: InputMaybe<LiquidityGauge_Filter>;
-  gauge_contains?: InputMaybe<Scalars['String']>;
-  gauge_contains_nocase?: InputMaybe<Scalars['String']>;
-  gauge_ends_with?: InputMaybe<Scalars['String']>;
-  gauge_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  gauge_gt?: InputMaybe<Scalars['String']>;
-  gauge_gte?: InputMaybe<Scalars['String']>;
-  gauge_in?: InputMaybe<Array<Scalars['String']>>;
-  gauge_lt?: InputMaybe<Scalars['String']>;
-  gauge_lte?: InputMaybe<Scalars['String']>;
-  gauge_not?: InputMaybe<Scalars['String']>;
-  gauge_not_contains?: InputMaybe<Scalars['String']>;
-  gauge_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  gauge_not_ends_with?: InputMaybe<Scalars['String']>;
-  gauge_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  gauge_not_in?: InputMaybe<Array<Scalars['String']>>;
-  gauge_not_starts_with?: InputMaybe<Scalars['String']>;
-  gauge_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  gauge_starts_with?: InputMaybe<Scalars['String']>;
-  gauge_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  id?: InputMaybe<Scalars['ID']>;
-  id_gt?: InputMaybe<Scalars['ID']>;
-  id_gte?: InputMaybe<Scalars['ID']>;
-  id_in?: InputMaybe<Array<Scalars['ID']>>;
-  id_lt?: InputMaybe<Scalars['ID']>;
-  id_lte?: InputMaybe<Scalars['ID']>;
-  id_not?: InputMaybe<Scalars['ID']>;
-  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
-  rewardTokens_?: InputMaybe<RewardToken_Filter>;
-};
-
-export enum Streamer_OrderBy {
-  Address = 'address',
-  Gauge = 'gauge',
-  Id = 'id',
-  RewardTokens = 'rewardTokens',
 }
 
 export type Subscription = {
@@ -965,12 +1001,10 @@ export type Subscription = {
   gauges: Array<Gauge>;
   liquidityGauge?: Maybe<LiquidityGauge>;
   liquidityGauges: Array<LiquidityGauge>;
+  pool?: Maybe<Pool>;
+  pools: Array<Pool>;
   rewardToken?: Maybe<RewardToken>;
   rewardTokens: Array<RewardToken>;
-  rootGauge?: Maybe<RootGauge>;
-  rootGauges: Array<RootGauge>;
-  streamer?: Maybe<Streamer>;
-  streamers: Array<Streamer>;
   user?: Maybe<User>;
   users: Array<User>;
   votingEscrow?: Maybe<VotingEscrow>;
@@ -1079,6 +1113,22 @@ export type SubscriptionLiquidityGaugesArgs = {
   where?: InputMaybe<LiquidityGauge_Filter>;
 };
 
+export type SubscriptionPoolArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+export type SubscriptionPoolsArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Pool_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<Pool_Filter>;
+};
+
 export type SubscriptionRewardTokenArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
@@ -1093,38 +1143,6 @@ export type SubscriptionRewardTokensArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<RewardToken_Filter>;
-};
-
-export type SubscriptionRootGaugeArgs = {
-  block?: InputMaybe<Block_Height>;
-  id: Scalars['ID'];
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-export type SubscriptionRootGaugesArgs = {
-  block?: InputMaybe<Block_Height>;
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<RootGauge_OrderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  skip?: InputMaybe<Scalars['Int']>;
-  subgraphError?: _SubgraphErrorPolicy_;
-  where?: InputMaybe<RootGauge_Filter>;
-};
-
-export type SubscriptionStreamerArgs = {
-  block?: InputMaybe<Block_Height>;
-  id: Scalars['ID'];
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-export type SubscriptionStreamersArgs = {
-  block?: InputMaybe<Block_Height>;
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<Streamer_OrderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  skip?: InputMaybe<Scalars['Int']>;
-  subgraphError?: _SubgraphErrorPolicy_;
-  where?: InputMaybe<Streamer_Filter>;
 };
 
 export type SubscriptionUserArgs = {
@@ -1177,9 +1195,13 @@ export type SubscriptionVotingEscrowsArgs = {
 
 export type User = {
   __typename?: 'User';
+  /**  List of gauge the user has shares  */
   gaugeShares?: Maybe<Array<GaugeShare>>;
+  /**  List of votes on gauges  */
   gaugeVotes?: Maybe<Array<GaugeVote>>;
+  /**  User address  */
   id: Scalars['ID'];
+  /**  List of locks the user created  */
   votingLocks?: Maybe<Array<VotingEscrowLock>>;
 };
 
@@ -1232,8 +1254,11 @@ export enum User_OrderBy {
 
 export type VotingEscrow = {
   __typename?: 'VotingEscrow';
+  /**  VotingEscrow contract address  */
   id: Scalars['ID'];
+  /**  List of veBAL locks created  */
   locks?: Maybe<Array<VotingEscrowLock>>;
+  /**  Amount of B-80BAL-20WETH BPT locked  */
   stakedSupply: Scalars['BigDecimal'];
 };
 
@@ -1247,10 +1272,16 @@ export type VotingEscrowLocksArgs = {
 
 export type VotingEscrowLock = {
   __typename?: 'VotingEscrowLock';
+  /**  Equal to: <userAdress>-<votingEscrow>  */
   id: Scalars['ID'];
+  /**  Amount of B-80BAL-20WETH BPT the user has locked  */
   lockedBalance: Scalars['BigDecimal'];
+  /**  Timestamp at which B-80BAL-20WETH BPT can be unlocked by user [seconds]  */
   unlockTime?: Maybe<Scalars['BigInt']>;
+  updatedAt: Scalars['Int'];
+  /**  Reference to User entity  */
   user: User;
+  /**  Reference to VotingEscrow entity  */
   votingEscrowID: VotingEscrow;
 };
 
@@ -1281,6 +1312,14 @@ export type VotingEscrowLock_Filter = {
   unlockTime_lte?: InputMaybe<Scalars['BigInt']>;
   unlockTime_not?: InputMaybe<Scalars['BigInt']>;
   unlockTime_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  updatedAt?: InputMaybe<Scalars['Int']>;
+  updatedAt_gt?: InputMaybe<Scalars['Int']>;
+  updatedAt_gte?: InputMaybe<Scalars['Int']>;
+  updatedAt_in?: InputMaybe<Array<Scalars['Int']>>;
+  updatedAt_lt?: InputMaybe<Scalars['Int']>;
+  updatedAt_lte?: InputMaybe<Scalars['Int']>;
+  updatedAt_not?: InputMaybe<Scalars['Int']>;
+  updatedAt_not_in?: InputMaybe<Array<Scalars['Int']>>;
   user?: InputMaybe<Scalars['String']>;
   user_?: InputMaybe<User_Filter>;
   user_contains?: InputMaybe<Scalars['String']>;
@@ -1329,6 +1368,7 @@ export enum VotingEscrowLock_OrderBy {
   Id = 'id',
   LockedBalance = 'lockedBalance',
   UnlockTime = 'unlockTime',
+  UpdatedAt = 'updatedAt',
   User = 'user',
   VotingEscrowId = 'votingEscrowID',
 }
@@ -1396,11 +1436,11 @@ export enum _SubgraphErrorPolicy_ {
 }
 
 export type GaugeLiquidityGaugesQueryVariables = Exact<{
-  first?: Maybe<Scalars['Int']>;
-  orderBy?: Maybe<LiquidityGauge_OrderBy>;
-  orderDirection?: Maybe<OrderDirection>;
-  skip?: Maybe<Scalars['Int']>;
-  where?: Maybe<LiquidityGauge_Filter>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<LiquidityGauge_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<LiquidityGauge_Filter>;
 }>;
 
 export type GaugeLiquidityGaugesQuery = {
@@ -1408,27 +1448,19 @@ export type GaugeLiquidityGaugesQuery = {
   liquidityGauges: Array<{
     __typename?: 'LiquidityGauge';
     id: string;
-    poolId: string;
+    poolId?: string | null;
     totalSupply: string;
-    tokens?:
-      | Array<{
-          __typename?: 'RewardToken';
-          id: string;
-          name: string;
-          address: string;
-          decimals: number;
-          symbol: string;
-        }>
-      | null
-      | undefined;
-    shares?:
-      | Array<{
-          __typename?: 'GaugeShare';
-          balance: string;
-          user: { __typename?: 'User'; id: string };
-        }>
-      | null
-      | undefined;
+    tokens?: Array<{
+      __typename?: 'RewardToken';
+      id: string;
+      decimals: number;
+      symbol: string;
+    }> | null;
+    shares?: Array<{
+      __typename?: 'GaugeShare';
+      balance: string;
+      user: { __typename?: 'User'; id: string };
+    }> | null;
   }>;
 };
 
@@ -1445,43 +1477,28 @@ export type GaugeUserGaugesQueryVariables = Exact<{
 
 export type GaugeUserGaugesQuery = {
   __typename?: 'Query';
-  user?:
-    | {
-        __typename?: 'User';
+  user?: {
+    __typename?: 'User';
+    id: string;
+    gaugeShares?: Array<{
+      __typename?: 'GaugeShare';
+      balance: string;
+      gauge: {
+        __typename?: 'LiquidityGauge';
         id: string;
-        gaugeShares?:
-          | Array<{
-              __typename?: 'GaugeShare';
-              balance: string;
-              gauge: {
-                __typename?: 'LiquidityGauge';
-                id: string;
-                poolId: string;
-                tokens?:
-                  | Array<{
-                      __typename?: 'RewardToken';
-                      name: string;
-                      address: string;
-                      decimals: number;
-                      symbol: string;
-                    }>
-                  | null
-                  | undefined;
-              };
-            }>
-          | null
-          | undefined;
-      }
-    | null
-    | undefined;
+        poolId?: string | null;
+        tokens?: Array<{ __typename?: 'RewardToken'; decimals: number; symbol: string }> | null;
+      };
+    }> | null;
+  } | null;
 };
 
 export type GaugeSharesQueryVariables = Exact<{
-  block?: Maybe<Block_Height>;
-  first?: Maybe<Scalars['Int']>;
-  orderBy?: Maybe<GaugeShare_OrderBy>;
-  orderDirection?: Maybe<OrderDirection>;
-  skip?: Maybe<Scalars['Int']>;
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<GaugeShare_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
 }>;
 
 export type GaugeSharesQuery = {
@@ -1490,29 +1507,13 @@ export type GaugeSharesQuery = {
     __typename?: 'GaugeShare';
     id: string;
     balance: string;
-    gauge: { __typename?: 'LiquidityGauge'; id: string; poolId: string; poolAddress: string };
+    gauge: {
+      __typename?: 'LiquidityGauge';
+      id: string;
+      poolId?: string | null;
+      poolAddress: string;
+    };
     user: { __typename?: 'User'; id: string };
-  }>;
-};
-
-export type GaugeStreamersQueryVariables = Exact<{ [key: string]: never }>;
-
-export type GaugeStreamersQuery = {
-  __typename?: 'Query';
-  streamers: Array<{
-    __typename?: 'Streamer';
-    id: string;
-    rewardTokens?:
-      | Array<{
-          __typename?: 'RewardToken';
-          name: string;
-          address: string;
-          decimals: number;
-          symbol: string;
-        }>
-      | null
-      | undefined;
-    gauge: { __typename?: 'LiquidityGauge'; id: string; poolId: string; totalSupply: string };
   }>;
 };
 
@@ -1520,15 +1521,12 @@ export type GaugeGetMetaQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GaugeGetMetaQuery = {
   __typename?: 'Query';
-  meta?:
-    | {
-        __typename?: '_Meta_';
-        deployment: string;
-        hasIndexingErrors: boolean;
-        block: { __typename?: '_Block_'; number: number };
-      }
-    | null
-    | undefined;
+  meta?: {
+    __typename?: '_Meta_';
+    deployment: string;
+    hasIndexingErrors: boolean;
+    block: { __typename?: '_Block_'; number: number };
+  } | null;
 };
 
 export const GaugeLiquidityGaugesDocument = gql`
@@ -1580,8 +1578,6 @@ export const GaugeUserGaugesDocument = gql`
           id
           poolId
           tokens {
-            name
-            address
             decimals
             symbol
           }
@@ -1618,24 +1614,6 @@ export const GaugeSharesDocument = gql`
     }
   }
 `;
-export const GaugeStreamersDocument = gql`
-  query GaugeStreamers {
-    streamers {
-      id
-      rewardTokens {
-        name
-        address
-        decimals
-        symbol
-      }
-      gauge {
-        id
-        poolId
-        totalSupply
-      }
-    }
-  }
-`;
 export const GaugeGetMetaDocument = gql`
   query GaugeGetMeta {
     meta: _meta {
@@ -1651,9 +1629,10 @@ export const GaugeGetMetaDocument = gql`
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
   operationName: string,
+  operationType?: string,
 ) => Promise<T>;
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
@@ -1668,6 +1647,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             ...wrappedRequestHeaders,
           }),
         'GaugeLiquidityGauges',
+        'query',
       );
     },
     GaugeLiquidityGaugeAddresses(
@@ -1682,6 +1662,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             { ...requestHeaders, ...wrappedRequestHeaders },
           ),
         'GaugeLiquidityGaugeAddresses',
+        'query',
       );
     },
     GaugeUserGauges(
@@ -1695,6 +1676,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             ...wrappedRequestHeaders,
           }),
         'GaugeUserGauges',
+        'query',
       );
     },
     GaugeShares(
@@ -1708,19 +1690,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             ...wrappedRequestHeaders,
           }),
         'GaugeShares',
-      );
-    },
-    GaugeStreamers(
-      variables?: GaugeStreamersQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers'],
-    ): Promise<GaugeStreamersQuery> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<GaugeStreamersQuery>(GaugeStreamersDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'GaugeStreamers',
+        'query',
       );
     },
     GaugeGetMeta(
@@ -1734,6 +1704,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             ...wrappedRequestHeaders,
           }),
         'GaugeGetMeta',
+        'query',
       );
     },
   };

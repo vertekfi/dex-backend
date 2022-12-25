@@ -14,7 +14,7 @@ export class GaugeService {
     return await this.gaugeSubgraphService.getAllGaugeAddresses();
   }
 
-  public async getAllGauges(args: GaugeLiquidityGaugesQueryVariables) {
+  async getAllGauges(args: GaugeLiquidityGaugesQueryVariables) {
     const gauges = await this.gaugeSubgraphService.getAllGauges(args);
 
     return gauges.map(({ id, poolId, totalSupply, shares, tokens }) => ({
@@ -30,6 +30,7 @@ export class GaugeService {
       tokens: tokens,
     }));
   }
+
   async getAllUserShares(userAddress: string): Promise<GaugeUserShare[]> {
     const userGauges = await this.gaugeSubgraphService.getUserGauges(userAddress);
     return (

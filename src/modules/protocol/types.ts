@@ -27,4 +27,5 @@ export interface ProtocolConfigData {
   blacklistedPools: string[];
   poolFilters: PoolFilter[];
   rewardPools: RewardPool[];
+  gauges: string[];
 }
