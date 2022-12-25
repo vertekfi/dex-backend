@@ -19,22 +19,25 @@ export class GaugeService {
   }
 
   async getAllGauges(args: GaugeLiquidityGaugesQueryVariables) {
-    const gauges = await this.gaugeSubgraphService.getAllGauges(args);
+    const [gauges, protoData] = await Promise.all([
+      this.gaugeSubgraphService.getAllGauges(args),
+      this.protocolService.getProtocolConfigDataForChain(),
+    ]);
 
-    const protoData = await this.protocolService.getProtocolConfigDataForChain();
-
-    return gauges.map(({ id, poolId, totalSupply, shares, tokens }) => ({
-      id,
-      address: id,
-      poolId,
-      totalSupply,
-      shares:
-        shares?.map((share) => ({
-          userAddress: share.user.id,
-          amount: share.balance,
-        })) ?? [],
-      tokens: tokens,
-    }));
+    return gauges
+      .filter((g) => protoData.gauges.includes(g.poolId))
+      .map(({ id, poolId, totalSupply, shares, tokens }) => ({
+        id,
+        address: id,
+        poolId,
+        totalSupply,
+        shares:
+          shares?.map((share) => ({
+            userAddress: share.user.id,
+            amount: share.balance,
+          })) ?? [],
+        tokens: tokens,
+      }));
   }
 
   async getAllUserShares(userAddress: string): Promise<GaugeUserShare[]> {

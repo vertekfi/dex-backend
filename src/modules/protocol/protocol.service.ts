@@ -10,8 +10,11 @@ import { PrismaLastBlockSyncedCategory, PrismaUserBalanceType } from '@prisma/cl
 import axios from 'axios';
 import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
+import { FIVE_MINUTES_SECONDS } from '../utils/time';
 
 export const PROTOCOL_METRICS_CACHE_KEY = 'protocol:metrics';
+export const PROTOCOL_CONFIG_CACHE_KEY = 'protocol:config';
+export const PROTOCOL_TOKENLIST_CACHE_KEY = 'protocol:tokenlist';
 
 @Injectable()
 export class ProtocolService {
@@ -23,16 +26,32 @@ export class ProtocolService {
   ) {}
 
   async getProtocolConfigDataForChain(): Promise<ProtocolConfigData> {
+    const cached = await this.cache.get<ProtocolConfigData>(PROTOCOL_CONFIG_CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
     const url = 'https://raw.githubusercontent.com/vertekfi/pool-data-config/main/pool-data.json';
     const { data } = await axios.get(url);
-    return data[String(this.rpc.chainId)];
+    const config = data[String(this.rpc.chainId)];
+
+    await this.cache.put(PROTOCOL_CONFIG_CACHE_KEY, config, FIVE_MINUTES_SECONDS);
+
+    return config;
   }
 
   async getProtocolTokenList() {
+    const cached = await this.cache.get<any>(PROTOCOL_TOKENLIST_CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
+
     const url = 'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json';
     const { data } = await axios.get(url);
 
-    return data[url].tokens.filter((tk) => tk.chainId === this.rpc.chainId);
+    const tokens = data[url].tokens.filter((tk) => tk.chainId === this.rpc.chainId);
+    await this.cache.put(PROTOCOL_TOKENLIST_CACHE_KEY, tokens, FIVE_MINUTES_SECONDS);
+
+    return tokens;
   }
 
   async getMetrics(): Promise<ProtocolMetrics> {
