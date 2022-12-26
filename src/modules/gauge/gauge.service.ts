@@ -8,6 +8,7 @@ import { GaugeSubgraphService } from '../subgraphs/gauge-subgraph/gauge-subgraph
 import {
   GaugeLiquidityGaugesQueryVariables,
   GaugeSharesQueryVariables,
+  LiquidityGauge,
 } from '../subgraphs/gauge-subgraph/generated/gauge-subgraph-types';
 import { TokenPrices } from '../token/token-types-old';
 import { GaugeShare, GaugeUserShare, Pool, SubgraphGauge } from './types';
@@ -45,7 +46,7 @@ export class GaugeService {
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
 
-    // TODO: Need to double check subgraph. Think we only add gauges from GaugeController events
+    // TODO: Need to double check subgraph. Think we only add gauges from GaugeController events anyway
     return gauges
       .filter((g) => protoData.gauges.includes(g.poolId))
       .map(({ id, poolId, totalSupply, shares, tokens }) => ({
@@ -60,6 +61,12 @@ export class GaugeService {
           })) ?? [],
         tokens: tokens,
       }));
+  }
+
+  async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {
+    const userGauges: LiquidityGauge[] = [];
+
+    return userGauges;
   }
 
   async getAllUserShares(userAddress: string): Promise<GaugeUserShare[]> {

@@ -9,4 +9,9 @@ export class GaugeQueryResolver {
   async getLiquidityGauges(@Args() args) {
     return this.gaugeService.getAllGauges(args);
   }
+
+  @Query()
+  async getUserGaugeStakes(@Args() args) {
+    return this.gaugeService.getUserGaugeStakes(args);
+  }
 }
