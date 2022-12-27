@@ -20,9 +20,16 @@ import { VeBalHelpers } from './lib/ve-helpers';
 import { Multicaller } from '../common/web3/multicaller';
 import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
+import { FIVE_MINUTES_SECONDS } from '../utils/time';
+import { CONTRACT_MAP } from '../data/contracts';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
+
+const MAIN_POOL_GAUGE = {
+  5: getAddress('0x5C17FbD4Ad85463F0C8A2759D767fD64a948428e'),
+  56: '',
+};
 
 @Injectable()
 export class GaugeService {
@@ -41,26 +48,52 @@ export class GaugeService {
   }
 
   async getAllGauges(args: GaugeLiquidityGaugesQueryVariables) {
-    const [gauges, protoData] = await Promise.all([
+    const cached = await this.cache.get<SubgraphGauge[]>(GAUGE_CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
+
+    const [subgraphGauges, protoData] = await Promise.all([
       this.gaugeSubgraphService.getAllGauges(args),
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
 
-    // TODO: Need to double check subgraph. Think we only add gauges from GaugeController events anyway
-    return gauges
-      .filter((g) => protoData.gauges.includes(g.poolId))
-      .map(({ id, poolId, totalSupply, shares, tokens }) => ({
-        id,
-        address: id,
-        poolId,
-        totalSupply,
-        shares:
-          shares?.map((share) => ({
-            userAddress: share.user.id,
-            amount: share.balance,
-          })) ?? [],
-        tokens: tokens,
-      }));
+    const gauges = [];
+    for (const gauge of subgraphGauges) {
+      if (
+        protoData.gauges.includes(gauge.poolId) &&
+        getAddress(gauge.id) !== MAIN_POOL_GAUGE[this.rpc.chainId]
+      ) {
+        gauges.push({
+          id: gauge.id,
+          symbol: '',
+          poolId: gauge.poolId,
+          totalSupply: gauge.totalSupply,
+          factory: {
+            id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
+          },
+        });
+      }
+    }
+    // This do not change often and front end makes its calls as needed also
+    await this.cache.set(GAUGE_CACHE_KEY, gauges, FIVE_MINUTES_SECONDS);
+
+    return gauges;
+
+    // return gauges
+    //   .filter((g) => protoData.gauges.includes(g.poolId))
+    //   .map(({ id, poolId, totalSupply, shares, tokens }) => ({
+    //     id,
+    //     address: id,
+    //     poolId,
+    //     totalSupply,
+    //     shares:
+    //       shares?.map((share) => ({
+    //         userAddress: share.user.id,
+    //         amount: share.balance,
+    //       })) ?? [],
+    //     tokens: tokens,
+    //   }));
   }
 
   async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {
