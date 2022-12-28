@@ -47,12 +47,7 @@ export class GaugeService {
     return await this.gaugeSubgraphService.getAllGaugeAddresses();
   }
 
-  async getAllGauges(args: GaugeLiquidityGaugesQueryVariables) {
-    const cached = await this.cache.get<SubgraphGauge[]>(GAUGE_CACHE_KEY);
-    if (cached) {
-      return cached;
-    }
-
+  async getAllGauges(args: GaugeLiquidityGaugesQueryVariables = {}) {
     const [subgraphGauges, protoData] = await Promise.all([
       this.gaugeSubgraphService.getAllGauges(args),
       this.protocolService.getProtocolConfigDataForChain(),
@@ -75,8 +70,6 @@ export class GaugeService {
         });
       }
     }
-    // This do not change often and front end makes its calls as needed also
-    await this.cache.set(GAUGE_CACHE_KEY, gauges, FIVE_MINUTES_SECONDS);
 
     return gauges;
 

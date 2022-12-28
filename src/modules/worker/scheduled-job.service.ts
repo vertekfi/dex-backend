@@ -1,4 +1,5 @@
 import * as cron from 'node-cron';
+import * as schedule from 'node-schedule';
 import { runWithMinimumInterval } from './scheduling';
 import * as _ from 'lodash';
 import { TokenService } from '../common/token/token.service';
@@ -8,6 +9,7 @@ import { Inject } from '@nestjs/common';
 import { AccountWeb3 } from '../common/types';
 import { UserService } from '../user/user.service';
 import { ProtocolService } from '../protocol/protocol.service';
+import { GaugeSyncService } from '../gauge/gauge-sync.service';
 
 const ONE_MINUTE_IN_MS = 60000;
 const TWO_MINUTES_IN_MS = 120000;
@@ -15,12 +17,20 @@ const FIVE_MINUTES_IN_MS = 300000;
 const TEN_MINUTES_IN_MS = 600000;
 
 export class ScheduledJobService {
+  private _jobs: {
+    [jobName: string]: {
+      job: schedule.Job;
+      running: boolean;
+    };
+  } = {};
+
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly tokenService: TokenService,
     private readonly poolService: PoolService,
     private readonly userService: UserService,
     private readonly protocolService: ProtocolService,
+    private readonly gaugeSyncService: GaugeSyncService,
   ) {}
 
   init() {
@@ -29,6 +39,50 @@ export class ScheduledJobService {
     // }
 
     this.scheduleLocalWorkerTasks();
+  }
+
+  private createJobIfNeeded(taskName: string, job: schedule.Job) {
+    if (!this._jobs[taskName]) {
+      this._jobs[taskName] = {
+        running: false,
+        job,
+      };
+    }
+    return this._jobs[taskName];
+  }
+
+  scheduleNodeJob(
+    rule: schedule.RecurrenceRule,
+    taskName: string,
+    jobFunction: () => Promise<void | any>,
+  ) {
+    const job = this.createJobIfNeeded(taskName, null);
+
+    const newJob = schedule.scheduleJob(taskName, rule, async () => {
+      try {
+        const jobCacheWrapper = (async () => {
+          if (job.running) {
+            return;
+          }
+
+          console.log(`Running job ${taskName}`);
+
+          job.running = true;
+          await jobFunction();
+          job.running = false;
+        }).bind(this);
+
+        await jobCacheWrapper();
+      } catch (error) {
+        console.log(`$Scheduled work tasker ${taskName} failed. See logs.`);
+        console.error(error);
+        job.running = false;
+      }
+    });
+
+    if (!job.job) {
+      job.job = newJob;
+    }
   }
 
   scheduleJob(
@@ -110,11 +164,26 @@ export class ScheduledJobService {
     );
   }
 
+  private getRule(second: number, minute = 0, hour = 0): schedule.RecurrenceRule {
+    const rule = new schedule.RecurrenceRule();
+    rule.second = second;
+
+    if (minute > 0) rule.minute = hour;
+    if (hour > 0) rule.hour = hour;
+
+    return rule;
+  }
+
   scheduleLocalWorkerTasks() {
-    //every 20 seconds
+    // every 20 seconds
     this.scheduleJob('*/20 * * * * *', 'loadTokenPrices', ONE_MINUTE_IN_MS, async () => {
       await this.tokenService.loadTokenPrices();
     });
+    // this.scheduleNodeJob(
+    //   this.getRule(20),
+    //   'loadTokenPrices',
+    //   async () => this.tokenService.loadTokenPrices,
+    // );
 
     // every 30 seconds
     // TODO: check this
@@ -127,8 +196,12 @@ export class ScheduledJobService {
         // await this.poolService.updatePoolAprs([]);
       },
     );
+    // this.scheduleNodeJob(this.getRule(30), 'poolUpdateLiquidityValuesForAllPools', async () => {
+    //   await this.poolService.updateLiquidityValuesForPools();
+    //   // await this.poolService.updatePoolAprs([]);
+    // });
 
-    //every 30 seconds
+    // every 30 seconds
     this.scheduleJob(
       '*/30 * * * * *',
       'loadOnChainDataForPoolsWithActiveUpdates',
@@ -137,13 +210,23 @@ export class ScheduledJobService {
         await this.poolService.loadOnChainDataForPoolsWithActiveUpdates();
       },
     );
+    // this.scheduleNodeJob(
+    //   this.getRule(30),
+    //   'loadOnChainDataForPoolsWithActiveUpdates',
+    //   this.poolService.loadOnChainDataForPoolsWithActiveUpdates,
+    // );
 
     // every 30 seconds
     this.scheduleJob('*/30 * * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
       await this.poolService.syncNewPoolsFromSubgraph();
     });
+    // this.scheduleNodeJob(
+    //   this.getRule(30),
+    //   'syncNewPoolsFromSubgraph',
+    //   this.poolService.syncNewPoolsFromSubgraph,
+    // );
 
-    // //every 3 minutes
+    // every 3 minutes
     // this.scheduleJob('*/3 * * * *', 'poolSyncSanityPoolData', FIVE_MINUTES_IN_MS, async () => {
     //   await this.poolService.syncSanityPoolData();
     // });
@@ -152,8 +235,9 @@ export class ScheduledJobService {
     this.scheduleJob('*/5 * * * *', 'syncTokensFromPoolTokens', TEN_MINUTES_IN_MS, async () => {
       await this.tokenService.syncTokenData();
     });
+    // this.scheduleNodeJob(this.getRule(0, 5), 'syncTokenData', this.tokenService.syncTokenData);
 
-    //every 5 minutes
+    //  every 5 minutes
     this.scheduleJob(
       '*/5 * * * *',
       'updateLiquidity24hAgoForAllPools',
@@ -162,6 +246,11 @@ export class ScheduledJobService {
         await this.poolService.updateLiquidity24hAgoForAllPools();
       },
     );
+    // this.scheduleNodeJob(
+    //   this.getRule(0, 5),
+    //   'updateLiquidity24hAgoForAllPools',
+    //   this.poolService.updateLiquidity24hAgoForAllPools,
+    // );
 
     // once a minute
     /*this.scheduleJob('* * * * *', 'sor-reload-graph', TWO_MINUTES_IN_MS, async () => {
@@ -172,21 +261,38 @@ export class ScheduledJobService {
     this.scheduleJob('*/1 * * * *', 'syncTokenDynamicData', TEN_MINUTES_IN_MS, async () => {
       await this.tokenService.syncTokenDynamicData();
     });
+    // this.scheduleNodeJob(
+    //   this.getRule(0, 1),
+    //   'syncTokenDynamicData',
+    //   this.tokenService.syncTokenDynamicData,
+    // );
 
+    // TODO: Can add other gauge items like APR's to this flow for frontend
     // every 5 minutes
-    // TODO: check this
-    // this.scheduleJob('*/5 * * * *', 'syncStakingForPools', ONE_MINUTE_IN_MS, async () => {
-    //   await this.poolService.syncStakingForPools([]);
+    // this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
+    //   await this.gaugeSyncService.syncGaugeData();
     // });
+    // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeSyncService.syncGaugeData);
 
+    // every 30 seconds
     this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
       await this.protocolService.cacheProtocolMetrics();
     });
+    // this.scheduleNodeJob(
+    //   this.getRule(30),
+    //   'cacheProtocolMetrics',
+    //   this.protocolService.cacheProtocolMetrics,
+    // );
 
     // once an hour at minute 1
     this.scheduleJob('1 * * * *', 'syncLatestSnapshotsForAllPools', TEN_MINUTES_IN_MS, async () => {
       await this.poolService.syncLatestSnapshotsForAllPools();
     });
+    // this.scheduleNodeJob(
+    //   this.getRule(0, 1),
+    //   'syncLatestSnapshotsForAllPools',
+    //   this.poolService.syncLatestSnapshotsForAllPools,
+    // );
 
     // every 20 minutes
     this.scheduleJob(
@@ -197,6 +303,11 @@ export class ScheduledJobService {
         await this.poolService.updateLifetimeValuesForAllPools();
       },
     );
+    // this.scheduleNodeJob(
+    //   this.getRule(0, 20),
+    //   'updateLifetimeValuesForAllPools',
+    //   this.poolService.updateLifetimeValuesForAllPools,
+    // );
 
     /*
       //every five minutes
@@ -274,23 +385,23 @@ export class ScheduledJobService {
   */
     console.log('scheduled cron jobs');
 
-    console.log('start pool sync');
+    // console.log('start pool sync');
 
-    runWithMinimumInterval(5000, async () => {
-      await this.poolService.syncChangedPools();
-    }).catch((error) => console.log('Error starting syncChangedPools...', error));
+    // runWithMinimumInterval(5000, async () => {
+    //   await this.poolService.syncChangedPools();
+    // }).catch((error) => console.log('Error starting syncChangedPools...', error));
 
-    this.addRpcListener(
-      'userSyncWalletBalancesForAllPools',
-      'block',
-      ONE_MINUTE_IN_MS,
-      async () => {
-        await this.userService.syncChangedWalletBalancesForAllPools();
-      },
-    );
+    // this.addRpcListener(
+    //   'userSyncWalletBalancesForAllPools',
+    //   'block',
+    //   ONE_MINUTE_IN_MS,
+    //   async () => {
+    //     await this.userService.syncChangedWalletBalancesForAllPools();
+    //   },
+    // );
 
-    this.addRpcListener('userSyncStakedBalances', 'block', ONE_MINUTE_IN_MS, async () => {
-      await this.userService.syncChangedStakedBalances();
-    });
+    // this.addRpcListener('userSyncStakedBalances', 'block', ONE_MINUTE_IN_MS, async () => {
+    //   await this.userService.syncChangedStakedBalances();
+    // });
   }
 }

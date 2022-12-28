@@ -3,6 +3,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { getDexPriceFromPair } from 'src/modules/common/token/dexscreener';
+import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 
 export class DexscreenerPriceHandlerService implements TokenPriceHandler {
   public readonly exitIfFails = false;
@@ -32,8 +33,14 @@ export class DexscreenerPriceHandlerService implements TokenPriceHandler {
       // }
 
       // We know the token has the pair address at this point
-      const screenerPrice = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
-      const price = screenerPrice.priceNum;
+      let price: number;
+      const chainId = parseInt(process.env.CHAIN_ID);
+      if (chainId === 5 && token.address === PROTOCOL_TOKEN[chainId]) {
+        price = 9;
+      } else {
+        const screenerPrice = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
+        price = screenerPrice.priceNum;
+      }
 
       updated.push(token.address);
 
