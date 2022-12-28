@@ -89,6 +89,10 @@ export class GaugeService {
     //   }));
   }
 
+  async getPoolsForGauges(gaugeIds: string[]) {
+    return [];
+  }
+
   async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {
     const userGauges: LiquidityGauge[] = [];
 

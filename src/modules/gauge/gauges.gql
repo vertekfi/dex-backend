@@ -1,10 +1,19 @@
 extend type Query {
   getLiquidityGauges: [LiquidityGauge]!
   getUserGaugeStakes(user: String!, poolIds: [String!]!): [LiquidityGauge]!
+  getPoolsForGauges(gaugeIds: [String!]!): [GaugePool]!
 }
 
 extend type Mutation {
   syncGaugeData: Boolean!
+}
+
+type GaugePool {
+  id: String!
+  address: String!
+  poolType: String!
+  tokens: [GqlPoolTokenBase!]!
+  tokensList: [String!]!
 }
 
 type VotingEscrow {

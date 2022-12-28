@@ -11,6 +11,11 @@ export class GaugeQueryResolver {
   }
 
   @Query()
+  async getPoolsForGauges(@Args('gaugeIds') gaugeIds: string[]) {
+    return this.gaugeService.getPoolsForGauges(gaugeIds);
+  }
+
+  @Query()
   async getUserGaugeStakes(@Args() args) {
     return this.gaugeService.getUserGaugeStakes(args);
   }
