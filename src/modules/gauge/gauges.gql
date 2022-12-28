@@ -36,6 +36,10 @@ type VotingEscrowLock {
   updatedAt: Int!
 }
 
+type GaugeFactory {
+  id: String!
+}
+
 type LiquidityGauge {
   " LiquidityGauge contract address "
   id: ID!
@@ -64,7 +68,7 @@ type LiquidityGauge {
   " List of reward tokens depositted in the gauge "
   tokens: [RewardToken!]
 
-  factory: String
+  factory: GaugeFactory
 }
 
 type GaugePoolInfo {
