@@ -30,6 +30,7 @@ import {
   BalancerPoolsDocument,
   BalancerPoolsQueryVariables,
 } from '../subgraphs/balancer/generated/balancer-subgraph-types';
+import { CacheDecorator } from '../common/decorators/cache.decorator';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
@@ -76,9 +77,10 @@ export class GaugeService {
     return liquidityGauges;
   }
 
+  @CacheDecorator(GAUGE_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getAllGauges() {
-    const cached = await this.cache.get(GAUGE_CACHE_KEY);
-    if (cached) return cached;
+    // const cached = await this.cache.get(GAUGE_CACHE_KEY);
+    // if (cached) return cached;
 
     const gauges = await this.getCoreGauges();
     const pools = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
@@ -101,12 +103,12 @@ export class GaugeService {
     });
 
     // These do not change often and front end makes its immediate calls to contracts as needed also
-    await this.cache.set(GAUGE_CACHE_KEY, gauges, FIVE_MINUTES_SECONDS);
+    // await this.cache.set(GAUGE_CACHE_KEY, gauges, FIVE_MINUTES_SECONDS);
 
     return gauges;
   }
 
-  private async getCoreGauges() {
+  async getCoreGauges() {
     const [subgraphGauges, protoData] = await Promise.all([
       this.getLiquidityGauges(),
       this.protocolService.getProtocolConfigDataForChain(),

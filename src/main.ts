@@ -5,7 +5,10 @@ import * as compression from 'compression';
 import helmet from 'helmet';
 import { accountMiddleware } from './modules/common/middleware/accountMiddleware';
 import { PrismaService } from 'nestjs-prisma';
+import { INestApplication, Type } from '@nestjs/common/interfaces';
 const cluster = require('cluster');
+
+export let nestApp: INestApplication;
 
 async function bootstrap() {
   if (cluster.isMaster && process.env.NODE_ENV === 'production') {
@@ -27,32 +30,40 @@ async function bootstrap() {
       config();
     }
 
-    const app = await NestFactory.create(AppModule);
+    nestApp = await NestFactory.create(AppModule);
 
-    app.enableCors();
-    app.use(compression());
+    nestApp.enableCors();
+    nestApp.use(compression());
 
-    app.use(helmet.dnsPrefetchControl());
-    app.use(helmet.expectCt());
-    app.use(helmet.frameguard());
-    app.use(helmet.hidePoweredBy());
-    app.use(helmet.hsts());
-    app.use(helmet.ieNoOpen());
-    app.use(helmet.noSniff());
-    app.use(helmet.originAgentCluster());
-    app.use(helmet.permittedCrossDomainPolicies());
-    app.use(helmet.referrerPolicy());
-    app.use(helmet.xssFilter());
+    nestApp.use(helmet.dnsPrefetchControl());
+    nestApp.use(helmet.expectCt());
+    nestApp.use(helmet.frameguard());
+    nestApp.use(helmet.hidePoweredBy());
+    nestApp.use(helmet.hsts());
+    nestApp.use(helmet.ieNoOpen());
+    nestApp.use(helmet.noSniff());
+    nestApp.use(helmet.originAgentCluster());
+    nestApp.use(helmet.permittedCrossDomainPolicies());
+    nestApp.use(helmet.referrerPolicy());
+    nestApp.use(helmet.xssFilter());
 
-    app.use(accountMiddleware);
+    nestApp.use(accountMiddleware);
 
-    const prismaService: PrismaService = app.get(PrismaService);
-    await prismaService.enableShutdownHooks(app);
+    const prismaService: PrismaService = nestApp.get(PrismaService);
+    await prismaService.enableShutdownHooks(nestApp);
 
     // const HOST = process.env.HOST;
     const PORT = process.env.PORT || 5000;
-    await app.listen(PORT, () => console.log(`DEX Backend running at: ${PORT}`));
+    await nestApp.listen(PORT, () => console.log(`DEX Backend running at: ${PORT}`));
   }
 }
 
 bootstrap();
+
+export function getApp() {
+  return nestApp;
+}
+
+export function getAppService<T>(type: Type<T>) {
+  return nestApp.get(type) as T;
+}
