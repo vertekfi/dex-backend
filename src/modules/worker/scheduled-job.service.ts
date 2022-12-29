@@ -1,6 +1,5 @@
 import * as cron from 'node-cron';
 import * as schedule from 'node-schedule';
-import { runWithMinimumInterval } from './scheduling';
 import * as _ from 'lodash';
 import { TokenService } from '../common/token/token.service';
 import { PoolService } from '../pool/pool.service';
@@ -9,7 +8,7 @@ import { Inject } from '@nestjs/common';
 import { AccountWeb3 } from '../common/types';
 import { UserService } from '../user/user.service';
 import { ProtocolService } from '../protocol/protocol.service';
-import { GaugeSyncService } from '../gauge/gauge-sync.service';
+import { GaugeService } from '../gauge/gauge.service';
 
 const ONE_MINUTE_IN_MS = 60000;
 const TWO_MINUTES_IN_MS = 120000;
@@ -30,7 +29,7 @@ export class ScheduledJobService {
     private readonly poolService: PoolService,
     private readonly userService: UserService,
     private readonly protocolService: ProtocolService,
-    private readonly gaugeSyncService: GaugeSyncService,
+    private readonly gaugeService: GaugeService,
   ) {}
 
   init() {
@@ -269,10 +268,10 @@ export class ScheduledJobService {
 
     // TODO: Can add other gauge items like APR's to this flow for frontend
     // every 5 minutes
-    // this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
-    //   await this.gaugeSyncService.syncGaugeData();
-    // });
-    // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeSyncService.syncGaugeData);
+    this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
+      await this.gaugeService.getAllGauges();
+    });
+    // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeService.getAllGauges);
 
     // every 30 seconds
     this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {

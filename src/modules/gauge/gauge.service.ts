@@ -24,6 +24,12 @@ import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { CONTRACT_MAP } from '../data/contracts';
 import { GaugePool } from 'src/graphql';
 import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
+import { gql } from 'graphql-request';
+import { PrismaService } from 'nestjs-prisma';
+import {
+  BalancerPoolsDocument,
+  BalancerPoolsQueryVariables,
+} from '../subgraphs/balancer/generated/balancer-subgraph-types';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
@@ -44,19 +50,67 @@ export class GaugeService {
     private readonly contractService: ContractService,
     private readonly veBALHelpers: VeBalHelpers,
     private readonly balancerSubgraph: BalancerSubgraphService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async getAllGaugeAddresses(): Promise<string[]> {
     return await this.gaugeSubgraphService.getAllGaugeAddresses();
   }
 
-  async getAllGauges(args: GaugeLiquidityGaugesQueryVariables = {}) {
+  async getLiquidityGauges() {
+    const { liquidityGauges } = await this.gaugeSubgraphService.client.request(gql`
+      query {
+        liquidityGauges {
+          id
+          symbol
+          poolId
+          totalSupply
+          factory {
+            id
+          }
+          isKilled
+        }
+      }
+    `);
+
+    return liquidityGauges;
+  }
+
+  async getAllGauges() {
+    const cached = await this.cache.get(GAUGE_CACHE_KEY);
+    if (cached) return cached;
+
+    const gauges = await this.getCoreGauges();
+    const pools = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
+
+    // Attach each gauges pool info
+    // These can be cached along with the gauges since only static data is asked for
+    pools.forEach((p) => {
+      const gauge = gauges.find((g) => g.poolId == p.id);
+      gauge.pool = {
+        ...p,
+        poolType: p.type,
+        tokensList: p.tokens.map((t) => t.address),
+        tokens: p.tokens.map((t) => {
+          return {
+            weight: t.dynamicData.weight,
+            address: t.address,
+          };
+        }),
+      };
+    });
+
+    // These do not change often and front end makes its immediate calls to contracts as needed also
+    await this.cache.set(GAUGE_CACHE_KEY, gauges, FIVE_MINUTES_SECONDS);
+
+    return gauges;
+  }
+
+  private async getCoreGauges() {
     const [subgraphGauges, protoData] = await Promise.all([
-      this.gaugeSubgraphService.getAllGauges(args),
+      this.getLiquidityGauges(),
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
-
-    console.log(protoData);
 
     const gauges = [];
     for (const gauge of subgraphGauges) {
@@ -72,25 +126,29 @@ export class GaugeService {
           factory: {
             id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
           },
+          isKilled: gauge.isKilled,
         });
       }
     }
 
-    const poolIds = gauges.map((g) => g.poolId);
-    const pools = await this.balancerSubgraph.getAllPools({
+    return gauges;
+  }
+
+  private async getPoolsForGauges(poolIds: string[]) {
+    return await this.prisma.prismaPool.findMany({
       where: {
-        id_in: poolIds,
+        id: {
+          in: poolIds,
+        },
+      },
+      include: {
+        tokens: {
+          include: {
+            dynamicData: true,
+          },
+        },
       },
     });
-
-    // Attach each gauges pool info
-    // These can be cached along with the gauges since only static data is asked for
-    pools.forEach((p) => {
-      const gauge = gauges.find((g) => g.poolId == p.id);
-      gauge.pool = p;
-    });
-
-    return gauges;
   }
 
   async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {

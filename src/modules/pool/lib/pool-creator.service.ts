@@ -3,7 +3,7 @@ import { PrismaPoolType } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaPoolWithExpandedNesting } from 'prisma/prisma-types';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
-import { BalancerPoolFragment } from 'src/modules/subgraphs/balancer/balancer-subgraph-types';
+import { BalancerPoolFragment } from 'src/modules/subgraphs/balancer/generated/balancer-subgraph-types';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import * as _ from 'lodash';
 import { UserService } from 'src/modules/user/user.service';

@@ -14,7 +14,7 @@ import {
   JoinExit_OrderBy,
   OrderDirection,
   Swap_OrderBy,
-} from 'src/modules/subgraphs/balancer/balancer-subgraph-types';
+} from 'src/modules/subgraphs/balancer/generated/balancer-subgraph-types';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import * as moment from 'moment-timezone';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';

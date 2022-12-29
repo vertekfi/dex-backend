@@ -13,7 +13,7 @@ import {
   PoolSnapshot_OrderBy,
   OrderDirection,
   BalancerPoolSnapshotFragment,
-} from 'src/modules/subgraphs/balancer/balancer-subgraph-types';
+} from 'src/modules/subgraphs/balancer/generated/balancer-subgraph-types';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import { TokenHistoricalPrices } from 'src/modules/token/token-types-old';
 import { CoingeckoService } from 'src/modules/token/lib/coingecko.service';

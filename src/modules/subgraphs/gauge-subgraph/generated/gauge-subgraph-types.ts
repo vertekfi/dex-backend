@@ -1559,6 +1559,7 @@ export const GaugeLiquidityGaugesDocument = gql`
         }
         balance
       }
+      isKilled
     }
   }
 `;

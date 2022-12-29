@@ -365,6 +365,7 @@ type LiquidityGauge {
     where: RewardToken_filter
   ): [RewardToken!]
   totalSupply: BigDecimal!
+  isKilled: Boolean!
 }
 
 input LiquidityGauge_filter {

@@ -18,7 +18,7 @@ import {
   getSdk,
   OrderDirection,
   Swap_OrderBy,
-} from './balancer-subgraph-types';
+} from './generated/balancer-subgraph-types';
 import { GraphQLClient } from 'graphql-request';
 import { subgraphLoadAll } from '../utils';
 import { BalancerUserPoolShare } from './balancer-types';
@@ -26,7 +26,7 @@ import { ConfigService } from 'src/modules/common/config.service';
 
 @Injectable()
 export class BalancerSubgraphService {
-  private readonly client: GraphQLClient;
+  readonly client: GraphQLClient;
 
   private get sdk() {
     return getSdk(this.client);

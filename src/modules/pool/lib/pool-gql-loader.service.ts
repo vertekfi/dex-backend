@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaPoolMinimal, prismaPoolWithExpandedNesting } from 'prisma/prisma-types';
 import { PoolGqlLoaderUtils } from './gql-loader-utils.service';
-import { GqlPoolFeaturedPoolGroup, GqlPoolLinear, QueryPoolGetPoolsArgs } from 'src/gql-addons';
+import { GqlPoolLinear, QueryPoolGetPoolsArgs } from 'src/gql-addons';
 
 @Injectable()
 export class PoolGqlLoaderService {
-  constructor(private prisma: PrismaService, private poolUtils: PoolGqlLoaderUtils) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly poolUtils: PoolGqlLoaderUtils,
+  ) {}
 
   async getPool(id: string) {
     const pool = await this.prisma.prismaPool.findUnique({

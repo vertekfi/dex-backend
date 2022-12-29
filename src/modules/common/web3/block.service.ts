@@ -1,13 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
-import * as moment from 'moment-timezone';
 
 import { RPC } from './rpc.provider';
 import { AccountWeb3 } from '../types';
-import { networkConfig } from 'src/modules/config/network-config';
 import { CacheService } from '../cache.service';
-import { getDailyTimestampsForDays, getDailyTimestampsWithBuffer } from 'src/modules/utils/time';
-import { OrderDirection } from 'src/modules/subgraphs/balancer/balancer-subgraph-types';
 import { BlockFragment } from './types';
 import { BLOCKS_PER_DAY } from 'src/modules/utils/blocks';
 

@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { Pool } from 'src/modules/subgraphs/balancer/balancer-subgraph-types';
+import { Pool } from 'src/modules/subgraphs/balancer/generated/balancer-subgraph-types';
 import { SubgraphPoolBase } from '../impl/types';
 import { SOR } from '../impl/wrapper';
 
