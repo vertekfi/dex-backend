@@ -64,7 +64,6 @@ export class GaugeService {
         protoData.gauges.includes(gauge.poolId) &&
         getAddress(gauge.id) !== MAIN_POOL_GAUGE[this.rpc.chainId]
       ) {
-        // Attach each gauges pool info
         gauges.push({
           id: gauge.id,
           symbol: '',
@@ -84,6 +83,7 @@ export class GaugeService {
       },
     });
 
+    // Attach each gauges pool info
     // These can be cached along with the gauges since only static data is asked for
     pools.forEach((p) => {
       const gauge = gauges.find((g) => g.poolId == p.id);

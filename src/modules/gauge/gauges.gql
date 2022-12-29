@@ -56,13 +56,13 @@ type LiquidityGauge {
   symbol: String!
 
   " Reference to Pool entity "
-  pool: GaugePool
+  pool: GaugePool!
 
   " Address of the pool (lp_token of the gauge) "
   address: String!
 
   " Pool ID if lp_token is a Balancer pool; null otherwise "
-  poolId: String
+  poolId: String!
 
   " Whether Balancer DAO killed the gauge "
   isKilled: Boolean!
