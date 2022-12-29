@@ -32,8 +32,9 @@ import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph
 import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
 import { PoolSyncService } from './lib/pool-sync.service';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
-import { CacheService } from '../common/cache.service';
 import { ProtocolService } from '../protocol/protocol.service';
+import { CacheDecorator } from '../common/decorators/cache.decorator';
+import { FIVE_MINUTES_SECONDS } from '../utils/time';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -52,7 +53,6 @@ export class PoolService {
     private readonly balancerSubgraphService: BalancerSubgraphService,
     private readonly poolAprUpdaterService: PoolAprUpdaterService,
     private readonly poolSyncService: PoolSyncService,
-    private readonly cache: CacheService,
     private readonly protocolService: ProtocolService,
   ) {}
 
@@ -104,13 +104,8 @@ export class PoolService {
     return this.poolSwapService.getUserSwapVolume(args);
   }
 
+  @CacheDecorator(FEATURED_POOL_GROUPS_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getFeaturedPoolGroups(): Promise<GqlPoolFeaturedPoolGroup[]> {
-    const cached: GqlPoolFeaturedPoolGroup[] = await this.cache.get(FEATURED_POOL_GROUPS_CACHE_KEY);
-
-    if (cached) {
-      return cached;
-    }
-
     const config = await this.protocolService.getProtocolConfigDataForChain();
     const pools = await this.prisma.prismaPool.findMany({
       where: {
@@ -141,8 +136,6 @@ export class PoolService {
         ],
       };
     });
-
-    this.cache.put(FEATURED_POOL_GROUPS_CACHE_KEY, featured, 60 * 5 * 1000);
 
     return featured;
   }

@@ -275,7 +275,7 @@ export class ScheduledJobService {
 
     // every 30 seconds
     this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
-      await this.protocolService.cacheProtocolMetrics();
+      await this.protocolService.getMetrics();
     });
     // this.scheduleNodeJob(
     //   this.getRule(30),

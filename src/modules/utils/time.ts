@@ -1,11 +1,13 @@
 import * as moment from 'moment-timezone';
 
 export const ONE_MINUTE_SECONDS = 60 * 1000;
-export const FIVE_MINUTES_SECONDS = 5 * ONE_MINUTE_SECONDS;
-
-export const ONE_SECOND_MS = 1000;
+export const THIRTY_SECONDS_SECONDS = 60 * 1000;
+export const FIVE_MINUTES_SECONDS = ONE_MINUTE_SECONDS * 5;
+export const THIRTY_MINUTES_SECONDS = ONE_MINUTE_SECONDS * 30;
 
 export const ONE_DAY_SECONDS = 86400;
+
+export const ONE_SECOND_MS = 1000;
 
 export function timestampRoundedUpToNearestHour(m: moment.Moment = moment()): number {
   const roundUp =

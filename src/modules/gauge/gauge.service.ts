@@ -2,11 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { isNil, mapValues } from 'lodash';
 import { formatUnits, getAddress } from 'ethers/lib/utils';
 import { bnum } from '../balancer-sdk/sor/impl/utils/bignumber';
-import { CacheService } from '../common/cache.service';
 import { ProtocolService } from '../protocol/protocol.service';
 import { GaugeSubgraphService } from '../subgraphs/gauge-subgraph/gauge-subgraph.service';
 import {
-  GaugeLiquidityGaugesQueryVariables,
   GaugeSharesQueryVariables,
   LiquidityGauge,
 } from '../subgraphs/gauge-subgraph/generated/gauge-subgraph-types';
@@ -22,14 +20,8 @@ import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
 import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { CONTRACT_MAP } from '../data/contracts';
-import { GaugePool } from 'src/graphql';
-import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
 import { gql } from 'graphql-request';
 import { PrismaService } from 'nestjs-prisma';
-import {
-  BalancerPoolsDocument,
-  BalancerPoolsQueryVariables,
-} from '../subgraphs/balancer/generated/balancer-subgraph-types';
 import { CacheDecorator } from '../common/decorators/cache.decorator';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
@@ -47,10 +39,8 @@ export class GaugeService {
     private readonly gaugeSubgraphService: GaugeSubgraphService,
     private readonly tokenAdmin: BalTokenAdmin,
     private readonly protocolService: ProtocolService,
-    private readonly cache: CacheService,
     private readonly contractService: ContractService,
     private readonly veBALHelpers: VeBalHelpers,
-    private readonly balancerSubgraph: BalancerSubgraphService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -179,6 +169,7 @@ export class GaugeService {
     return this.gaugeSubgraphService.getMetadata();
   }
 
+  @CacheDecorator(GAUGE_APR_KEY, FIVE_MINUTES_SECONDS)
   async getGaugeBALAprs({
     prices,
     pools,
@@ -189,11 +180,6 @@ export class GaugeService {
     gauges: SubgraphGauge[];
   }) {
     try {
-      const cached = await this.cache.get(GAUGE_APR_KEY);
-      if (cached) {
-        return cached;
-      }
-
       let gaugeAddresses = gauges.map((gauge) => gauge.id);
       const protocolTokenAddress = this.contractService.getProtocolToken().address;
 
@@ -234,7 +220,6 @@ export class GaugeService {
       });
 
       const data = Object.fromEntries(aprs);
-      await this.cache.set(GAUGE_APR_KEY, data, 60 * 5);
 
       return data;
     } catch (error) {

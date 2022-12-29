@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken, PrismaTokenCurrentPrice } from '@prisma/client';
 import * as _ from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
-import { CacheService } from '../cache.service';
 import { ConfigService } from '../config.service';
 import { networkConfig } from '../../config/network-config';
 import { TokenDataLoaderService } from './token-data-loader.service';
@@ -11,6 +10,8 @@ import { TokenPriceService } from './token-price.service';
 import { TokenDefinition } from '../../token/token-types';
 import { RPC } from '../web3/rpc.provider';
 import { AccountWeb3 } from '../types';
+import { CacheDecorator } from '../decorators/cache.decorator';
+import { FIVE_MINUTES_SECONDS, THIRTY_SECONDS_SECONDS } from 'src/modules/utils/time';
 
 const TOKEN_PRICES_CACHE_KEY = 'token:prices:current';
 const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
@@ -21,7 +22,6 @@ export class TokenService {
   constructor(
     @Inject(RPC) private rpc: AccountWeb3,
     private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
     private readonly tokenPriceService: TokenPriceService,
     private readonly config: ConfigService,
     private readonly tokenData: TokenDataLoaderService,
@@ -32,12 +32,9 @@ export class TokenService {
     return this.tokenPriceService.getProtocolTokenPrice();
   }
 
+  @CacheDecorator(ALL_TOKENS_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getTokens(addresses?: string[]): Promise<PrismaToken[]> {
-    let tokens: PrismaToken[] | null = await this.cache.get<PrismaToken[]>(ALL_TOKENS_CACHE_KEY);
-    if (!tokens) {
-      tokens = await this.prisma.prismaToken.findMany({});
-      this.cache.put(ALL_TOKENS_CACHE_KEY, tokens, 5 * 60 * 1000);
-    }
+    const tokens = await this.prisma.prismaToken.findMany({});
     if (addresses) {
       return tokens.filter((token) => addresses.includes(token.address));
     }
@@ -111,28 +108,18 @@ export class TokenService {
     });
   }
 
+  @CacheDecorator(TOKEN_PRICES_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getTokenPrices(): Promise<PrismaTokenCurrentPrice[]> {
-    let tokenPrices = await this.cache.get<PrismaTokenCurrentPrice[]>(TOKEN_PRICES_CACHE_KEY);
-    if (!tokenPrices) {
-      tokenPrices = await this.tokenPriceService.getCurrentTokenPrices();
-      await this.cache.put(TOKEN_PRICES_CACHE_KEY, tokenPrices, 30 * 1000);
-    }
-    return tokenPrices;
+    return await this.tokenPriceService.getCurrentTokenPrices();
   }
 
   getPriceForToken(tokenPrices: PrismaTokenCurrentPrice[], tokenAddress: string): number {
     return this.tokenPriceService.getPriceForToken(tokenPrices, tokenAddress);
   }
 
+  @CacheDecorator(TOKEN_PRICES_24H_AGO_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getTokenPriceFrom24hAgo(): Promise<PrismaTokenCurrentPrice[]> {
-    let tokenPrices24hAgo = await this.cache.get<PrismaTokenCurrentPrice[]>(
-      TOKEN_PRICES_24H_AGO_CACHE_KEY,
-    );
-    if (!tokenPrices24hAgo) {
-      tokenPrices24hAgo = await this.tokenPriceService.getTokenPriceFrom24hAgo();
-      this.cache.put(TOKEN_PRICES_24H_AGO_CACHE_KEY, tokenPrices24hAgo, 60 * 5 * 1000);
-    }
-    return tokenPrices24hAgo;
+    return await this.tokenPriceService.getTokenPriceFrom24hAgo();
   }
 
   async loadTokenPrices(): Promise<void> {

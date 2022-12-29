@@ -1,8 +1,6 @@
-import { Contract } from '@ethersproject/contracts';
 import { commify, formatEther } from '@ethersproject/units';
 import { Inject, Injectable } from '@nestjs/common';
 import { RewardPool, RewardPoolUserInfo } from 'src/graphql';
-import { CacheService } from '../common/cache.service';
 import { TokenPriceService } from '../common/token/token-price.service';
 import { AccountWeb3 } from '../common/types';
 import { ContractService } from '../common/web3/contract.service';
@@ -12,10 +10,11 @@ import { BLOCKS_PER_DAY } from '../utils/blocks';
 import * as poolAbi from './abis/RewardPool.json';
 import * as erc20Abi from '../common/web3/abi/ERC20.json';
 import { BigNumber } from 'ethers';
-import { convertToFormatEthNumber, doTransaction, MAX_UINT256 } from '../common/web3/utils';
-import { parseEther } from 'ethers/lib/utils';
+import { convertToFormatEthNumber } from '../common/web3/utils';
 import { BlockService } from '../common/web3/block.service';
 import { ProtocolService } from '../protocol/protocol.service';
+import { CacheDecorator } from '../common/decorators/cache.decorator';
+import { ONE_MINUTE_SECONDS } from '../utils/time';
 
 const REWARD_POOL_KEY = 'REWARD_POOL_KEY';
 
@@ -37,37 +36,10 @@ export class RewardPoolService {
   constructor(
     @Inject(RPC) private rpc: AccountWeb3,
     private readonly pricing: TokenPriceService,
-    private readonly cache: CacheService,
     private readonly contracts: ContractService,
     private readonly blockService: BlockService,
     private readonly protocolService: ProtocolService,
   ) {}
-
-  //   async getPools(): Promise<RewardPool[]> {
-  //     const cached = await this.cache.get<RewardPool[]>(REWARD_POOL_KEY);
-  //     if (cached) {
-  //       return cached;
-  //     }
-
-  //     const { rewardPools } = await getProtocolConfigDataForChain(this.rpc.chainId);
-  //     const pools = await this.getPoolInfo(rewardPools);
-  //     await this.cache.set(REWARD_POOL_KEY, pools, 30);
-  //     return pools;
-  //   }
-
-  async doStakes() {
-    const amount = parseEther('100');
-    const { rewardPools } = await this.protocolService.getProtocolConfigDataForChain();
-
-    const protocolToken = this.contracts.getProtocolToken();
-    for (const pool of rewardPools) {
-      const contract = new Contract(pool.address, poolAbi, this.rpc.wallet);
-      await doTransaction(await protocolToken.approve(pool.address, MAX_UINT256));
-      await doTransaction(await contract.deposit(amount));
-    }
-
-    return true;
-  }
 
   async getPoolsWithUserData(user?: string) {
     // get block and price once to start
@@ -91,19 +63,13 @@ export class RewardPoolService {
     return pools;
   }
 
+  @CacheDecorator(REWARD_POOL_KEY, ONE_MINUTE_SECONDS)
   private async getPoolInfo(
     pools: RewardPool[],
     protocolTokenPrice: number,
     blockNumber: number,
   ): Promise<RewardPool[]> {
-    // TODO: All this cache check stuff can be put in a custom decorator
-    const cached = await this.cache.get<RewardPool[]>(REWARD_POOL_KEY);
-    if (cached) {
-      return cached;
-    }
-
     const protocolToken = this.contracts.getProtocolToken();
-
     const poolDataMulticall = new Multicaller(this.rpc, poolAbi);
     const balancesMulticall = new Multicaller(this.rpc, erc20Abi);
 
