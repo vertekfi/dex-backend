@@ -54,7 +54,7 @@ export class ProtocolService {
       return cached;
     }
 
-    const url = 'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json';
+    const url = 'https://raw.githubusercontent.com/vertekfi/token-list/main/tokenlist.json';
     const { data } = await axios.get(url);
 
     const tokens = data[url].tokens.filter((tk) => tk.chainId === this.rpc.chainId);

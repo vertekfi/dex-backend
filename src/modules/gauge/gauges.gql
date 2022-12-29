@@ -1,7 +1,6 @@
 extend type Query {
   getLiquidityGauges: [LiquidityGauge]!
   getUserGaugeStakes(user: String!, poolIds: [String!]!): [LiquidityGauge]!
-  getPoolsForGauges(gaugeIds: [String!]!): [GaugePool]!
 }
 
 extend type Mutation {
@@ -12,7 +11,7 @@ type GaugePool {
   id: String!
   address: String!
   poolType: String!
-  tokens: [GqlPoolTokenBase!]!
+  tokens: [GqlPoolToken!]!
   tokensList: [String!]!
 }
 
@@ -57,7 +56,7 @@ type LiquidityGauge {
   symbol: String!
 
   " Reference to Pool entity "
-  pool: GaugePoolInfo
+  pool: GaugePool
 
   " Address of the pool (lp_token of the gauge) "
   address: String!
@@ -78,11 +77,6 @@ type LiquidityGauge {
   tokens: [RewardToken!]
 
   factory: GaugeFactory
-}
-
-type GaugePoolInfo {
-  poolId: String!
-  address: String!
 }
 
 type GaugeShare {

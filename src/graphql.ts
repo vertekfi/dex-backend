@@ -182,6 +182,8 @@ export interface IQuery {
     sorGetSwaps(tokenIn: string, tokenOut: string, swapType: GqlSorSwapType, swapAmount: BigDecimal, swapOptions: GqlSorSwapOptionsInput): GqlSorGetSwapsResponse | Promise<GqlSorGetSwapsResponse>;
     sorGetBatchSwapForTokensIn(tokensIn: GqlTokenAmountHumanReadable[], tokenOut: string, swapOptions: GqlSorSwapOptionsInput): GqlSorGetBatchSwapForTokensInResponse | Promise<GqlSorGetBatchSwapForTokensInResponse>;
     getLiquidityGauges(): Nullable<LiquidityGauge>[] | Promise<Nullable<LiquidityGauge>[]>;
+    getUserGaugeStakes(user: string, poolIds: string[]): Nullable<LiquidityGauge>[] | Promise<Nullable<LiquidityGauge>[]>;
+    getPoolsForGauges(gaugeIds: string[]): Nullable<GaugePool>[] | Promise<Nullable<GaugePool>[]>;
     poolGetPool(id: string): GqlPoolBase | Promise<GqlPoolBase>;
     poolGetPools(first?: Nullable<number>, skip?: Nullable<number>, orderBy?: Nullable<GqlPoolOrderBy>, orderDirection?: Nullable<GqlPoolOrderDirection>, where?: Nullable<GqlPoolFilter>, textSearch?: Nullable<string>): GqlPoolMinimal[] | Promise<GqlPoolMinimal[]>;
     poolGetPoolsCount(first?: Nullable<number>, skip?: Nullable<number>, orderBy?: Nullable<GqlPoolOrderBy>, orderDirection?: Nullable<GqlPoolOrderDirection>, where?: Nullable<GqlPoolFilter>, textSearch?: Nullable<string>): number | Promise<number>;
@@ -280,7 +282,7 @@ export interface GqlSorGetBatchSwapForTokensInResponse {
 
 export interface IMutation {
     __typename?: 'IMutation';
-    syncGaugeData(): string | Promise<string>;
+    syncGaugeData(): boolean | Promise<boolean>;
     poolSyncAllPoolsFromSubgraph(): string[] | Promise<string[]>;
     poolSyncNewPoolsFromSubgraph(): string[] | Promise<string[]>;
     poolLoadOnChainDataForAllPools(): string | Promise<string>;
@@ -320,6 +322,15 @@ export interface IMutation {
     userSyncChangedStakedBalances(): string | Promise<string>;
 }
 
+export interface GaugePool {
+    __typename?: 'GaugePool';
+    id: string;
+    address: string;
+    poolType: string;
+    tokens: GqlPoolTokenBase[];
+    tokensList: string[];
+}
+
 export interface VotingEscrow {
     __typename?: 'VotingEscrow';
     id: string;
@@ -337,6 +348,11 @@ export interface VotingEscrowLock {
     updatedAt: number;
 }
 
+export interface GaugeFactory {
+    __typename?: 'GaugeFactory';
+    id: string;
+}
+
 export interface LiquidityGauge {
     __typename?: 'LiquidityGauge';
     id: string;
@@ -348,6 +364,7 @@ export interface LiquidityGauge {
     totalSupply: BigDecimal;
     shares?: Nullable<GaugeShare[]>;
     tokens?: Nullable<RewardToken[]>;
+    factory?: Nullable<GaugeFactory>;
 }
 
 export interface GaugePoolInfo {

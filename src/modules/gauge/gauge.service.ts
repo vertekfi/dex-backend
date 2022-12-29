@@ -22,6 +22,8 @@ import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
 import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { CONTRACT_MAP } from '../data/contracts';
+import { GaugePool } from 'src/graphql';
+import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
@@ -40,7 +42,8 @@ export class GaugeService {
     private readonly protocolService: ProtocolService,
     private readonly cache: CacheService,
     private readonly contractService: ContractService,
-    private veBALHelpers: VeBalHelpers,
+    private readonly veBALHelpers: VeBalHelpers,
+    private readonly balancerSubgraph: BalancerSubgraphService,
   ) {}
 
   async getAllGaugeAddresses(): Promise<string[]> {
@@ -53,12 +56,15 @@ export class GaugeService {
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
 
+    console.log(protoData);
+
     const gauges = [];
     for (const gauge of subgraphGauges) {
       if (
         protoData.gauges.includes(gauge.poolId) &&
         getAddress(gauge.id) !== MAIN_POOL_GAUGE[this.rpc.chainId]
       ) {
+        // Attach each gauges pool info
         gauges.push({
           id: gauge.id,
           symbol: '',
@@ -71,26 +77,20 @@ export class GaugeService {
       }
     }
 
+    const poolIds = gauges.map((g) => g.poolId);
+    const pools = await this.balancerSubgraph.getAllPools({
+      where: {
+        id_in: poolIds,
+      },
+    });
+
+    // These can be cached along with the gauges since only static data is asked for
+    pools.forEach((p) => {
+      const gauge = gauges.find((g) => g.poolId == p.id);
+      gauge.pool = p;
+    });
+
     return gauges;
-
-    // return gauges
-    //   .filter((g) => protoData.gauges.includes(g.poolId))
-    //   .map(({ id, poolId, totalSupply, shares, tokens }) => ({
-    //     id,
-    //     address: id,
-    //     poolId,
-    //     totalSupply,
-    //     shares:
-    //       shares?.map((share) => ({
-    //         userAddress: share.user.id,
-    //         amount: share.balance,
-    //       })) ?? [],
-    //     tokens: tokens,
-    //   }));
-  }
-
-  async getPoolsForGauges(gaugeIds: string[]) {
-    return [];
   }
 
   async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {

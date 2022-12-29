@@ -44,7 +44,6 @@ export type GaugeFactory = {
   __typename?: 'GaugeFactory';
   gauges?: Maybe<Array<LiquidityGauge>>;
   id: Scalars['ID'];
-  numGauges: Scalars['Int'];
 };
 
 export type GaugeFactoryGaugesArgs = {
