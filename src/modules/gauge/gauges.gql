@@ -74,7 +74,7 @@ type LiquidityGauge {
   shares: [GaugeShare!]
 
   " List of reward tokens depositted in the gauge "
-  tokens: [RewardToken!]
+  rewardTokens: [RewardToken]!
 
   factory: GaugeFactory
 }

@@ -60,6 +60,11 @@ export class GaugeService {
             id
           }
           isKilled
+          tokens {
+            id
+            decimals
+            symbol
+          }
         }
       }
     `);
@@ -104,6 +109,8 @@ export class GaugeService {
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
 
+    console.log(subgraphGauges);
+
     const gauges = [];
     for (const gauge of subgraphGauges) {
       if (
@@ -112,13 +119,14 @@ export class GaugeService {
       ) {
         gauges.push({
           id: gauge.id,
-          symbol: '',
+          symbol: gauge.symbol,
           poolId: gauge.poolId,
           totalSupply: gauge.totalSupply,
           factory: {
             id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
           },
           isKilled: gauge.isKilled,
+          rewardTokens: gauge.tokens,
         });
       }
     }
