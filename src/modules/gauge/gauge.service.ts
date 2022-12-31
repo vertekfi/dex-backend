@@ -72,16 +72,14 @@ export class GaugeService {
     return liquidityGauges;
   }
 
+  // Cache: These do not change often and front end makes its immediate calls to contracts as needed also
   @CacheDecorator(GAUGE_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getAllGauges() {
-    // const cached = await this.cache.get(GAUGE_CACHE_KEY);
-    // if (cached) return cached;
-
     const gauges = await this.getCoreGauges();
     const pools = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
 
     // Attach each gauges pool info
-    // These can be cached along with the gauges since only static data is asked for
+    // These can be cached along with the gauges since only static(mostly) data is asked for
     pools.forEach((p) => {
       const gauge = gauges.find((g) => g.poolId == p.id);
       gauge.pool = {
@@ -97,9 +95,6 @@ export class GaugeService {
       };
     });
 
-    // These do not change often and front end makes its immediate calls to contracts as needed also
-    // await this.cache.set(GAUGE_CACHE_KEY, gauges, FIVE_MINUTES_SECONDS);
-
     return gauges;
   }
 
@@ -108,8 +103,6 @@ export class GaugeService {
       this.getLiquidityGauges(),
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
-
-    console.log(subgraphGauges);
 
     const gauges = [];
     for (const gauge of subgraphGauges) {
