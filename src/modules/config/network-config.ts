@@ -146,16 +146,16 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     beetsPriceProviderRpcUrl:
       'https://eth-goerli.g.alchemy.com/v2/cK2OOgcOIjM2enbLpRfinpxq8hdY9aGU',
     beets: {
-      address: '0xb269A278E427478712e2AF0eBa728021157A2114',
+      address: '0xaFbf7fB9Fa206089041218dF93c8B3A1Bb9F4497',
     },
     bal: {
       address: '',
     },
     balancer: {
-      vault: '0x84259CbD70aA17EB282Cb40666d2687Cd8E100AA',
+      vault: '0x4b93431a1942A0F3Be0a082834200FFd9BE54FD4',
       composableStablePoolFactories: [],
       weightedPoolV2Factories: [],
-      weightedPoolFactories: ['0xDE1b1D8a94b909976eC252d7b73BAA8F10B7d8e1'],
+      weightedPoolFactories: ['0x274B157a7b312175936Dc16fCA5209ee9DE8422e'],
       swapProtocolFeePercentage: 0.25,
       yieldProtocolFeePercentage: 0.25,
     },
