@@ -1,12 +1,5 @@
 import { Inject, UseGuards } from '@nestjs/common';
-import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
-import {
-  GqlPoolSnapshotDataRange,
-  QueryPoolGetBatchSwapsArgs,
-  QueryPoolGetJoinExitsArgs,
-  QueryPoolGetPoolsArgs,
-  QueryPoolGetUserSwapVolumeArgs,
-} from 'src/gql-addons';
+import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { AccountWeb3 } from '../common/types';
 import { RPC } from '../common/web3/rpc.provider';

@@ -98,8 +98,8 @@ export class BalancerSorService {
       this.getToken(tokenOut),
     ]);
 
-    console.log(tokenInfoIn);
-    console.log(tokenInfoOut);
+    // console.log(tokenInfoIn);
+    // console.log(tokenInfoOut);
 
     const priceOfNativeAssetInBuyToken = Number(
       formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoIn.price, 36)), 36),

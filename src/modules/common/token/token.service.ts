@@ -130,6 +130,7 @@ export class TokenService {
     await this.tokenData.syncTokenData();
   }
 
+  // TODO: Finish this
   async syncTokenDynamicData() {
     const tokens = await this.prisma.prismaToken.findMany({
       include: {

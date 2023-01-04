@@ -17,7 +17,7 @@ export const PROTOCOL_CONFIG_CACHE_KEY = 'protocol:config';
 export const PROTOCOL_TOKENLIST_CACHE_KEY = 'protocol:tokenlist';
 
 const MAIN_POOL_IDS = {
-  5: '0xa5d4313d76020d51446634366666c6c1f051efd8000200000000000000000004',
+  5: '0x3e9f7b85e8ee2107aeca28677b6b416fa60b6200000200000000000000000002',
   56: '',
 };
 
@@ -46,7 +46,9 @@ export class ProtocolService {
     const url = 'https://raw.githubusercontent.com/vertekfi/token-list/main/tokenlist.json';
     const { data } = await axios.get(url);
 
-    return data[url].tokens.filter((tk) => tk.chainId === this.rpc.chainId);
+    return data[
+      'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json'
+    ].tokens.filter((tk) => tk.chainId === this.rpc.chainId);
   }
 
   @CacheDecorator(PROTOCOL_METRICS_CACHE_KEY, THIRTY_MINUTES_SECONDS)

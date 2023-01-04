@@ -36,6 +36,7 @@ export class DexscreenerPriceHandlerService implements TokenPriceHandler {
       let price: number;
       const chainId = parseInt(process.env.CHAIN_ID);
       if (chainId === 5 && token.address === PROTOCOL_TOKEN[chainId]) {
+        // TODO: For testing only
         price = 9;
       } else {
         const screenerPrice = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);

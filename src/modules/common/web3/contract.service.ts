@@ -9,12 +9,12 @@ import * as bptABI from './abi/BalancerPoolToken.json';
 import { RPC } from './rpc.provider';
 
 export const PROTOCOL_TOKEN = {
-  5: '0xb269A278E427478712e2AF0eBa728021157A2114',
+  5: '0xaFbf7fB9Fa206089041218dF93c8B3A1Bb9F4497',
   56: '',
 };
 
 export const MAIN_POOL = {
-  5: '0xA5D4313D76020D51446634366666C6c1F051EfD8',
+  5: '0x3e9f7B85E8Ee2107aeca28677b6B416fA60b6200',
   56: '',
 };
 
