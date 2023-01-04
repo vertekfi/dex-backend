@@ -162,7 +162,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     multicall: '0xFDec6c30306F84eCC4196FA689974721fE863Dfc',
     avgBlockSpeed: 3,
     sor: {
-      url: 'https://seb3bxrechp46fx7h3d2ksmjce0minwk.lambda-url.ca-central-1.on.aws/',
+      url: 'https://dex-frontend-v2.vercel.app/',
       maxPools: 8,
       forceRefresh: false,
       gasPrice: BigNumber.from(10),
