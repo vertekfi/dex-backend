@@ -1,26 +1,23 @@
-import { FundManagement, SwapType } from '@balancer-labs/sdk';
+import { FundManagement } from '@balancer-labs/sdk';
 import { parseFixed, formatFixed } from '@ethersproject/bignumber';
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken } from '@prisma/client';
 import { BigNumber } from 'ethers';
-import { getAddress, parseUnits } from 'ethers/lib/utils';
+import { getAddress } from 'ethers/lib/utils';
 import {
-  GqlSorGetSwapsResponse,
   GqlSorSwapOptionsInput,
   GqlSorSwapRoute,
   GqlSorSwapRouteHop,
   GqlSorSwapType,
 } from 'src/gql-addons';
 import { AccountWeb3, TokenAmountHumanReadable } from 'src/modules/common/types';
-import { ContractService } from 'src/modules/common/web3/contract.service';
+import { ContractService, PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { PoolService } from 'src/modules/pool/pool.service';
 import { networkConfig } from '../../config/network-config';
 import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../utils/addresses';
 import { oldBnum } from '../../utils/old-big-number';
-import { SorApiService } from './api/sor-api.service';
-import { GetSwapsInput, Order, PoolFilter, SwapTypes, SwapV2 } from './types';
-import { TokenService } from 'src/modules/common/token/token.service';
+import { GetSwapsInput, PoolFilter, SwapTypes, SwapV2 } from './types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { SorPriceService } from './api/sor-price.service';
@@ -39,7 +36,6 @@ export class BalancerSorService {
   constructor(
     private readonly contractService: ContractService,
     @Inject(RPC) private rpc: AccountWeb3,
-    private readonly tokenService: TokenService,
     private readonly poolDataService: SubgraphPoolDataService,
     private readonly sorPriceService: SorPriceService,
     private readonly prisma: PrismaService,
@@ -90,16 +86,10 @@ export class BalancerSorService {
         },
     );*/
 
-    // console.log(tokenIn);
-    // console.log(tokenOut);
-
     const [tokenInfoIn, tokenInfoOut] = await Promise.all([
       this.getToken(tokenIn),
       this.getToken(tokenOut),
     ]);
-
-    // console.log(tokenInfoIn);
-    // console.log(tokenInfoOut);
 
     const priceOfNativeAssetInBuyToken = Number(
       formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoIn.price, 36)), 36),
@@ -108,7 +98,7 @@ export class BalancerSorService {
     const priceOfNativeAssetInSellToken = Number(
       formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoOut.price, 36)), 36),
     );
-    // 0x3416cF6C708Da44DB2624D63ea0AAef7113527C6
+    // TODO: This right?...
     await Promise.all([
       this.sor.swapCostCalculator.setNativeAssetPriceInToken(
         tokenIn,
@@ -312,14 +302,12 @@ export class BalancerSorService {
       throw new Error('Unknown token: ' + address);
     }
 
-    console.log(token);
-
     if (token.useDexscreener) {
-      if (address === '0xb269a278e427478712e2af0eba728021157a2114') {
+      if (getAddress(address) === getAddress(PROTOCOL_TOKEN[this.rpc.chainId])) {
         return {
           // TODO: testing
           ...token,
-          price: '9',
+          price: '7',
         };
       }
       const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);

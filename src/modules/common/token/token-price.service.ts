@@ -15,7 +15,7 @@ export class TokenPriceService {
 
   async getProtocolTokenPrice() {
     // return getDexPriceFromPair('bsc', '0x7a09ddf458fda6e324a97d1a8e4304856fb3e702000200000000000000000000-0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5-0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c')
-    return '9';
+    return '7';
   }
 
   async tryCachePriceForToken(address: string) {
@@ -112,7 +112,6 @@ export class TokenPriceService {
     // Break up for dexscreener and coingecko as needed. Currently only need screener for our degen shit
 
     for (const handler of handlers) {
-      console.log(handler.id);
       const accepted = await handler.getAcceptedTokens(tokensWithTypes);
       const acceptedTokens = tokensWithTypes.filter((token) => accepted.includes(token.address));
       let updated: string[] = [];
@@ -121,10 +120,6 @@ export class TokenPriceService {
         updated = await handler.updatePricesForTokens(acceptedTokens);
       } catch (e) {
         console.error(e);
-        // Sentry.captureException(e, (scope) => {
-        //     scope.setTag('handler.exitIfFails', handler.exitIfFails);
-        //     return scope;
-        // });
         if (handler.exitIfFails) {
           throw e;
         }

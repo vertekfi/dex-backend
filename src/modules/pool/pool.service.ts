@@ -107,7 +107,6 @@ export class PoolService {
   @CacheDecorator(FEATURED_POOL_GROUPS_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getFeaturedPoolGroups(): Promise<GqlPoolFeaturedPoolGroup[]> {
     const config = await this.protocolService.getProtocolConfigDataForChain();
-    console.log(config);
     const pools = await this.prisma.prismaPool.findMany({
       where: {
         id: {
