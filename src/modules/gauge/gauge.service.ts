@@ -85,6 +85,7 @@ export class GaugeService {
       gauge.pool = {
         ...p,
         poolType: p.type,
+        name: p.name,
         tokensList: p.tokens.map((t) => t.address),
         tokens: p.tokens.map((t) => {
           return {
@@ -106,14 +107,12 @@ export class GaugeService {
 
     const gauges = [];
     for (const gauge of subgraphGauges) {
-      if (
-        protoData.gauges.includes(gauge.poolId) &&
-        getAddress(gauge.id) !== MAIN_POOL_GAUGE[this.rpc.chainId]
-      ) {
+      if (protoData.gauges.includes(gauge.poolId)) {
         gauges.push({
           id: gauge.id,
           symbol: gauge.symbol,
           poolId: gauge.poolId,
+          address: gauge.id,
           totalSupply: gauge.totalSupply,
           factory: {
             id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],

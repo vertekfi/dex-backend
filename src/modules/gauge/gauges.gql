@@ -10,6 +10,7 @@ extend type Mutation {
 type GaugePool {
   id: String!
   address: String!
+  name: String!
   poolType: String!
   tokens: [GqlPoolToken!]!
   tokensList: [String!]!
