@@ -325,6 +325,7 @@ export interface GaugePool {
     __typename?: 'GaugePool';
     id: string;
     address: string;
+    name: string;
     poolType: string;
     tokens: GqlPoolToken[];
     tokensList: string[];
@@ -362,7 +363,7 @@ export interface LiquidityGauge {
     isKilled: boolean;
     totalSupply: BigDecimal;
     shares?: Nullable<GaugeShare[]>;
-    tokens?: Nullable<RewardToken[]>;
+    rewardTokens: Nullable<RewardToken>[];
     factory?: Nullable<GaugeFactory>;
 }
 
@@ -679,6 +680,7 @@ export interface GqlPoolToken extends GqlPoolTokenBase {
     name: string;
     symbol: string;
     index: number;
+    logoURI?: Nullable<string>;
     balance: BigDecimal;
     priceRate: BigDecimal;
     weight?: Nullable<BigDecimal>;

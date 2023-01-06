@@ -23,6 +23,7 @@ import { CONTRACT_MAP } from '../data/contracts';
 import { gql } from 'graphql-request';
 import { PrismaService } from 'nestjs-prisma';
 import { CacheDecorator } from '../common/decorators/cache.decorator';
+import { GqlPoolToken } from 'src/gql-addons';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
@@ -76,8 +77,7 @@ export class GaugeService {
   @CacheDecorator(GAUGE_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getAllGauges() {
     const gauges = await this.getCoreGauges();
-    const pools = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
-
+    const { pools, tokens } = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
     // Attach each gauges pool info
     // These can be cached along with the gauges since only static(mostly) data is asked for
     pools.forEach((p) => {
@@ -91,10 +91,13 @@ export class GaugeService {
           return {
             weight: t.dynamicData.weight,
             address: t.address,
+            logoURI: tokens.find((t2) => t2.address == t.address)?.logoURI,
           };
         }),
       };
     });
+
+    console.log(pools[0].tokens);
 
     return gauges;
   }
@@ -127,20 +130,28 @@ export class GaugeService {
   }
 
   private async getPoolsForGauges(poolIds: string[]) {
-    return await this.prisma.prismaPool.findMany({
-      where: {
-        id: {
-          in: poolIds,
-        },
-      },
-      include: {
-        tokens: {
-          include: {
-            dynamicData: true,
+    const [tokens, pools] = await Promise.all([
+      this.prisma.prismaToken.findMany({}),
+      this.prisma.prismaPool.findMany({
+        where: {
+          id: {
+            in: poolIds,
           },
         },
-      },
-    });
+        include: {
+          tokens: {
+            include: {
+              dynamicData: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      pools,
+      tokens,
+    };
   }
 
   async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {

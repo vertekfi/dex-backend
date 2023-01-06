@@ -406,6 +406,7 @@ type GqlPoolToken implements GqlPoolTokenBase {
   name: String!
   symbol: String!
   index: Int!
+  logoURI: String
 
   #dynamic data
   balance: BigDecimal!
