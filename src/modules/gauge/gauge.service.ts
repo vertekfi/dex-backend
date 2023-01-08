@@ -76,7 +76,7 @@ export class GaugeService {
   }
 
   // Cache: These do not change often and front end makes its immediate calls to contracts as needed also
-  @CacheDecorator(GAUGE_CACHE_KEY, FIVE_MINUTES_SECONDS)
+  // @CacheDecorator(GAUGE_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getAllGauges() {
     const gauges = await this.getCoreGauges();
     const { pools, tokens } = await this.getPoolsForGauges(gauges.map((g) => g.poolId));

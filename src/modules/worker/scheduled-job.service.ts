@@ -141,7 +141,6 @@ export class ScheduledJobService {
       'loadTokenPrices',
       ONE_MINUTE_IN_MS,
       async () => {
-        console.log('HELLOOO');
         await this.tokenService.loadTokenPrices();
       },
       true,
