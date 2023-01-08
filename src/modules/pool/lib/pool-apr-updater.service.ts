@@ -18,7 +18,6 @@ export class PoolAprUpdaterService {
         await aprService.updateAprForPools(pools);
       } catch (e) {
         console.log(`Error during APR update of aprService:`, e);
-        // Sentry.captureException(e);
       }
     }
 

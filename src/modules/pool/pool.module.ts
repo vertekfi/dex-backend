@@ -13,9 +13,10 @@ import { PoolUsdDataService } from './lib/pool-usd-data.service';
 import { PoolMutationResolver } from './pool-mutation.resolver';
 import { PoolQueryResolver } from './pool-query.resolver';
 import { PoolService } from './pool.service';
+import { GaugeModule } from '../gauge/gauge.module';
 
 @Module({
-  imports: [TokenModule, UserModule],
+  imports: [TokenModule, UserModule, GaugeModule],
   providers: [
     PoolQueryResolver,
     PoolMutationResolver,

@@ -150,9 +150,13 @@ export class GaugeService {
       gauge.tokens?.forEach((rewardToken) => {
         const rewardData = rewardDataResult[rewardToken.id];
         const isActive = moment.unix(parseInt(rewardData.period_finish)).isAfter(moment());
+        // id in subgraph = <tokenAddress>-<gaugeAddress>
+        const address = rewardToken.id.split('-')[0];
+
         rewardTokens.push({
           gaugeAddress: gauge.id,
           ...rewardToken,
+          address,
           rewardsPerSecond: isActive
             ? scaleDown(rewardData.rate, rewardToken.decimals).toNumber()
             : 0,

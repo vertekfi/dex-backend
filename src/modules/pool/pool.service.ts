@@ -27,7 +27,7 @@ import { PoolOnChainDataService } from '../common/pool/pool-on-chain-data.servic
 import { PoolSnapshotService } from './lib/pool-snapshot.service';
 import { PoolSwapService } from '../common/pool/pool-swap.service';
 import { PoolUsdDataService } from './lib/pool-usd-data.service';
-import { PoolAprService, PoolStakingService } from './pool-types';
+import { PoolStakingService } from './pool-types';
 import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
 import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
 import { PoolSyncService } from './lib/pool-sync.service';
@@ -36,6 +36,10 @@ import { ProtocolService } from '../protocol/protocol.service';
 import { CacheDecorator } from '../common/decorators/cache.decorator';
 import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
+import { VeGaugeAprService } from './lib/aprs/ve-bal-guage-apr.service';
+import { GaugeService } from '../gauge/gauge.service';
+import { TokenService } from '../common/token/token.service';
+import { PROTOCOL_TOKEN } from '../common/web3/contract.service';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -55,6 +59,8 @@ export class PoolService {
     private readonly poolAprUpdaterService: PoolAprUpdaterService,
     private readonly poolSyncService: PoolSyncService,
     private readonly protocolService: ProtocolService,
+    private readonly gaugeService: GaugeService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -263,8 +269,12 @@ export class PoolService {
 
   async updatePoolAprs() {
     // TODO: Use fee collector to get protocol fee
+    // Also move all of this apr stuff into its own concern/service
     const swaps = new SwapFeeAprService(this.prisma, 0.25);
-    await this.poolAprUpdaterService.updatePoolAprs([swaps]);
+    const gauges = new VeGaugeAprService(this.gaugeService, this.tokenService, [
+      PROTOCOL_TOKEN[this.rpc.chainId],
+    ]);
+    await this.poolAprUpdaterService.updatePoolAprs([swaps, gauges]);
   }
 
   async syncChangedPools() {
