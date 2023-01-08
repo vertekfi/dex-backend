@@ -196,7 +196,6 @@ export class ScheduledJobService {
       await this.tokenService.syncTokenDynamicData();
     });
 
-    // TODO: Can add other gauge items like APR's to this flow for frontend
     // every 5 minutes
     this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
       await this.gaugeService.syncGaugeData();
