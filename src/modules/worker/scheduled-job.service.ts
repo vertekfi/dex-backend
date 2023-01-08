@@ -8,7 +8,9 @@ import { Inject } from '@nestjs/common';
 import { AccountWeb3 } from '../common/types';
 import { UserService } from '../user/user.service';
 import { ProtocolService } from '../protocol/protocol.service';
-import { GaugeService } from '../gauge/gauge.service';
+import { GaugeSyncService } from '../gauge/gauge-sync.service';
+import { runWithMinimumInterval } from './scheduling';
+import { PoolDataLoaderService } from '../pool/lib/pool-data-loader.service';
 
 const ONE_MINUTE_IN_MS = 60000;
 const TWO_MINUTES_IN_MS = 120000;
@@ -29,14 +31,11 @@ export class ScheduledJobService {
     private readonly poolService: PoolService,
     private readonly userService: UserService,
     private readonly protocolService: ProtocolService,
-    private readonly gaugeService: GaugeService,
+    private readonly gaugeService: GaugeSyncService,
+    private readonly poolDataLoader: PoolDataLoaderService,
   ) {}
 
   init() {
-    // if (process.env.NODE_ENV === 'production') {
-    // this.scheduleLocalWorkerTasks();
-    // }
-
     this.scheduleLocalWorkerTasks();
   }
 
@@ -103,26 +102,6 @@ export class ScheduledJobService {
         console.log(`${taskName} already running, skipping call...`);
         return;
       }
-
-      // const transaction = Sentry.startTransaction({ name: taskName });
-      // Sentry.configureScope((scope) => scope.setSpan(transaction));
-      // // Sentry.withScope((scope) => {
-      // //     scope.setSpan(transaction);
-      // //     running = true;
-      // //     console.log(`Start ${taskName}...`);
-      // //     console.time(taskName);
-      // asyncCallWithTimeout(func, timeout)
-      //   .catch((error) => {
-      //     console.log(`Error ${taskName}`, error);
-      //     Sentry.captureException(error);
-      //   })
-      //   .finally(() => {
-      //     running = false;
-      //     transaction.finish();
-      //     console.timeEnd(taskName);
-      //     console.log(`${taskName} done`);
-      //   });
-      // });
     });
   }
 
@@ -141,24 +120,6 @@ export class ScheduledJobService {
           console.log(`${taskName} already running, skipping call...`);
           return;
         }
-        // const transaction = Sentry.startTransaction({ name: taskName });
-        // Sentry.withScope((scope) => {
-        //   scope.setSpan(transaction);
-
-        //   running = true;
-        //   console.log(`Start ${taskName}...`);
-        //   console.time(taskName);
-        //   asyncCallWithTimeout(listener, timeout)
-        //     .catch((error) => {
-        //       console.log(`Error ${taskName}`, error);
-        //       Sentry.captureException(error);
-        //     })
-        //     .finally(() => {
-        //       transaction.finish();
-        //       running = false;
-        //       console.timeEnd(taskName);
-        //     });
-        // });
       }, 1),
     );
   }
@@ -178,27 +139,17 @@ export class ScheduledJobService {
     this.scheduleJob('*/20 * * * * *', 'loadTokenPrices', ONE_MINUTE_IN_MS, async () => {
       await this.tokenService.loadTokenPrices();
     });
-    // this.scheduleNodeJob(
-    //   this.getRule(20),
-    //   'loadTokenPrices',
-    //   async () => this.tokenService.loadTokenPrices,
-    // );
 
     // every 30 seconds
-    // TODO: check this
     this.scheduleJob(
       '*/30 * * * * *',
       'poolUpdateLiquidityValuesForAllPools',
       TWO_MINUTES_IN_MS,
       async () => {
         await this.poolService.updateLiquidityValuesForPools();
-        // await this.poolService.updatePoolAprs([]);
+        await this.poolService.updatePoolAprs();
       },
     );
-    // this.scheduleNodeJob(this.getRule(30), 'poolUpdateLiquidityValuesForAllPools', async () => {
-    //   await this.poolService.updateLiquidityValuesForPools();
-    //   // await this.poolService.updatePoolAprs([]);
-    // });
 
     // every 30 seconds
     this.scheduleJob(
@@ -209,32 +160,21 @@ export class ScheduledJobService {
         await this.poolService.loadOnChainDataForPoolsWithActiveUpdates();
       },
     );
-    // this.scheduleNodeJob(
-    //   this.getRule(30),
-    //   'loadOnChainDataForPoolsWithActiveUpdates',
-    //   this.poolService.loadOnChainDataForPoolsWithActiveUpdates,
-    // );
 
     // every 30 seconds
     this.scheduleJob('*/30 * * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
       await this.poolService.syncNewPoolsFromSubgraph();
     });
-    // this.scheduleNodeJob(
-    //   this.getRule(30),
-    //   'syncNewPoolsFromSubgraph',
-    //   this.poolService.syncNewPoolsFromSubgraph,
-    // );
 
     // every 3 minutes
-    // this.scheduleJob('*/3 * * * *', 'poolSyncSanityPoolData', FIVE_MINUTES_IN_MS, async () => {
-    //   await this.poolService.syncSanityPoolData();
-    // });
+    this.scheduleJob('*/3 * * * *', 'poolSyncSanityPoolData', FIVE_MINUTES_IN_MS, async () => {
+      await this.poolDataLoader.syncPoolConfigData();
+    });
 
     // every 5 minutes
     this.scheduleJob('*/5 * * * *', 'syncTokensFromPoolTokens', TEN_MINUTES_IN_MS, async () => {
       await this.tokenService.syncTokenData();
     });
-    // this.scheduleNodeJob(this.getRule(0, 5), 'syncTokenData', this.tokenService.syncTokenData);
 
     //  every 5 minutes
     this.scheduleJob(
@@ -245,31 +185,21 @@ export class ScheduledJobService {
         await this.poolService.updateLiquidity24hAgoForAllPools();
       },
     );
-    // this.scheduleNodeJob(
-    //   this.getRule(0, 5),
-    //   'updateLiquidity24hAgoForAllPools',
-    //   this.poolService.updateLiquidity24hAgoForAllPools,
-    // );
 
-    // once a minute
-    /*this.scheduleJob('* * * * *', 'sor-reload-graph', TWO_MINUTES_IN_MS, async () => {
-          await balancerSdk.sor.reloadGraph();
-      });*/
+    // // once a minute
+    // this.scheduleJob('* * * * *', 'sor-reload-graph', TWO_MINUTES_IN_MS, async () => {
+    //       await balancerSdk.sor.reloadGraph();
+    //   });
 
     // every minute
     this.scheduleJob('*/1 * * * *', 'syncTokenDynamicData', TEN_MINUTES_IN_MS, async () => {
       await this.tokenService.syncTokenDynamicData();
     });
-    // this.scheduleNodeJob(
-    //   this.getRule(0, 1),
-    //   'syncTokenDynamicData',
-    //   this.tokenService.syncTokenDynamicData,
-    // );
 
     // TODO: Can add other gauge items like APR's to this flow for frontend
     // every 5 minutes
     this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
-      await this.gaugeService.getAllGauges();
+      await this.gaugeService.syncGaugeData();
     });
     // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeService.getAllGauges);
 
@@ -277,21 +207,11 @@ export class ScheduledJobService {
     this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
       await this.protocolService.getMetrics();
     });
-    // this.scheduleNodeJob(
-    //   this.getRule(30),
-    //   'cacheProtocolMetrics',
-    //   this.protocolService.cacheProtocolMetrics,
-    // );
 
     // once an hour at minute 1
     this.scheduleJob('1 * * * *', 'syncLatestSnapshotsForAllPools', TEN_MINUTES_IN_MS, async () => {
       await this.poolService.syncLatestSnapshotsForAllPools();
     });
-    // this.scheduleNodeJob(
-    //   this.getRule(0, 1),
-    //   'syncLatestSnapshotsForAllPools',
-    //   this.poolService.syncLatestSnapshotsForAllPools,
-    // );
 
     // every 20 minutes
     this.scheduleJob(
@@ -302,11 +222,6 @@ export class ScheduledJobService {
         await this.poolService.updateLifetimeValuesForAllPools();
       },
     );
-    // this.scheduleNodeJob(
-    //   this.getRule(0, 20),
-    //   'updateLifetimeValuesForAllPools',
-    //   this.poolService.updateLifetimeValuesForAllPools,
-    // );
 
     /*
       //every five minutes
@@ -323,19 +238,16 @@ export class ScheduledJobService {
           await tokenPriceService.cacheHistoricalNestedBptPrices();
       });
   
-  
-
-  
       this.scheduleJob('*!/5 * * * *', 'cache-tokens', async () => {
           await tokenService.cacheTokenDefinitions();
       });
   
-      //every 10 seconds
+      // every 10 seconds
       this.scheduleJob('*!/10 * * * * *', 'cache-user-pool-shares', async () => {
           await balancerService.cacheUserPoolShares();
       });
   
-      //every 30 seconds
+      // every 30 seconds
       this.scheduleJob('*!/30 * * * * *', 'cache-beets-price', async () => {
           await tokenPriceService.cacheBeetsPrice();
       });

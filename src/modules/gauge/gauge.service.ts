@@ -97,8 +97,6 @@ export class GaugeService {
       };
     });
 
-    console.log(pools[0].tokens);
-
     return gauges;
   }
 

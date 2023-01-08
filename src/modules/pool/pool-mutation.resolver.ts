@@ -63,7 +63,7 @@ export class PoolMutationResolver {
 
   @Mutation()
   async poolUpdateAprs() {
-    await this.poolService.updatePoolAprs([]);
+    await this.poolService.updatePoolAprs();
     return 'success';
   }
 
@@ -75,8 +75,7 @@ export class PoolMutationResolver {
 
   @Mutation()
   async poolReloadAllPoolAprs() {
-    throw new Error('Not setup yet');
-    await this.poolService.realodAllPoolAprs([]);
+    await this.poolService.reloadAllPoolAprs();
     return 'success';
   }
 

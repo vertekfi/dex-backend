@@ -35,6 +35,7 @@ import { prismaPoolMinimal } from 'prisma/prisma-types';
 import { ProtocolService } from '../protocol/protocol.service';
 import { CacheDecorator } from '../common/decorators/cache.decorator';
 import { FIVE_MINUTES_SECONDS } from '../utils/time';
+import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -260,11 +261,10 @@ export class PoolService {
     );
   }
 
-  async updatePoolAprs(aprServices: PoolAprService[]) {
-    if (!aprServices.length) {
-      throw new Error('PoolService.updatePoolAprs not given updatePoolAprs params');
-    }
-    await this.poolAprUpdaterService.updatePoolAprs(aprServices);
+  async updatePoolAprs() {
+    // TODO: Use fee collector to get protocol fee
+    const swaps = new SwapFeeAprService(this.prisma, 0.25);
+    await this.poolAprUpdaterService.updatePoolAprs([swaps]);
   }
 
   async syncChangedPools() {
@@ -275,18 +275,18 @@ export class PoolService {
     console.log('latestBlock: ' + latestBlock);
     console.log('ERROR: FINISH PoolService.syncChangedPools() BITCH');
 
-    // const poolIds = await this.poolSyncService.getChangedPoolIds(startBlock, endBlock);
-    // if (poolIds.length !== 0) {
-    //   console.log(`Syncing ${poolIds.length} pools`);
-    //   await this.updateOnChainDataForPools(poolIds, latestBlock);
+    const poolIds = await this.poolSyncService.getChangedPoolIds(startBlock, endBlock);
+    if (poolIds.length !== 0) {
+      console.log(`Syncing ${poolIds.length} pools`);
+      await this.updateOnChainDataForPools(poolIds, latestBlock);
 
-    //   const poolsWithNewSwaps = await this.syncSwapsForLast48Hours();
-    //   await this.updateVolumeAndFeeValuesForPools(poolsWithNewSwaps);
-    // }
+      const poolsWithNewSwaps = await this.syncSwapsForLast48Hours();
+      await this.updateVolumeAndFeeValuesForPools(poolsWithNewSwaps);
+    }
   }
 
-  async realodAllPoolAprs(aprServices: PoolAprService[]) {
-    await this.poolAprUpdaterService.realodAllPoolAprs(aprServices);
+  async reloadAllPoolAprs() {
+    await this.updatePoolAprs();
   }
 
   async updateLiquidity24hAgoForAllPools() {
