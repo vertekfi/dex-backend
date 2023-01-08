@@ -13,13 +13,17 @@ export class UserQueryResolver {
   @Query()
   async userGetPoolBalances(@Context() context) {
     const accountAddress = getRequiredAccountAddress(context);
-    const tokenPrices = await this.tokenService.getTokenPrices();
-    const balances = await this.userService.getUserPoolBalances(accountAddress);
+    const [tokenPrices, balances] = await Promise.all([
+      this.tokenService.getTokenPrices(),
+      this.userService.getUserPoolBalances(accountAddress),
+    ]);
 
-    return balances.map((balance) => ({
-      ...balance,
-      tokenPrice: this.tokenService.getPriceForToken(tokenPrices, balance.tokenAddress),
-    }));
+    return balances.map((balance) => {
+      return {
+        ...balance,
+        tokenPrice: this.tokenService.getPriceForToken(tokenPrices, balance.tokenAddress),
+      };
+    });
   }
 
   @Query()

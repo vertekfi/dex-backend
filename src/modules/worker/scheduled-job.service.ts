@@ -136,9 +136,16 @@ export class ScheduledJobService {
 
   scheduleLocalWorkerTasks() {
     // every 20 seconds
-    this.scheduleJob('*/20 * * * * *', 'loadTokenPrices', ONE_MINUTE_IN_MS, async () => {
-      await this.tokenService.loadTokenPrices();
-    });
+    this.scheduleJob(
+      '*/20 * * * * *',
+      'loadTokenPrices',
+      ONE_MINUTE_IN_MS,
+      async () => {
+        console.log('HELLOOO');
+        await this.tokenService.loadTokenPrices();
+      },
+      true,
+    );
 
     // every 30 seconds
     this.scheduleJob(
