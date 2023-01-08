@@ -4,10 +4,7 @@ import { formatUnits, getAddress } from 'ethers/lib/utils';
 import { bnum } from '../balancer-sdk/sor/impl/utils/bignumber';
 import { ProtocolService } from '../protocol/protocol.service';
 import { GaugeSubgraphService } from '../subgraphs/gauge-subgraph/gauge-subgraph.service';
-import {
-  GaugeSharesQueryVariables,
-  LiquidityGauge,
-} from '../subgraphs/gauge-subgraph/generated/gauge-subgraph-types';
+import { GaugeSharesQueryVariables } from '../subgraphs/gauge-subgraph/generated/gauge-subgraph-types';
 import { TokenPrices } from '../token/token-types-old';
 import { GaugeShare, GaugeUserShare, Pool, SubgraphGauge } from './types';
 import { ContractService } from '../common/web3/contract.service';
@@ -23,7 +20,9 @@ import { CONTRACT_MAP } from '../data/contracts';
 import { gql } from 'graphql-request';
 import { PrismaService } from 'nestjs-prisma';
 import { CacheDecorator } from '../common/decorators/cache.decorator';
-import { GqlPoolToken } from 'src/gql-addons';
+import * as moment from 'moment-timezone';
+import { scaleDown } from '../utils/old-big-number';
+import { LiquidityGauge } from 'src/graphql';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
@@ -65,6 +64,9 @@ export class GaugeService {
             id
             decimals
             symbol
+            rate
+            periodFinish
+            totalDeposited
           }
         }
       }
@@ -106,6 +108,8 @@ export class GaugeService {
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
 
+    const rewardTokens = await this.getGaugesRewardData(subgraphGauges);
+
     const gauges = [];
     for (const gauge of subgraphGauges) {
       if (protoData.gauges.includes(gauge.poolId)) {
@@ -119,12 +123,44 @@ export class GaugeService {
             id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
           },
           isKilled: gauge.isKilled,
-          rewardTokens: gauge.tokens,
+          rewardTokens: rewardTokens.find((r) => r.gaugeAddress == gauge.id) || [],
         });
       }
     }
 
     return gauges;
+  }
+
+  async getGaugesRewardData(gauges: any[]) {
+    const multiCaller = new Multicaller(this.rpc, []);
+    const rewardTokens = [];
+
+    for (const gauge of gauges) {
+      gauge.tokens?.forEach((rewardToken) => {
+        // id in subgraph = <tokenAddress>-<gaugeAddress>
+        const tokenAddress = rewardToken.id.split('-')[0];
+        multiCaller.call(rewardToken.id, gauge.id, 'reward_data', [tokenAddress]);
+      });
+
+      const rewardDataResult = (await multiCaller.execute()) as Record<
+        string,
+        { rate: string; period_finish: string }
+      >;
+
+      gauge.tokens?.forEach((rewardToken) => {
+        const rewardData = rewardDataResult[rewardToken.id];
+        const isActive = moment.unix(parseInt(rewardData.period_finish)).isAfter(moment());
+        rewardTokens.push({
+          gaugeAddress: gauge.id,
+          ...rewardToken,
+          rewardsPerSecond: isActive
+            ? scaleDown(rewardData.rate, rewardToken.decimals).toNumber()
+            : 0,
+        });
+      });
+    }
+
+    return rewardTokens;
   }
 
   private async getPoolsForGauges(poolIds: string[]) {

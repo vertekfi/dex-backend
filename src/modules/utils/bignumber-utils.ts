@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js';
+import { parseUnits } from 'ethers/lib/utils';
 
 export function bnum(val: string | number | BigNumber): BigNumber {
   const number = typeof val === 'string' ? val : val ? val.toString() : '0';

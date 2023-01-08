@@ -29,6 +29,12 @@ import { PoolService } from './pool.service';
     PoolSyncService,
     PoolDataLoaderService,
   ],
-  exports: [PoolQueryResolver, PoolMutationResolver, PoolService, PoolSyncService],
+  exports: [
+    PoolQueryResolver,
+    PoolMutationResolver,
+    PoolService,
+    PoolSyncService,
+    PoolDataLoaderService,
+  ],
 })
 export class PoolModule {}

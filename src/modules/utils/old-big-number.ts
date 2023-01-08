@@ -27,6 +27,10 @@ export function oldBnumScaleDown(input: OldBigNumber, decimalPlaces: number): Ol
   return input.dividedBy(scaleMul);
 }
 
+export function scaleDown(val: string, decimals: number): BigNumber {
+  return parseUnits(val).div(BigNumber.from(10).pow(BigNumber.from(decimals)));
+}
+
 /**
  * Sums and array of string numbers and returns as OldBigNumber
  */

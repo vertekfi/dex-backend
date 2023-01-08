@@ -52,6 +52,7 @@
     "cache-manager": "^4.1.0",
     "compression": "^1.7.4",
     "date-fns": "^2.29.3",
+    "decimal.js": "^10.4.3",
     "dotenv": "^16.0.3",
     "ethers": "^5.7.2",
     "fs-extra": "^11.1.0",
