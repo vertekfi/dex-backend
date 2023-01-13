@@ -32,6 +32,7 @@ const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
 @Injectable()
 export class BalancerSorService {
   private readonly sor: SOR;
+  private readonly sorV1: SOR;
 
   constructor(
     private readonly contractService: ContractService,
@@ -51,6 +52,17 @@ export class BalancerSorService {
       this.poolDataService,
       this.sorPriceService,
     );
+
+    // this.sorV1 = new SOR(
+    //   this.rpc.provider,
+    //   {
+    //     chainId: this.rpc.chainId,
+    //     vault: CONTRACT_MAP.VAULT[this.rpc.chainId],
+    //     weth: networkConfig.weth.address,
+    //   },
+    //   this.poolDataService,
+    //   this.sorPriceService,
+    // );
   }
 
   async getSwaps({ tokenIn, tokenOut, swapType, swapOptions, swapAmount, tokens }: GetSwapsInput) {
