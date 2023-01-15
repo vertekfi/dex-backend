@@ -21,11 +21,11 @@ export class TokenChartDataService {
     tokenAddress = tokenAddress.toLowerCase();
 
     const operations: any[] = [];
-    const token = (await getTokensWithTypes(this.prisma)).filter((t) =>
+    const tokens = (await getTokensWithTypes(this.prisma)).filter((t) =>
       isSameAddress(t.address, tokenAddress),
     );
 
-    if (!token.length) {
+    if (!tokens.length) {
       throw new Error(`initTokenChartData: Token not found`);
     }
 
@@ -34,8 +34,8 @@ export class TokenChartDataService {
       // const acceptedTokens = pricing.getAcceptedTokens(token);
 
       // If not for the proper type
-      const monthData = await pricing.getCoinCandlestickData(token[0], 30);
-      const twentyFourHourData = await pricing.getCoinCandlestickData(token[0], 1);
+      const monthData = await pricing.getCoinCandlestickData(tokens[0], 30);
+      const twentyFourHourData = await pricing.getCoinCandlestickData(tokens[0], 1);
 
       console.log(twentyFourHourData);
 
@@ -66,6 +66,8 @@ export class TokenChartDataService {
 
       operations.push(this.prisma.prismaTokenPrice.deleteMany({ where: { tokenAddress } }));
 
+      const coingecko = pricing.id === 'DexScreenerService' ? false : true;
+
       operations.push(
         this.prisma.prismaTokenPrice.createMany({
           data: monthData
@@ -78,7 +80,8 @@ export class TokenChartDataService {
               low: item[3],
               close: item[4],
               price: item[4],
-              coingecko: true,
+              coingecko,
+              dexscreener: !coingecko,
             })),
         }),
       );
@@ -93,7 +96,8 @@ export class TokenChartDataService {
             low: item[3],
             close: item[4],
             price: item[4],
-            coingecko: true,
+            coingecko,
+            dexscreener: !coingecko,
           })),
           skipDuplicates: true,
         }),
