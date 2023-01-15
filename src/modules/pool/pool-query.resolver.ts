@@ -55,6 +55,7 @@ export class PoolQueryResolver {
   @Query()
   async poolGetSnapshots(@Args() args) {
     const snapshots = await this.poolService.getSnapshotsForPool(args.id, args.range);
+    console.log(snapshots);
 
     return snapshots.map((snapshot) => ({
       ...snapshot,

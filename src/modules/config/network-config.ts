@@ -140,7 +140,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     },
     coingecko: {
       nativeAssetId: 'binancecoin',
-      platformId: 'bsc',
+      platformId: 'binance-smart-chain',
     },
     rpcUrl: 'https://eth-goerli.g.alchemy.com/v2/cK2OOgcOIjM2enbLpRfinpxq8hdY9aGU',
     beetsPriceProviderRpcUrl:

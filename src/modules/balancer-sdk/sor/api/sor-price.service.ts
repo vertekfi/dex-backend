@@ -1,10 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { parseUnits } from 'ethers/lib/utils';
 import { PrismaService } from 'nestjs-prisma';
+import { CoingeckoService } from 'src/modules/common/token/coingecko.service';
 import { getDexPriceFromPair } from 'src/modules/common/token/dexscreener';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
+import { TokenDefinition } from 'src/modules/token/token-types';
 import { TokenPriceService } from '../types';
+
+const priceCache: {
+  [address: string]: {
+    lastTimestamp: number;
+    price: string;
+  };
+} = {};
+
+const ttl = 1000 * 30;
 
 @Injectable()
 export class SorPriceService implements TokenPriceService {
@@ -20,22 +31,33 @@ export class SorPriceService implements TokenPriceService {
   }
 
   private get nativeAssetId(): string {
-    // switch (this.rpc.chainId) {
-    //   case 5:
-    //     return 'binancecoin';
-    //   case 56:
-    //     return 'binancecoin';
-    // }
-
     return 'usd';
   }
-
-  nativeAddress;
 
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
+    private readonly coingecko: CoingeckoService,
   ) {}
+
+  async getTokenPrice(token: TokenDefinition): Promise<string> {
+    const address = token.address.toLowerCase();
+    const cached = priceCache[address];
+
+    const now = Date.now();
+    if (!cached || now - cached.lastTimestamp > ttl) {
+      const price = await this.coingecko.getTokenPrice(token as unknown as TokenDefinition);
+
+      priceCache[address] = {
+        lastTimestamp: Date.now(),
+        price: String(price),
+      };
+
+      return priceCache[address].price;
+    }
+
+    return cached.price;
+  }
 
   async getNativeAssetPriceInToken(tokenAddress: string): Promise<string> {
     try {

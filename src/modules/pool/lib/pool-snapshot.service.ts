@@ -16,7 +16,7 @@ import {
 } from 'src/modules/subgraphs/balancer/generated/balancer-subgraph-types';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import { TokenHistoricalPrices } from 'src/modules/token/token-types-old';
-import { CoingeckoService } from 'src/modules/token/lib/coingecko.service';
+import { CoingeckoService } from 'src/modules/common/token/coingecko.service';
 
 @Injectable()
 export class PoolSnapshotService {
@@ -96,6 +96,8 @@ export class PoolSnapshotService {
       orderDirection: OrderDirection.Asc,
     });
 
+    console.log(allSnapshots);
+
     const latestSyncedSnapshots = await this.prisma.prismaPoolSnapshot.findMany({
       where: {
         timestamp: moment()
@@ -105,6 +107,8 @@ export class PoolSnapshotService {
           .unix(),
       },
     });
+
+    console.log(latestSyncedSnapshots);
 
     const poolIds = _.uniq(allSnapshots.map((snapshot) => snapshot.pool.id));
 
@@ -194,7 +198,6 @@ export class PoolSnapshotService {
           );
           await sleep(5000);
         } catch (error: any) {
-          // Sentry.captureException(error);
           console.error(
             `Error getting historical prices form coingecko, falling back to database`,
             error.message,

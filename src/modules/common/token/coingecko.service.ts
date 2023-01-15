@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as moment from 'moment-timezone';
 import { RateLimiter } from 'limiter';
 import axios from 'axios';
@@ -9,12 +9,17 @@ import {
   HistoricalPrice,
   HistoricalPriceResponse,
   Price,
-} from '../token-types-old';
+} from '../../token/token-types-old';
 import { networkConfig } from 'src/modules/config/network-config';
 import { isAddress } from 'ethers/lib/utils';
-import { MappedToken, TokenDefinition } from '../token-types';
-import { TokenService } from '../../common/token/token.service';
+import { MappedToken, TokenDefinition } from '../../token/token-types';
+import { TokenService } from './token.service';
 import { ConfigService } from 'src/modules/common/config.service';
+import { RPC } from 'src/modules/common/web3/rpc.provider';
+import { AccountWeb3 } from 'src/modules/common/types';
+import { ProtocolService } from 'src/modules/protocol/protocol.service';
+import { getDexPairInfo } from 'src/modules/common/token/dexscreener';
+import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -34,7 +39,12 @@ export class CoingeckoService {
   private readonly nativeAssetId: string;
   private readonly nativeAssetAddress: string;
 
-  constructor(private readonly config: ConfigService, private readonly tokenService: TokenService) {
+  constructor(
+    @Inject(RPC) private rpc: AccountWeb3,
+    private readonly config: ConfigService,
+    private readonly tokenService: TokenService,
+    private readonly protocol: ProtocolService,
+  ) {
     this.baseUrl = 'https://api.coingecko.com/api/v3';
     this.fiatParam = 'usd';
     this.platformId = this.config.env.COINGECKO_PLATFORM_ID;
@@ -58,22 +68,54 @@ export class CoingeckoService {
     const now = Math.floor(Date.now() / 1000);
     const end = now;
     const start = end - days * ONE_DAY_SECONDS;
-    const tokenDefinitions = await this.tokenService.getTokenDefinitions();
+    const [tokenDefinitions, tokenList] = await Promise.all([
+      this.tokenService.getTokenDefinitions(),
+      this.protocol.getProtocolTokenList(),
+    ]);
     const mapped = this.getMappedTokenDetails(address, tokenDefinitions);
 
-    const endpoint = `/coins/${mapped.platform}/contract/${mapped.address}/market_chart/range?vs_currency=${this.fiatParam}&from=${start}&to=${end}`;
+    //  console.log(tokenList);
 
-    const result = await this.get<HistoricalPriceResponse>(endpoint);
+    // console.log(tokenDefinitions);
 
-    return result.prices.map((item) => ({
-      //anchor to the start of the hour
-      timestamp:
-        moment
-          .unix(item[0] / 1000)
-          .startOf('hour')
-          .unix() * 1000,
-      price: item[1],
-    }));
+    // TODO: If testnet we need to map the test token address for gecko tokens to the real address
+
+    if (mapped.priceProvider === 'GECKO') {
+      const endpoint = `/coins/${mapped.platformId}/contract/${mapped.address}/market_chart/range?vs_currency=${this.fiatParam}&from=${start}&to=${end}`;
+      const result = await this.get<HistoricalPriceResponse>(endpoint);
+      return result.prices.map((item) => ({
+        // anchor to the start of the hour
+        timestamp:
+          moment
+            .unix(item[0] / 1000)
+            .startOf('hour')
+            .unix() * 1000,
+        price: item[1],
+      }));
+    }
+
+    // TODO: Need to store some of these ourself since gecko won't have them listed
+    if (mapped.priceProvider === 'DEXSCREENER') {
+      // TODO: token price testing
+      if (mapped.address !== PROTOCOL_TOKEN[this.rpc.chainId]) {
+        const tokenInfo = await getDexPairInfo('bsc', mapped.platformId);
+        console.log(tokenInfo);
+      }
+    }
+
+    return [];
+  }
+
+  async getTokenPrice(token: TokenDefinition): Promise<number> {
+    if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
+      throw new Error(`token ${token.address} not a coingecko price token`);
+    }
+
+    const address = token.coingeckoContractAddress.toLowerCase();
+    const endpoint = `/simple/token_price/${token.coingeckoPlatformId}?contract_addresses=${address}&vs_currencies=${this.fiatParam}`;
+    const result = await this.get(endpoint);
+
+    return result[address]?.usd;
   }
 
   /**
@@ -83,18 +125,23 @@ export class CoingeckoService {
     const token = tokens.find((token) => token.address.toLowerCase() === address.toLowerCase());
     if (token && token.coingeckoPlatformId && token.coingeckoContractAddress) {
       return {
-        platform: token.coingeckoPlatformId,
+        platformId: token.coingeckoPlatformId,
         address: isAddress(token.coingeckoContractAddress)
           ? token.coingeckoContractAddress.toLowerCase()
           : token.coingeckoContractAddress,
         originalAddress: address.toLowerCase(),
+        priceProvider: 'GECKO',
+      };
+    } else if (token && token.useDexscreener && token.dexScreenerPairAddress) {
+      return {
+        platformId: token.dexScreenerPairAddress,
+        address: isAddress(token.dexScreenerPairAddress)
+          ? token.dexScreenerPairAddress.toLowerCase()
+          : token.dexScreenerPairAddress,
+        originalAddress: address.toLowerCase(),
+        priceProvider: 'DEXSCREENER',
       };
     }
-
-    return {
-      platform: this.platformId,
-      address: address.toLowerCase(),
-    };
   }
 
   private async get<T>(endpoint: string): Promise<T> {

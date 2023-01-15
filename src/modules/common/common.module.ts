@@ -12,6 +12,7 @@ import { TokenService } from './token/token.service';
 import { TokenDataLoaderService } from './token/token-data-loader.service';
 import { ContractService } from './web3/contract.service';
 import { PoolOnChainDataService } from './pool/pool-on-chain-data.service';
+import { CoingeckoService } from './token/coingecko.service';
 
 @Global()
 @Module({
@@ -42,6 +43,7 @@ import { PoolOnChainDataService } from './pool/pool-on-chain-data.service';
     TokenDataLoaderService,
     ContractService,
     PoolOnChainDataService,
+    CoingeckoService,
   ],
   exports: [
     ConfigService,
@@ -55,6 +57,7 @@ import { PoolOnChainDataService } from './pool/pool-on-chain-data.service';
     TokenDataLoaderService,
     ContractService,
     PoolOnChainDataService,
+    CoingeckoService,
   ],
 })
 export class CommonModule {}
