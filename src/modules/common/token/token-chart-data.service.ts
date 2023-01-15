@@ -6,6 +6,8 @@ import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { groupBy } from 'lodash';
 import { TokenPricingService } from './types';
 import { PRICE_SERVICES } from './pricing/price-services.provider';
+import { getTokensWithTypes } from './pricing/utils';
+import { isSameAddress } from '@balancer-labs/sdk';
 
 @Injectable()
 export class TokenChartDataService {
@@ -19,13 +21,23 @@ export class TokenChartDataService {
     tokenAddress = tokenAddress.toLowerCase();
 
     const operations: any[] = [];
-    const token = await this.prisma.prismaToken.findUnique({ where: { address: tokenAddress } });
+    const token = (await getTokensWithTypes(this.prisma)).filter((t) =>
+      isSameAddress(t.address, tokenAddress),
+    );
+
+    if (!token.length) {
+      throw new Error(`initTokenChartData: Token not found`);
+    }
 
     for (const pricing of this.pricingServices) {
       // TODO: Do the getAcceptedTokens pattern here
-      // const acceptedTokens = pricing.getAcceptedTokens()
-      const monthData = await pricing.getCoinCandlestickData(token, 30);
-      const twentyFourHourData = await pricing.getCoinCandlestickData(token, 1);
+      // const acceptedTokens = pricing.getAcceptedTokens(token);
+
+      // If not for the proper type
+      const monthData = await pricing.getCoinCandlestickData(token[0], 30);
+      const twentyFourHourData = await pricing.getCoinCandlestickData(token[0], 1);
+
+      console.log(twentyFourHourData);
 
       // Merge 30 min data into hourly data
       const hourlyData = Object.values(

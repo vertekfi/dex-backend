@@ -13,7 +13,6 @@ import { CoingeckoService } from './token/pricing/coingecko.service';
 import { DexScreenerService } from './token/pricing/dex-screener.service';
 import { TokenPriceServicesProvider } from './token/pricing/price-services.provider';
 import { TokenChartDataService } from './token/token-chart-data.service';
-import { TokenDataLoaderService } from './token/token-data-loader.service';
 import { TokenService } from './token/token.service';
 import { TokenPriceService } from './token/pricing/token-price.service';
 import { TokenSyncService } from './token/token-sync.service';
@@ -48,7 +47,6 @@ import { TokenSyncService } from './token/token-sync.service';
     // Tokens
     TokenPriceService,
     TokenService,
-    TokenDataLoaderService,
     CoingeckoService,
     TokenChartDataService,
     DexScreenerService,
@@ -68,7 +66,6 @@ import { TokenSyncService } from './token/token-sync.service';
     // Tokens
     TokenPriceService,
     TokenService,
-    TokenDataLoaderService,
     CoingeckoService,
     TokenChartDataService,
     DexScreenerService,

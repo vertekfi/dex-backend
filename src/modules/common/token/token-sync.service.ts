@@ -1,14 +1,12 @@
 import { isSameAddress } from '@balancer-labs/sdk';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { sortBy } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { ProtocolService } from 'src/modules/protocol/protocol.service';
 import { getPriceHandlers } from './pricing/token-price-handlers';
+import { getTokensWithTypes } from './pricing/utils';
 import { TokenChartDataService } from './token-chart-data.service';
-import { TokenDataLoaderService } from './token-data-loader.service';
-import { TokenPriceHandler } from './types';
 
 @Injectable()
 export class TokenSyncService {
@@ -18,39 +16,16 @@ export class TokenSyncService {
     private readonly protocolService: ProtocolService,
   ) {}
 
-  async getTokensWithTypes(): Promise<PrismaTokenWithTypes[]> {
-    const tokens = await this.prisma.prismaToken.findMany({
-      select: {
-        address: true,
-        symbol: true,
-        useDexscreener: true,
-        dexscreenPairAddress: true,
-        types: true,
-        prices: { take: 1, orderBy: { timestamp: 'desc' } },
-      },
-    });
-
-    // order by timestamp ascending, so the tokens at the front of the list are the ones with the oldest timestamp
-    // this is for instances where a query gets rate limited and does not finish
-    let tokensWithTypes: any[] = sortBy(tokens, (token) => token.prices[0]?.timestamp || 0).map(
-      (token) => ({
-        ...token,
-        types: token.types.map((type) => type.type),
-      }),
-    );
-
-    return tokensWithTypes;
-  }
-
   // TODO: Finish this
   async syncTokenDynamicData() {
-    let tokensWithTypes = await this.getTokensWithTypes();
+    let tokensWithTypes = await getTokensWithTypes(this.prisma);
 
-    // This syncs up 24 hour price changes and such. Dexscreener api does not provide this, so would need to create myself
+    // This syncs up 24 hour price changes and such. Dexscreener provides a 24 hour change.
+    // So need to schedule sync job times as needed for this
   }
 
-  async syncTokenData() {
-    const tokens = await this.protocolService.getProtocolTokenList();
+  async syncTokenDefinitions() {
+    const tokens = await this.protocolService.getProtocolTokenListAllChains();
 
     for (const token of tokens) {
       const tokenAddress = token.address.toLowerCase();
@@ -166,7 +141,7 @@ export class TokenSyncService {
   }
 
   async syncTokenPrices(): Promise<void> {
-    let tokensWithTypes = await this.getTokensWithTypes();
+    let tokensWithTypes = await getTokensWithTypes(this.prisma);
 
     for (const handler of getPriceHandlers(this.prisma)) {
       const accepted = await handler.getAcceptedTokens(tokensWithTypes);

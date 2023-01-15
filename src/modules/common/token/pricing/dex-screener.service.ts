@@ -35,10 +35,20 @@ export class DexScreenerService implements TokenPricingService {
     days: 1 | 30,
   ): Promise<[number, number, number, number, number][]> {
     // "tokenId" should be the dexscreener pair address instead of coingecko id
-    validateDexscreenerToken(token as unknown as PrismaToken);
+    // validateDexscreenerToken(token as unknown as PrismaToken);
+
+    if (!token.useDexscreener || !token.dexscreenPairAddress) {
+      return [];
+    }
 
     // TODO: from database
-    // structure of the gecko chart data
+    // Structure of the gecko chart data returned:
+    // [
+    //   [ 1673739000000, 1549.98, 1550.79, 1549.16, 1550.79 ],
+    //   [ 1673740800000, 1550.63, 1554.25, 1549.11, 1549.11 ],
+    //   [ 1673742600000, 1553.17, 1553.91, 1548.63, 1549.88 ],
+    // ]
+
     // need to run the sync as scheduled job to get the data
     //
     // {

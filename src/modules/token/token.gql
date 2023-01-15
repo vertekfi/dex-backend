@@ -59,6 +59,7 @@ type GqlToken {
   logoURI: String
   priority: Int!
   tradable: Boolean!
+  coingeckoTokenId: String
 }
 
 type GqlTokenDynamicData {

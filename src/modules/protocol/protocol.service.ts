@@ -51,6 +51,13 @@ export class ProtocolService {
     ].tokens.filter((tk) => tk.chainId === this.rpc.chainId);
   }
 
+  async getProtocolTokenListAllChains() {
+    const url = 'https://raw.githubusercontent.com/vertekfi/token-list/main/tokenlist.json';
+    const { data } = await axios.get(url);
+    console.log(data);
+    return data['https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json'].tokens;
+  }
+
   @CacheDecorator(PROTOCOL_METRICS_CACHE_KEY, THIRTY_MINUTES_SECONDS)
   async getMetrics(): Promise<ProtocolMetrics> {
     const { totalSwapFee, totalSwapVolume, poolCount } =

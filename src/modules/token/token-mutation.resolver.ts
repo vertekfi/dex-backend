@@ -20,7 +20,7 @@ export class TokenMutationResolver {
 
   @Mutation()
   async tokenSyncTokenDefinitions() {
-    await this.tokenSyncService.syncTokenData();
+    await this.tokenSyncService.syncTokenDefinitions();
     return 'success';
   }
 

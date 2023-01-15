@@ -176,7 +176,7 @@ export class ScheduledJobService {
 
     // every 5 minutes
     this.scheduleJob('*/5 * * * *', 'syncTokensFromPoolTokens', TEN_MINUTES_IN_MS, async () => {
-      await this.tokenSyncService.syncTokenData();
+      await this.tokenSyncService.syncTokenDefinitions();
     });
 
     //  every 5 minutes
