@@ -1,4 +1,4 @@
-import { TokenPriceHandler } from '../../../common/token/types';
+import { TokenPriceHandler } from '../../types';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
@@ -19,33 +19,23 @@ export class DexscreenerPriceHandlerService implements TokenPriceHandler {
 
   async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
     const timestamp = timestampRoundedUpToNearestHour();
-    // const pools = await this.prisma.prismaPool.findMany({
-    //   where: { dynamicData: { totalLiquidity: { gt: 0.1 } } },
-    //   include: { dynamicData: true },
-    // });
+
     let updated: string[] = [];
     let operations: any[] = [];
 
     for (const token of tokens) {
-      // const pool = pools.find((pool) => pool.address === token.address);
-      // if (pool?.dynamicData && pool.dynamicData.totalLiquidity !== 0) {
-      //   const price = pool.dynamicData.totalLiquidity / parseFloat(pool.dynamicData.totalShares);
-      // }
-
       // We know the token has the pair address at this point
       let price: number;
       const chainId = parseInt(process.env.CHAIN_ID);
       if (chainId === 5 && token.address === PROTOCOL_TOKEN[chainId]) {
         // TODO: For testing only
-        price = 9;
+        price = 7;
       } else {
         const screenerPrice = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
         price = screenerPrice.priceNum;
       }
 
       updated.push(token.address);
-
-      // console.log(`DexscreenerPriceHandlerService: token: ${token.symbol} - price: ${price}`);
 
       operations.push(
         this.prisma.prismaTokenPrice.upsert({

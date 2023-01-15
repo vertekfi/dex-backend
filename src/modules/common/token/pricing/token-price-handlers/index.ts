@@ -1,5 +1,5 @@
 import { PrismaService } from 'nestjs-prisma';
-import { TokenPriceHandler } from '../../../common/token/types';
+import { TokenPriceHandler } from '../../types';
 import { BptPriceHandlerService } from './bpt-price-handler.service';
 import { DexscreenerPriceHandlerService } from './dexscreener-price-handler.service';
 import { LinearWrappedTokenPriceHandlerService } from './linear-wrapped-token-price-handler.service';

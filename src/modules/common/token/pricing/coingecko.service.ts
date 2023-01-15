@@ -9,17 +9,16 @@ import {
   HistoricalPrice,
   HistoricalPriceResponse,
   Price,
-} from '../../token/token-types-old';
-import { networkConfig } from 'src/modules/config/network-config';
+} from '../../../token/token-types-old';
 import { isAddress } from 'ethers/lib/utils';
-import { MappedToken, TokenDefinition } from '../../token/token-types';
-import { TokenService } from './token.service';
+import { MappedToken, TokenDefinition } from '../types';
+import { TokenService } from '../token.service';
 import { ConfigService } from 'src/modules/common/config.service';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
-import { ProtocolService } from 'src/modules/protocol/protocol.service';
-import { getDexPairInfo } from 'src/modules/common/token/dexscreener';
+import { getDexPairInfo } from 'src/modules/common/token/pricing/dexscreener';
 import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
+import { TokenPricingService } from '../types';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -32,9 +31,9 @@ import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 const requestRateLimiter = new RateLimiter({ tokensPerInterval: 15, interval: 'minute' });
 
 @Injectable()
-export class CoingeckoService {
-  private readonly baseUrl: string;
-  private readonly fiatParam: string;
+export class CoingeckoService implements TokenPricingService {
+  readonly baseUrl: string;
+  readonly fiatParam: string;
   private readonly platformId: string;
   private readonly nativeAssetId: string;
   private readonly nativeAssetAddress: string;
@@ -42,9 +41,8 @@ export class CoingeckoService {
   constructor(
     @Inject(RPC) private rpc: AccountWeb3,
     private readonly config: ConfigService,
-    private readonly tokenService: TokenService,
-    private readonly protocol: ProtocolService,
-  ) {
+  ) // private readonly tokenService: TokenService,
+  {
     this.baseUrl = 'https://api.coingecko.com/api/v3';
     this.fiatParam = 'usd';
     this.platformId = this.config.env.COINGECKO_PLATFORM_ID;
@@ -64,21 +62,17 @@ export class CoingeckoService {
     }
   }
 
-  async getTokenHistoricalPrices(address: string, days: number): Promise<HistoricalPrice[]> {
+  async getTokenHistoricalPrices(
+    address: string,
+    days: number,
+    tokenDefinitions: TokenDefinition[],
+  ): Promise<HistoricalPrice[]> {
     const now = Math.floor(Date.now() / 1000);
     const end = now;
     const start = end - days * ONE_DAY_SECONDS;
-    const [tokenDefinitions, tokenList] = await Promise.all([
-      this.tokenService.getTokenDefinitions(),
-      this.protocol.getProtocolTokenList(),
-    ]);
+    // const tokenDefinitions = await this.tokenService.getTokenDefinitions();
+
     const mapped = this.getMappedTokenDetails(address, tokenDefinitions);
-
-    //  console.log(tokenList);
-
-    // console.log(tokenDefinitions);
-
-    // TODO: If testnet we need to map the test token address for gecko tokens to the real address
 
     if (mapped.priceProvider === 'GECKO') {
       const endpoint = `/coins/${mapped.platformId}/contract/${mapped.address}/market_chart/range?vs_currency=${this.fiatParam}&from=${start}&to=${end}`;
@@ -118,6 +112,15 @@ export class CoingeckoService {
     return result[address]?.usd;
   }
 
+  async getCoinCandlestickData(
+    tokenId: string,
+    days: 1 | 30,
+  ): Promise<[number, number, number, number, number][]> {
+    const endpoint = `/coins/${tokenId}/ohlc?vs_currency=usd&days=${days}`;
+
+    return this.get(endpoint);
+  }
+
   /**
    * Support instances where a token address is not supported by the platform id, provide the option to use a different platform
    */
@@ -144,7 +147,7 @@ export class CoingeckoService {
     }
   }
 
-  private async get<T>(endpoint: string): Promise<T> {
+  async get<T>(endpoint: string): Promise<T> {
     const remainingRequests = await requestRateLimiter.removeTokens(1);
     console.log('Remaining coingecko requests', remainingRequests);
     const { data } = await axios.get(this.baseUrl + endpoint);

@@ -23,6 +23,7 @@ import * as StablePhantomPoolAbi from '../../pool/abi/StablePhantomPool.json';
 // import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
 import * as LiquidityBootstrappingPoolAbi from '../../pool/abi/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
+import { TokenPriceService } from '../token/pricing/token-price.service';
 
 @Injectable()
 export class PoolOnChainDataService {
@@ -30,12 +31,13 @@ export class PoolOnChainDataService {
     @Inject(RPC) private rpc: AccountWeb3,
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
+    private readonly pricingService: TokenPriceService,
   ) {}
 
   async updateOnChainData(poolIds: string[], blockNumber: number) {
     if (poolIds.length === 0) return;
 
-    const tokenPrices = await this.tokenService.getTokenPrices();
+    const tokenPrices = await this.pricingService.getCurrentTokenPrices();
 
     const pools = await this.prisma.prismaPool.findMany({
       where: { id: { in: poolIds } },

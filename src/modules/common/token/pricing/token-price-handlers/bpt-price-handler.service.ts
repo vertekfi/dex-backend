@@ -1,4 +1,4 @@
-import { TokenPriceHandler } from '../../../common/token/types';
+import { TokenPriceHandler } from '../../types';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';

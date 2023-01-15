@@ -16,7 +16,8 @@ import {
 } from 'src/modules/subgraphs/balancer/generated/balancer-subgraph-types';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import { TokenHistoricalPrices } from 'src/modules/token/token-types-old';
-import { CoingeckoService } from 'src/modules/common/token/coingecko.service';
+import { CoingeckoService } from 'src/modules/common/token/pricing/coingecko.service';
+import { TokenService } from 'src/modules/common/token/token.service';
 
 @Injectable()
 export class PoolSnapshotService {
@@ -25,6 +26,7 @@ export class PoolSnapshotService {
     private readonly balancerSubgraphService: BalancerSubgraphService,
     private readonly blockService: BlockService,
     private readonly coingeckoService: CoingeckoService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async getSnapshotsForPool(poolId: string, range: GqlPoolSnapshotDataRange) {
@@ -195,6 +197,7 @@ export class PoolSnapshotService {
           tokenPriceMap[token.address] = await this.coingeckoService.getTokenHistoricalPrices(
             token.address,
             numDays,
+            await this.tokenService.getTokenDefinitions(),
           );
           await sleep(5000);
         } catch (error: any) {

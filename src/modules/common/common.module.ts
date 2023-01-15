@@ -7,12 +7,15 @@ import { RpcProvider } from './web3/rpc.provider';
 import { BlockService } from './web3/block.service';
 import { AdminGuard } from './guards/admin.guard';
 import { PoolSwapService } from './pool/pool-swap.service';
-import { TokenPriceService } from './token/token-price.service';
-import { TokenService } from './token/token.service';
-import { TokenDataLoaderService } from './token/token-data-loader.service';
 import { ContractService } from './web3/contract.service';
 import { PoolOnChainDataService } from './pool/pool-on-chain-data.service';
-import { CoingeckoService } from './token/coingecko.service';
+import { CoingeckoService } from './token/pricing/coingecko.service';
+import { DexScreenerService } from './token/pricing/dex-screener.service';
+import { TokenPriceServicesProvider } from './token/pricing/price-services.provider';
+import { TokenChartDataService } from './token/token-chart-data.service';
+import { TokenDataLoaderService } from './token/token-data-loader.service';
+import { TokenService } from './token/token.service';
+import { TokenPriceService } from './token/pricing/token-price.service';
 
 @Global()
 @Module({
@@ -38,12 +41,17 @@ import { CoingeckoService } from './token/coingecko.service';
     RpcProvider,
     BlockService,
     PoolSwapService,
+    ContractService,
+    PoolOnChainDataService,
+
+    // Tokens
     TokenPriceService,
     TokenService,
     TokenDataLoaderService,
-    ContractService,
-    PoolOnChainDataService,
     CoingeckoService,
+    TokenChartDataService,
+    DexScreenerService,
+    TokenPriceServicesProvider,
   ],
   exports: [
     ConfigService,
@@ -52,12 +60,17 @@ import { CoingeckoService } from './token/coingecko.service';
     RpcProvider,
     BlockService,
     PoolSwapService,
+    ContractService,
+    PoolOnChainDataService,
+
+    // Tokens
     TokenPriceService,
     TokenService,
     TokenDataLoaderService,
-    ContractService,
-    PoolOnChainDataService,
     CoingeckoService,
+    TokenChartDataService,
+    DexScreenerService,
+    TokenPriceServicesProvider,
   ],
 })
 export class CommonModule {}

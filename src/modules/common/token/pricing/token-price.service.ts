@@ -1,17 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaTokenCurrentPrice } from '@prisma/client';
+import { PrismaTokenCurrentPrice, PrismaTokenPrice } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { networkConfig } from 'src/modules/config/network-config';
 import * as moment from 'moment-timezone';
 import * as _ from 'lodash';
-import { TokenPriceHandler } from '../../token/token-types';
+import { TokenPriceHandler } from '../types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
-import { getDexPriceFromPair } from './dexscreener';
-import { getAddress } from 'ethers/lib/utils';
+import { GqlTokenChartDataRange } from 'src/gql-addons';
+import { CacheDecorator } from '../../decorators/cache.decorator';
+import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
+import { TokenChartDataService } from '../token-chart-data.service';
+import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+
+const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
 
 @Injectable()
 export class TokenPriceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly chartDataService: TokenChartDataService,
+  ) {}
 
   async getProtocolTokenPrice() {
     // return getDexPriceFromPair('bsc', '0x7a09ddf458fda6e324a97d1a8e4304856fb3e702000200000000000000000000-0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5-0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c')
@@ -35,6 +43,7 @@ export class TokenPriceService {
     return tokenPrice?.price || 0;
   }
 
+  @CacheDecorator(PRICE_CACHE_KEY, 30)
   async getCurrentTokenPrices(): Promise<PrismaTokenCurrentPrice[]> {
     const tokenPrices = await this.prisma.prismaTokenCurrentPrice.findMany({
       orderBy: { timestamp: 'desc' },
@@ -82,12 +91,6 @@ export class TokenPriceService {
       }));
   }
 
-  // include: {
-  //   types: true,
-  //   // fetch the last price stored
-  //   prices: { take: 1, orderBy: { timestamp: 'desc' } },
-  // },
-
   async updateTokenPrices(handlers: TokenPriceHandler[]): Promise<void> {
     const tokens = await this.prisma.prismaToken.findMany({
       select: {
@@ -102,7 +105,7 @@ export class TokenPriceService {
 
     // order by timestamp ascending, so the tokens at the front of the list are the ones with the oldest timestamp
     // this is for instances where a query gets rate limited and does not finish
-    let tokensWithTypes = _.sortBy(tokens, (token) => token.prices[0]?.timestamp || 0).map(
+    let tokensWithTypes: any[] = _.sortBy(tokens, (token) => token.prices[0]?.timestamp || 0).map(
       (token) => ({
         ...token,
         types: token.types.map((type) => type.type),
@@ -129,30 +132,28 @@ export class TokenPriceService {
       tokensWithTypes = tokensWithTypes.filter((token) => !updated.includes(token.address));
     }
 
-    await this.updateCandleStickData();
+    await this.chartDataService.updateCandleStickData();
 
     // we only keep token prices for the last 24 hours
-    const yesterday = moment().subtract(1, 'day').unix();
-    await this.prisma.prismaTokenPrice.deleteMany({ where: { timestamp: { lt: yesterday } } });
+    // const yesterday = moment().subtract(1, 'day').unix();
+    // await this.prisma.prismaTokenPrice.deleteMany({ where: { timestamp: { lt: yesterday } } });
   }
 
-  private async updateCandleStickData() {
-    const timestamp = timestampRoundedUpToNearestHour();
-    const tokenPrices = await this.prisma.prismaTokenPrice.findMany({ where: { timestamp } });
-    let operations: any[] = [];
+  async getDataForRange(
+    tokenAddress: string,
+    range: GqlTokenChartDataRange,
+  ): Promise<PrismaTokenPrice[]> {
+    const startTimestamp = this.getStartTimestampFromRange(range);
 
-    for (const tokenPrice of tokenPrices) {
-      operations.push(
-        this.prisma.prismaTokenPrice.update({
-          where: { tokenAddress_timestamp: { tokenAddress: tokenPrice.tokenAddress, timestamp } },
-          data: {
-            high: Math.max(tokenPrice.high, tokenPrice.price),
-            low: Math.min(tokenPrice.low, tokenPrice.price),
-          },
-        }),
-      );
-    }
+    return this.prisma.prismaTokenPrice.findMany({
+      where: { tokenAddress, timestamp: { gt: startTimestamp } },
+      orderBy: { timestamp: 'asc' },
+    });
+  }
 
-    await Promise.all(operations);
+  private getStartTimestampFromRange(range: GqlTokenChartDataRange) {
+    return moment()
+      .subtract(range === 'SEVEN_DAY' ? 7 : 30, 'days')
+      .unix();
   }
 }

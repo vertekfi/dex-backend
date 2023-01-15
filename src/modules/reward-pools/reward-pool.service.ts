@@ -1,7 +1,7 @@
 import { commify, formatEther } from '@ethersproject/units';
 import { Inject, Injectable } from '@nestjs/common';
 import { RewardPool, RewardPoolUserInfo } from 'src/graphql';
-import { TokenPriceService } from '../common/token/token-price.service';
+import { TokenPriceService } from '../common/token/pricing/token-price.service';
 import { AccountWeb3 } from '../common/types';
 import { ContractService } from '../common/web3/contract.service';
 import { Multicaller } from '../common/web3/multicaller';
