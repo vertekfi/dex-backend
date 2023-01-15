@@ -291,7 +291,7 @@ export class PoolOnChainDataService {
                 balanceUSD:
                   poolToken.address === pool.address
                     ? 0
-                    : this.tokenService.getPriceForToken(tokenPrices, poolToken.address) *
+                    : this.pricingService.getPriceForToken(tokenPrices, poolToken.address) *
                       parseFloat(balance),
               },
               update: {
@@ -302,7 +302,7 @@ export class PoolOnChainDataService {
                 balanceUSD:
                   poolToken.address === pool.address
                     ? 0
-                    : this.tokenService.getPriceForToken(tokenPrices, poolToken.address) *
+                    : this.pricingService.getPriceForToken(tokenPrices, poolToken.address) *
                       parseFloat(balance),
               },
             });

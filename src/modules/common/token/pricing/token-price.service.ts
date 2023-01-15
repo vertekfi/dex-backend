@@ -9,6 +9,7 @@ import { GqlTokenChartDataRange } from 'src/gql-addons';
 import { CacheDecorator } from '../../decorators/cache.decorator';
 import { TokenChartDataService } from '../token-chart-data.service';
 import { FIVE_MINUTES_SECONDS } from 'src/modules/utils/time';
+import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 
 const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
 const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
@@ -16,7 +17,7 @@ const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
 @Injectable()
 export class TokenPriceService {
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly chartDataService: TokenChartDataService,
   ) {}
 
@@ -89,54 +90,6 @@ export class TokenPriceService {
         id: `${tokenPrice.tokenAddress}-${tokenPrice.timestamp}`,
         ...tokenPrice,
       }));
-  }
-
-  async updateTokenPrices(handlers: TokenPriceHandler[]): Promise<void> {
-    const tokens = await this.prisma.prismaToken.findMany({
-      select: {
-        address: true,
-        symbol: true,
-        useDexscreener: true,
-        dexscreenPairAddress: true,
-        types: true,
-        prices: { take: 1, orderBy: { timestamp: 'desc' } },
-      },
-    });
-
-    // order by timestamp ascending, so the tokens at the front of the list are the ones with the oldest timestamp
-    // this is for instances where a query gets rate limited and does not finish
-    let tokensWithTypes: any[] = _.sortBy(tokens, (token) => token.prices[0]?.timestamp || 0).map(
-      (token) => ({
-        ...token,
-        types: token.types.map((type) => type.type),
-      }),
-    );
-
-    // Break up for dexscreener and coingecko as needed. Currently only need screener for our degen shit
-
-    for (const handler of handlers) {
-      const accepted = await handler.getAcceptedTokens(tokensWithTypes);
-      const acceptedTokens = tokensWithTypes.filter((token) => accepted.includes(token.address));
-      let updated: string[] = [];
-
-      try {
-        updated = await handler.updatePricesForTokens(acceptedTokens);
-      } catch (e) {
-        console.error(e);
-        if (handler.exitIfFails) {
-          throw e;
-        }
-      }
-
-      // remove any updated tokens from the list for the next handler
-      tokensWithTypes = tokensWithTypes.filter((token) => !updated.includes(token.address));
-    }
-
-    await this.chartDataService.updateCandleStickData();
-
-    // we only keep token prices for the last 24 hours
-    // const yesterday = moment().subtract(1, 'day').unix();
-    // await this.prisma.prismaTokenPrice.deleteMany({ where: { timestamp: { lt: yesterday } } });
   }
 
   async getDataForRange(

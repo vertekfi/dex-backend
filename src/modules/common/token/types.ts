@@ -1,3 +1,4 @@
+import { PrismaToken } from '@prisma/client';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
 
@@ -23,7 +24,7 @@ export interface TokenPricingService extends TokenPriceHandler {
   getTokenPrice: (token: TokenDefinition) => Promise<number>;
 
   getCoinCandlestickData: (
-    tokenId: string,
+    token: PrismaToken,
     days: 1 | 30,
   ) => Promise<[number, number, number, number, number][]>;
 

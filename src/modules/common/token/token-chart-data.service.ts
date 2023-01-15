@@ -3,11 +3,9 @@ import * as moment from 'moment';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
-import { CoingeckoService } from './pricing/coingecko.service';
 import { groupBy } from 'lodash';
 import { TokenPricingService } from './types';
 import { PRICE_SERVICES } from './pricing/price-services.provider';
-import { validateCoinGeckoToken } from './pricing/utils';
 
 @Injectable()
 export class TokenChartDataService {
@@ -24,8 +22,10 @@ export class TokenChartDataService {
     const token = await this.prisma.prismaToken.findUnique({ where: { address: tokenAddress } });
 
     for (const pricing of this.pricingServices) {
-      const monthData = await pricing.getCoinCandlestickData(token.coingeckoTokenId, 30);
-      const twentyFourHourData = await pricing.getCoinCandlestickData(token.coingeckoTokenId, 1);
+      // TODO: Do the getAcceptedTokens pattern here
+      // const acceptedTokens = pricing.getAcceptedTokens()
+      const monthData = await pricing.getCoinCandlestickData(token, 30);
+      const twentyFourHourData = await pricing.getCoinCandlestickData(token, 1);
 
       // Merge 30 min data into hourly data
       const hourlyData = Object.values(

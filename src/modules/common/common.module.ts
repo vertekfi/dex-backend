@@ -16,6 +16,7 @@ import { TokenChartDataService } from './token/token-chart-data.service';
 import { TokenDataLoaderService } from './token/token-data-loader.service';
 import { TokenService } from './token/token.service';
 import { TokenPriceService } from './token/pricing/token-price.service';
+import { TokenSyncService } from './token/token-sync.service';
 
 @Global()
 @Module({
@@ -52,6 +53,7 @@ import { TokenPriceService } from './token/pricing/token-price.service';
     TokenChartDataService,
     DexScreenerService,
     TokenPriceServicesProvider,
+    TokenSyncService,
   ],
   exports: [
     ConfigService,
@@ -71,6 +73,7 @@ import { TokenPriceService } from './token/pricing/token-price.service';
     TokenChartDataService,
     DexScreenerService,
     TokenPriceServicesProvider,
+    TokenSyncService,
   ],
 })
 export class CommonModule {}

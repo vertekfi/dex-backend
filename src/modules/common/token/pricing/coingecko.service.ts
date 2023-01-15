@@ -20,6 +20,8 @@ import { getDexPairInfo } from 'src/modules/common/token/pricing/dexscreener';
 import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 import { TokenPricingService } from '../types';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+import { PrismaToken } from '@prisma/client';
+import { validateCoinGeckoToken } from './utils';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -103,9 +105,7 @@ export class CoingeckoService implements TokenPricingService {
   }
 
   async getTokenPrice(token: TokenDefinition): Promise<number> {
-    if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
-      throw new Error(`token ${token.address} not a coingecko price token`);
-    }
+    validateCoinGeckoToken(token as unknown as PrismaToken);
 
     const address = token.coingeckoContractAddress.toLowerCase();
     const endpoint = `/simple/token_price/${token.coingeckoPlatformId}?contract_addresses=${address}&vs_currencies=${this.fiatParam}`;
@@ -115,10 +115,13 @@ export class CoingeckoService implements TokenPricingService {
   }
 
   async getCoinCandlestickData(
-    tokenId: string,
+    token: PrismaToken,
     days: 1 | 30,
   ): Promise<[number, number, number, number, number][]> {
-    const endpoint = `/coins/${tokenId}/ohlc?vs_currency=usd&days=${days}`;
+    if (!token.coingeckoTokenId) {
+      throw new Error(`getCoinCandlestickData: missing coingeckoTokenId`);
+    }
+    const endpoint = `/coins/${token.coingeckoTokenId}/ohlc?vs_currency=usd&days=${days}`;
 
     return this.get(endpoint);
   }

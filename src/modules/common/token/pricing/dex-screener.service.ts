@@ -14,7 +14,7 @@ import { validateDexscreenerToken } from './utils';
 
 @Injectable()
 export class DexScreenerService implements TokenPricingService {
-  exitIfFails: boolean;
+  exitIfFails: boolean = false;
   readonly id = 'DexScreenerService';
 
   constructor(@Inject(RPC) private rpc: AccountWeb3, private readonly prisma: PrismaService) {}
@@ -31,14 +31,16 @@ export class DexScreenerService implements TokenPricingService {
   }
 
   async getCoinCandlestickData(
-    tokenId: string,
+    token: PrismaToken,
     days: 1 | 30,
   ): Promise<[number, number, number, number, number][]> {
     // "tokenId" should be the dexscreener pair address instead of coingecko id
+    validateDexscreenerToken(token as unknown as PrismaToken);
 
     // TODO: from database
     // structure of the gecko chart data
     // need to run the sync as scheduled job to get the data
+    //
     // {
     //   tokenAddress,
     //   timestamp: item[0] / 1000,
