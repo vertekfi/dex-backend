@@ -14,7 +14,6 @@ import { CacheDecorator } from '../decorators/cache.decorator';
 import { FIVE_MINUTES_SECONDS, THIRTY_SECONDS_SECONDS } from 'src/modules/utils/time';
 
 const TOKEN_PRICES_CACHE_KEY = 'token:prices:current';
-const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
 const ALL_TOKENS_CACHE_KEY = 'tokens:all';
 
 @Injectable()
@@ -115,11 +114,6 @@ export class TokenService {
 
   getPriceForToken(tokenPrices: PrismaTokenCurrentPrice[], tokenAddress: string): number {
     return this.tokenPriceService.getPriceForToken(tokenPrices, tokenAddress);
-  }
-
-  @CacheDecorator(TOKEN_PRICES_24H_AGO_CACHE_KEY, FIVE_MINUTES_SECONDS)
-  async getTokenPriceFrom24hAgo(): Promise<PrismaTokenCurrentPrice[]> {
-    return await this.tokenPriceService.getTokenPriceFrom24hAgo();
   }
 
   async loadTokenPrices(): Promise<void> {

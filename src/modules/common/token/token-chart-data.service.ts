@@ -14,7 +14,6 @@ export class TokenChartDataService {
   constructor(
     @Inject(PRICE_SERVICES) private readonly pricingServices: TokenPricingService[],
     private readonly prisma: PrismaService,
-    private readonly coingecko: CoingeckoService,
   ) {}
 
   async initTokenChartData(tokenAddress: string) {
@@ -28,46 +27,59 @@ export class TokenChartDataService {
 
     validateCoinGeckoToken(token);
 
-    const monthData = await this.coingecko.getCoinCandlestickData(token.coingeckoTokenId, 30);
-    const twentyFourHourData = await this.coingecko.getCoinCandlestickData(
-      token.coingeckoTokenId,
-      1,
-    );
+    for (const pricing of this.pricingServices) {
+      const monthData = await pricing.getCoinCandlestickData(token.coingeckoTokenId, 30);
+      const twentyFourHourData = await pricing.getCoinCandlestickData(token.coingeckoTokenId, 1);
 
-    //merge 30 min data into hourly data
-    const hourlyData = Object.values(
-      groupBy(twentyFourHourData, (item) =>
-        timestampRoundedUpToNearestHour(moment.unix(item[0] / 1000)),
-      ),
-    ).map((hourData) => {
-      if (hourData.length === 1) {
-        const item = hourData[0];
-        item[0] = timestampRoundedUpToNearestHour(moment.unix(item[0] / 1000)) * 1000;
+      // Merge 30 min data into hourly data
+      const hourlyData = Object.values(
+        groupBy(twentyFourHourData, (item) =>
+          timestampRoundedUpToNearestHour(moment.unix(item[0] / 1000)),
+        ),
+      ).map((hourData) => {
+        if (hourData.length === 1) {
+          const item = hourData[0];
+          item[0] = timestampRoundedUpToNearestHour(moment.unix(item[0] / 1000)) * 1000;
 
-        return item;
-      }
+          return item;
+        }
 
-      const thirty = hourData[0];
-      const hour = hourData[1];
+        const thirty = hourData[0];
+        const hour = hourData[1];
 
-      return [
-        hour[0],
-        thirty[1],
-        Math.max(thirty[2], hour[2]),
-        Math.min(thirty[3], hour[3]),
-        hour[4],
-      ];
-    });
+        return [
+          hour[0],
+          thirty[1],
+          Math.max(thirty[2], hour[2]),
+          Math.min(thirty[3], hour[3]),
+          hour[4],
+        ];
+      });
 
-    operations.push(this.prisma.prismaTokenPrice.deleteMany({ where: { tokenAddress } }));
+      operations.push(this.prisma.prismaTokenPrice.deleteMany({ where: { tokenAddress } }));
 
-    operations.push(
-      this.prisma.prismaTokenPrice.createMany({
-        data: monthData
-          .filter((item) => item[0] / 1000 <= latestTimestamp)
-          .map((item) => ({
+      operations.push(
+        this.prisma.prismaTokenPrice.createMany({
+          data: monthData
+            .filter((item) => item[0] / 1000 <= latestTimestamp)
+            .map((item) => ({
+              tokenAddress,
+              timestamp: item[0] / 1000,
+              open: item[1],
+              high: item[2],
+              low: item[3],
+              close: item[4],
+              price: item[4],
+              coingecko: true,
+            })),
+        }),
+      );
+
+      operations.push(
+        this.prisma.prismaTokenPrice.createMany({
+          data: hourlyData.map((item) => ({
             tokenAddress,
-            timestamp: item[0] / 1000,
+            timestamp: Math.floor(item[0] / 1000),
             open: item[1],
             high: item[2],
             low: item[3],
@@ -75,26 +87,12 @@ export class TokenChartDataService {
             price: item[4],
             coingecko: true,
           })),
-      }),
-    );
+          skipDuplicates: true,
+        }),
+      );
 
-    operations.push(
-      this.prisma.prismaTokenPrice.createMany({
-        data: hourlyData.map((item) => ({
-          tokenAddress,
-          timestamp: Math.floor(item[0] / 1000),
-          open: item[1],
-          high: item[2],
-          low: item[3],
-          close: item[4],
-          price: item[4],
-          coingecko: true,
-        })),
-        skipDuplicates: true,
-      }),
-    );
-
-    await prismaBulkExecuteOperations(operations, true);
+      await prismaBulkExecuteOperations(operations, true);
+    }
   }
 
   async updateCandleStickData() {

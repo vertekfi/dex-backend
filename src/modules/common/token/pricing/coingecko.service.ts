@@ -40,9 +40,8 @@ export class CoingeckoService implements TokenPricingService {
 
   constructor(
     @Inject(RPC) private rpc: AccountWeb3,
-    private readonly config: ConfigService,
-  ) // private readonly tokenService: TokenService,
-  {
+    private readonly config: ConfigService, // private readonly tokenService: TokenService,
+  ) {
     this.baseUrl = 'https://api.coingecko.com/api/v3';
     this.fiatParam = 'usd';
     this.platformId = this.config.env.COINGECKO_PLATFORM_ID;
@@ -89,13 +88,13 @@ export class CoingeckoService implements TokenPricingService {
     }
 
     // TODO: Need to store some of these ourself since gecko won't have them listed
-    if (mapped.priceProvider === 'DEXSCREENER') {
-      // TODO: token price testing
-      if (mapped.address !== PROTOCOL_TOKEN[this.rpc.chainId]) {
-        const tokenInfo = await getDexPairInfo('bsc', mapped.platformId);
-        console.log(tokenInfo);
-      }
-    }
+    // if (mapped.priceProvider === 'DEXSCREENER') {
+    //   // TODO: token price testing
+    //   if (mapped.address !== PROTOCOL_TOKEN[this.rpc.chainId]) {
+    //     const tokenInfo = await getDexPairInfo('bsc', mapped.platformId);
+    //     console.log(tokenInfo);
+    //   }
+    // }
 
     return [];
   }

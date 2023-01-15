@@ -5,14 +5,13 @@ import { networkConfig } from 'src/modules/config/network-config';
 import * as moment from 'moment-timezone';
 import * as _ from 'lodash';
 import { TokenPriceHandler } from '../types';
-import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { GqlTokenChartDataRange } from 'src/gql-addons';
 import { CacheDecorator } from '../../decorators/cache.decorator';
-import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { TokenChartDataService } from '../token-chart-data.service';
-import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+import { FIVE_MINUTES_SECONDS } from 'src/modules/utils/time';
 
 const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
+const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
 
 @Injectable()
 export class TokenPriceService {
@@ -64,7 +63,8 @@ export class TokenPriceService {
     return tokenPrices.filter((tokenPrice) => tokenPrice.price > 0.000000001);
   }
 
-  async getTokenPriceFrom24hAgo(): Promise<PrismaTokenCurrentPrice[]> {
+  @CacheDecorator(TOKEN_PRICES_24H_AGO_CACHE_KEY, FIVE_MINUTES_SECONDS)
+  async getTokenPricesFrom24hAgo(): Promise<PrismaTokenCurrentPrice[]> {
     const oneDayAgo = moment().subtract(24, 'hours').unix();
     const tokenPrices = await this.prisma.prismaTokenPrice.findMany({
       orderBy: { timestamp: 'desc' },

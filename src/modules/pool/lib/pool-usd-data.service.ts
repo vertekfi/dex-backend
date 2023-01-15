@@ -4,16 +4,16 @@ import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { BlockService } from 'src/modules/common/web3/block.service';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
-import { TokenService } from 'src/modules/common/token/token.service';
 import { Injectable } from '@nestjs/common';
+import { TokenPriceService } from 'src/modules/common/token/pricing/token-price.service';
 
 @Injectable()
 export class PoolUsdDataService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly tokenService: TokenService,
     private readonly blockService: BlockService,
     private readonly balancerSubgraphService: BalancerSubgraphService,
+    private readonly pricingService: TokenPriceService,
   ) {}
 
   /**
@@ -24,7 +24,7 @@ export class PoolUsdDataService {
     minShares: number = 0.00000000001,
     maxShares: number = Number.MAX_SAFE_INTEGER,
   ) {
-    const tokenPrices = await this.tokenService.getTokenPrices();
+    const tokenPrices = await this.pricingService.getCurrentTokenPrices();
     const pools = await this.prisma.prismaPool.findMany({
       include: { dynamicData: true, tokens: { include: { dynamicData: true } } },
       where: {
@@ -50,7 +50,7 @@ export class PoolUsdDataService {
           token.address === pool.address
             ? 0
             : parseFloat(token.dynamicData?.balance || '0') *
-              this.tokenService.getPriceForToken(tokenPrices, token.address),
+              this.pricingService.getPriceForToken(tokenPrices, token.address),
       }));
       const totalLiquidity = _.sumBy(balanceUSDs, (item) => item.balanceUSD);
 
@@ -81,7 +81,7 @@ export class PoolUsdDataService {
 
   async updateLiquidity24hAgoForAllPools() {
     const block24hAgo = await this.blockService.getBlockFrom24HoursAgo();
-    const tokenPrices24hAgo = await this.tokenService.getTokenPriceFrom24hAgo();
+    const tokenPrices24hAgo = await this.pricingService.getTokenPricesFrom24hAgo();
 
     const subgraphPools = await this.balancerSubgraphService.getAllPools(
       { block: { number: block24hAgo.number } },
@@ -97,7 +97,7 @@ export class PoolUsdDataService {
           token.address === pool.address
             ? 0
             : parseFloat(token.balance || '0') *
-              this.tokenService.getPriceForToken(tokenPrices24hAgo, token.address),
+              this.pricingService.getPriceForToken(tokenPrices24hAgo, token.address),
       }));
       const totalLiquidity = Math.max(
         _.sumBy(balanceUSDs, (item) => item.balanceUSD),
