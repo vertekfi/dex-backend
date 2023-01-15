@@ -25,6 +25,7 @@ import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
 import { SOR } from './impl/wrapper';
 import { PrismaService } from 'nestjs-prisma';
 import { getDexPriceFromPair } from 'src/modules/common/token/dexscreener';
+import { TokenDefinition } from 'src/modules/token/token-types';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
@@ -298,17 +299,23 @@ export class BalancerSorService {
         address,
       },
     });
+
     if (!token) {
       throw new Error('Unknown token: ' + address);
     }
 
+    // TODO: testing
+    const isProtoToken = getAddress(address) === getAddress(PROTOCOL_TOKEN[this.rpc.chainId]);
+    if (isProtoToken) {
+      return {
+        ...token,
+        price: '7',
+      };
+    }
+
     if (token.useDexscreener) {
-      if (getAddress(address) === getAddress(PROTOCOL_TOKEN[this.rpc.chainId])) {
-        return {
-          // TODO: testing
-          ...token,
-          price: '7',
-        };
+      if (!token.dexscreenPairAddress) {
+        throw new Error(`Missing dexscreenPairAddress for token ${token.address}`);
       }
       const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
       return {
@@ -316,7 +323,13 @@ export class BalancerSorService {
         price: String(info.priceNum),
       };
     } else {
-      throw new Error('Dexscreener not set');
+      if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
+        throw new Error(`Missing coingecko data for token ${token.address}`);
+      }
+      return {
+        ...token,
+        price: await this.sorPriceService.getTokenPrice(token as unknown as TokenDefinition),
+      };
     }
   }
 

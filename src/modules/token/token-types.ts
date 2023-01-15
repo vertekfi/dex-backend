@@ -30,6 +30,8 @@ export interface TokenDefinition {
   coingeckoContractAddress?: string | null;
   coingeckoTokenId?: string | null;
   tradable: boolean;
+  useDexscreener?: boolean;
+  dexScreenerPairAddress?: string;
 }
 
 export interface TokenPriceItem {
@@ -38,10 +40,13 @@ export interface TokenPriceItem {
   price: number;
 }
 
+export type PriceProvider = 'GECKO' | 'DEXSCREENER';
+
 export interface MappedToken {
-  platform: string;
+  platformId: string;
   address: string;
   originalAddress?: string;
+  priceProvider: PriceProvider;
 }
 
 export interface TokenDataDexScreener {

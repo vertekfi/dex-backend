@@ -129,7 +129,7 @@ export class TokenPriceService {
       tokensWithTypes = tokensWithTypes.filter((token) => !updated.includes(token.address));
     }
 
-    // await this.updateCandleStickData();
+    await this.updateCandleStickData();
 
     // we only keep token prices for the last 24 hours
     const yesterday = moment().subtract(1, 'day').unix();
