@@ -40,6 +40,7 @@ import { VeGaugeAprService } from './lib/aprs/ve-bal-guage-apr.service';
 import { GaugeService } from '../gauge/gauge.service';
 import { TokenService } from '../common/token/token.service';
 import { PROTOCOL_TOKEN } from '../common/web3/contract.service';
+import { TokenPriceService } from '../common/token/pricing/token-price.service';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -61,6 +62,7 @@ export class PoolService {
     private readonly protocolService: ProtocolService,
     private readonly gaugeService: GaugeService,
     private readonly tokenService: TokenService,
+    private readonly pricingService: TokenPriceService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -271,9 +273,11 @@ export class PoolService {
     // TODO: Use fee collector to get protocol fee
     // Also move all of this apr stuff into its own concern/service
     const swaps = new SwapFeeAprService(this.prisma, 0.25);
-    const gauges = new VeGaugeAprService(this.gaugeService, this.tokenService, [
-      PROTOCOL_TOKEN[this.rpc.chainId],
-    ]);
+    const gauges = new VeGaugeAprService(
+      this.gaugeService,
+      [PROTOCOL_TOKEN[this.rpc.chainId]],
+      this.pricingService,
+    );
     await this.poolAprUpdaterService.updatePoolAprs([swaps, gauges]);
   }
 

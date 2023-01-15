@@ -1,21 +1,6 @@
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
 
-export interface TokenPricingService {
-  getTokenPrice: (token: TokenDefinition) => Promise<number>;
-
-  getCoinCandlestickData: (
-    tokenId: string,
-    days: 1 | 30,
-  ) => Promise<[number, number, number, number, number][]>;
-
-  getTokenHistoricalPrices: (
-    address: string,
-    days: number,
-    tokenDefinitions: TokenDefinition[],
-  ) => Promise<HistoricalPrice[]>;
-}
-
 export interface TokenPriceHandler {
   exitIfFails: boolean;
   id: string;
@@ -32,6 +17,21 @@ export interface TokenPriceHandler {
    * @param tokens tokens needing prices
    */
   updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]>;
+}
+
+export interface TokenPricingService extends TokenPriceHandler {
+  getTokenPrice: (token: TokenDefinition) => Promise<number>;
+
+  getCoinCandlestickData: (
+    tokenId: string,
+    days: 1 | 30,
+  ) => Promise<[number, number, number, number, number][]>;
+
+  getTokenHistoricalPrices: (
+    address: string,
+    days: number,
+    tokenDefinitions: TokenDefinition[],
+  ) => Promise<HistoricalPrice[]>;
 }
 
 export interface TokenDefinition {

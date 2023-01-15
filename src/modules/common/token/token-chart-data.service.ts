@@ -23,10 +23,6 @@ export class TokenChartDataService {
     const operations: any[] = [];
     const token = await this.prisma.prismaToken.findUnique({ where: { address: tokenAddress } });
 
-    // gecko screener check
-
-    validateCoinGeckoToken(token);
-
     for (const pricing of this.pricingServices) {
       const monthData = await pricing.getCoinCandlestickData(token.coingeckoTokenId, 30);
       const twentyFourHourData = await pricing.getCoinCandlestickData(token.coingeckoTokenId, 1);

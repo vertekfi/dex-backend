@@ -19,6 +19,7 @@ import { AccountWeb3 } from 'src/modules/common/types';
 import { getDexPairInfo } from 'src/modules/common/token/pricing/dexscreener';
 import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 import { TokenPricingService } from '../types';
+import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -48,6 +49,8 @@ export class CoingeckoService implements TokenPricingService {
     this.nativeAssetId = this.config.env.COINGECKO_NATIVE_ASSET_ID;
     this.nativeAssetAddress = this.config.env.NATIVE_ASSET_ADDRESS;
   }
+  exitIfFails: boolean;
+  id: string;
 
   async getNativeAssetPrice(): Promise<Price> {
     try {
@@ -146,10 +149,20 @@ export class CoingeckoService implements TokenPricingService {
     }
   }
 
-  async get<T>(endpoint: string): Promise<T> {
+  private async get<T>(endpoint: string): Promise<T> {
     const remainingRequests = await requestRateLimiter.removeTokens(1);
     console.log('Remaining coingecko requests', remainingRequests);
     const { data } = await axios.get(this.baseUrl + endpoint);
     return data;
+  }
+
+  async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
+    return tokens
+      .filter((token) => token.coingeckoContractAddress && token.coingeckoPlatformId)
+      .map((token) => token.address);
+  }
+
+  async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
+    throw new Error('Method not implemented.');
   }
 }

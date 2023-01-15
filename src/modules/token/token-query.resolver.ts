@@ -22,7 +22,7 @@ export class TokenQueryResolver {
 
   @Query()
   async beetsGetBeetsPrice() {
-    return this.tokenService.getProtocolTokenPrice();
+    return this.pricingService.getProtocolTokenPrice();
   }
 
   // @Query()
