@@ -20,7 +20,9 @@ export interface TokenPriceHandler {
   updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]>;
 }
 
-export interface TokenPricingService extends TokenPriceHandler {
+export interface TokenPricingService {
+  coinGecko: boolean;
+
   getTokenPrice: (token: TokenDefinition) => Promise<number>;
 
   getCoinCandlestickData: (
@@ -63,7 +65,7 @@ export type PriceProvider = 'GECKO' | 'DEXSCREENER';
 
 export interface MappedToken {
   platformId: string;
-  address: string;
+  coingGeckoContractAddress: string;
   originalAddress?: string;
   priceProvider: PriceProvider;
 }

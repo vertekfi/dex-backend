@@ -9,6 +9,7 @@ import {
   HistoricalPrice,
   HistoricalPriceResponse,
   Price,
+  TokenPrices,
 } from '../../../token/token-types-old';
 import { isAddress } from 'ethers/lib/utils';
 import { MappedToken, TokenDefinition, TokenMarketData } from '../types';
@@ -16,7 +17,8 @@ import { ConfigService } from 'src/modules/common/config.service';
 import { TokenPricingService } from '../types';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
-import { isCoinGeckoToken, validateCoinGeckoToken } from './utils';
+import { filterForGeckoTokens, isCoinGeckoToken, validateCoinGeckoToken } from './utils';
+import { forEach, groupBy, mapKeys } from 'lodash';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -36,8 +38,7 @@ export class CoingeckoService implements TokenPricingService {
   private readonly nativeAssetId: string;
   private readonly nativeAssetAddress: string;
 
-  exitIfFails: boolean = false;
-  readonly id = 'CoingeckoService';
+  readonly coinGecko = true;
 
   constructor(
     private readonly config: ConfigService, // private readonly tokenService: TokenService,
@@ -102,12 +103,11 @@ export class CoingeckoService implements TokenPricingService {
     const now = Math.floor(Date.now() / 1000);
     const end = now;
     const start = end - days * ONE_DAY_SECONDS;
-    // const tokenDefinitions = await this.tokenService.getTokenDefinitions();
 
     const mapped = this.getMappedTokenDetails(address, tokenDefinitions);
 
-    if (mapped.priceProvider === 'GECKO') {
-      const endpoint = `/coins/${mapped.platformId}/contract/${mapped.address}/market_chart/range?vs_currency=${this.fiatParam}&from=${start}&to=${end}`;
+    if (mapped) {
+      const endpoint = `/coins/${mapped.platformId}/contract/${mapped.coingGeckoContractAddress}/market_chart/range?vs_currency=${this.fiatParam}&from=${start}&to=${end}`;
       const result = await this.get<HistoricalPriceResponse>(endpoint);
       return result.prices.map((item) => ({
         // anchor to the start of the hour
@@ -142,6 +142,57 @@ export class CoingeckoService implements TokenPricingService {
     return result[address]?.usd;
   }
 
+  async getTokenPrices(
+    addresses: string[],
+    tokenDefinitions: TokenDefinition[],
+    addressesPerRequest = 100,
+  ) {
+    try {
+      if (addresses.length / addressesPerRequest > 10)
+        throw new Error('To many requests for rate limit.');
+
+      let mapped = addresses.map((address) =>
+        this.getMappedTokenDetails(address, tokenDefinitions),
+      );
+
+      mapped = mapped.filter((t) => t !== undefined);
+      console.log(mapped);
+
+      const groupedByPlatform = groupBy(mapped, 'platformId');
+      const requests: Promise<CoingeckoPriceResponse>[] = [];
+
+      forEach(groupedByPlatform, (tokens, platform) => {
+        const mappedAddresses = tokens.map((token) => token.coingGeckoContractAddress);
+        const pageCount = Math.ceil(mappedAddresses.length / addressesPerRequest);
+        const pages = Array.from(Array(pageCount).keys());
+
+        pages.forEach((page) => {
+          const addressString = mappedAddresses.slice(
+            addressesPerRequest * page,
+            addressesPerRequest * (page + 1),
+          );
+          const endpoint = `/simple/token_price/${platform}?contract_addresses=${addressString}&vs_currencies=${this.fiatParam}`;
+          const request = this.get<CoingeckoPriceResponse>(endpoint);
+          requests.push(request);
+        });
+      });
+
+      const paginatedResults = await Promise.all(requests);
+      const results = this.parsePaginatedTokens(paginatedResults, mapped);
+
+      console.log(results);
+
+      // Inject native asset price if included in requested addresses
+      if (addresses.includes(this.nativeAssetAddress)) {
+        results[this.nativeAssetAddress] = await this.getNativeAssetPrice();
+      }
+
+      return results;
+    } catch (error: any) {
+      throw new Error(`Unable to fetch token prices - ${error.message} - ${error.statusCode}`);
+    }
+  }
+
   async getCoinCandlestickData(
     token: PrismaToken,
     days: 1 | 30,
@@ -159,25 +210,30 @@ export class CoingeckoService implements TokenPricingService {
    */
   getMappedTokenDetails(address: string, tokens: TokenDefinition[]): MappedToken {
     const token = tokens.find((token) => token.address.toLowerCase() === address.toLowerCase());
-    if (token && token.coingeckoPlatformId && token.coingeckoContractAddress) {
+
+    if (token) {
       return {
         platformId: token.coingeckoPlatformId,
-        address: isAddress(token.coingeckoContractAddress)
+        coingGeckoContractAddress: isAddress(token.coingeckoContractAddress)
           ? token.coingeckoContractAddress.toLowerCase()
           : token.coingeckoContractAddress,
         originalAddress: address.toLowerCase(),
         priceProvider: 'GECKO',
       };
-    } else if (token && token.useDexscreener && token.dexScreenerPairAddress) {
-      return {
-        platformId: token.dexScreenerPairAddress,
-        address: isAddress(token.dexScreenerPairAddress)
-          ? token.dexScreenerPairAddress.toLowerCase()
-          : token.dexScreenerPairAddress,
-        originalAddress: address.toLowerCase(),
-        priceProvider: 'DEXSCREENER',
-      };
+    } else {
+      console.log('No token: ' + address);
     }
+
+    // else if (token && token.useDexscreener && token.dexScreenerPairAddress) {
+    //   return {
+    //     platformId: token.dexScreenerPairAddress,
+    //     address: isAddress(token.dexScreenerPairAddress)
+    //       ? token.dexScreenerPairAddress.toLowerCase()
+    //       : token.dexScreenerPairAddress,
+    //     originalAddress: address.toLowerCase(),
+    //     priceProvider: 'DEXSCREENER',
+    //   };
+    // }
   }
 
   private async get<T>(endpoint: string): Promise<T> {
@@ -187,13 +243,41 @@ export class CoingeckoService implements TokenPricingService {
     return data;
   }
 
-  async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    return tokens
-      .filter((token) => token.coingeckoContractAddress && token.coingeckoPlatformId)
-      .map((token) => token.address);
-  }
+  private parsePaginatedTokens(
+    paginatedResults: TokenPrices[],
+    mappedTokens: MappedToken[],
+  ): TokenPrices {
+    const results = paginatedResults.reduce((result, page) => ({ ...result, ...page }), {});
+    const prices: TokenPrices = mapKeys(results, (val, address) => address);
 
-  async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    throw new Error('Method not implemented.');
+    const mappedResult = {};
+    // // Replacing to keep the testnet pricing situation intact also
+    // mappedTokens.forEach((tk) => {
+    //   const price = results[tk.coingGeckoContractAddress];
+    //   mappedResult[tk.originalAddress] = price;
+    // });
+
+    const resultAddresses = Object.keys(results);
+    for (const mappedToken of mappedTokens) {
+      if (mappedToken.originalAddress) {
+        const resultAddress = resultAddresses.find(
+          (address) =>
+            address.toLowerCase() === mappedToken.coingGeckoContractAddress.toLowerCase(),
+        );
+        if (!resultAddress) {
+          console.warn(
+            `Matching address for original address ${mappedToken.originalAddress} not found`,
+          );
+        } else {
+          prices[mappedToken.originalAddress] = results[resultAddress];
+        }
+      }
+    }
+
+    mappedTokens.forEach((tk) => {
+      delete prices[tk.coingGeckoContractAddress];
+    });
+
+    return prices;
   }
 }

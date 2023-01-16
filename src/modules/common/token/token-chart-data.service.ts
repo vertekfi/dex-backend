@@ -63,8 +63,6 @@ export class TokenChartDataService {
 
       operations.push(this.prisma.prismaTokenPrice.deleteMany({ where: { tokenAddress } }));
 
-      const coingecko = pricing.id === 'DexScreenerService' ? false : true;
-
       operations.push(
         this.prisma.prismaTokenPrice.createMany({
           data: monthData
@@ -77,8 +75,8 @@ export class TokenChartDataService {
               low: item[3],
               close: item[4],
               price: item[4],
-              coingecko,
-              dexscreener: !coingecko,
+              coingecko: pricing.coinGecko,
+              dexscreener: pricing.coinGecko,
             })),
         }),
       );
@@ -93,8 +91,8 @@ export class TokenChartDataService {
             low: item[3],
             close: item[4],
             price: item[4],
-            coingecko,
-            dexscreener: !coingecko,
+            coingecko: pricing.coinGecko,
+            dexscreener: pricing.coinGecko,
           })),
           skipDuplicates: true,
         }),

@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { DexScreenerApiResult } from '../types';
+import { RateLimiter } from 'limiter';
+
+const requestRateLimiter = new RateLimiter({ tokensPerInterval: 300, interval: 'minute' });
 
 const DEXSCREENER_PAIR_BASE_URL = 'https://api.dexscreener.io/latest/dex/pairs/';
 
@@ -16,8 +19,7 @@ export async function getDexPairInfo(
   pairAddress: string,
 ): Promise<DexScreenerApiResult> {
   try {
-    const req = await axios.get(`${DEXSCREENER_PAIR_BASE_URL}${chainSymbol}/${pairAddress}`);
-    return req.data;
+    return trackRequest(`${DEXSCREENER_PAIR_BASE_URL}${chainSymbol}/${pairAddress}`);
   } catch (error) {
     throw error;
   }
@@ -41,4 +43,11 @@ export async function getDexPriceFromPair(chainSymbol: 'bsc', pairAddress: strin
   } catch (error) {
     throw error;
   }
+}
+
+async function trackRequest(url: string) {
+  const remainingRequests = await requestRateLimiter.removeTokens(1);
+  console.log('Remaining Dexscreener requests', remainingRequests);
+  const req = await axios.get(url);
+  return req.data;
 }

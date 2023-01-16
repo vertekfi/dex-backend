@@ -3,12 +3,17 @@ import * as moment from 'moment-timezone';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
+import { nestApp } from 'src/main';
 
 export class SwapsPriceHandlerService implements TokenPriceHandler {
   public readonly exitIfFails = false;
   public readonly id = 'SwapsPriceHandlerService';
 
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly prisma: PrismaService;
+
+  constructor() {
+    this.prisma = nestApp.get(PrismaService);
+  }
 
   async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
     return tokens

@@ -17,7 +17,7 @@ import { AccountWeb3 } from '../types';
 @Injectable()
 export class TokenSyncService {
   constructor(
-    @Inject(RPC) private rpc: AccountWeb3,
+    @Inject(RPC) private readonly rpc: AccountWeb3,
     @Inject(PRICE_SERVICES) private readonly pricingServices: TokenPricingService[],
     private readonly prisma: PrismaService,
     private readonly chartDataService: TokenChartDataService,
@@ -70,20 +70,20 @@ export class TokenSyncService {
             continue;
           }
 
-          //   if (moment(item.updatedAt).isAfter(moment().subtract(10, 'minutes'))) {
-          operations.push(
-            this.prisma.prismaTokenDynamicData.upsert({
-              where: { tokenAddress: token.address },
-              update: item,
-              create: {
-                coingeckoId: token.coingeckoTokenId,
-                dexscreenerPair: token.dexscreenPairAddress,
-                tokenAddress: token.address,
-                ...item,
-              },
-            }),
-          );
-          //  }
+          if (moment(item.updatedAt).isAfter(moment().subtract(10, 'minutes'))) {
+            operations.push(
+              this.prisma.prismaTokenDynamicData.upsert({
+                where: { tokenAddress: token.address },
+                update: item,
+                create: {
+                  coingeckoId: token.coingeckoTokenId,
+                  dexscreenerPair: token.dexscreenPairAddress,
+                  tokenAddress: token.address,
+                  ...item,
+                },
+              }),
+            );
+          }
         }
 
         await Promise.all(operations);
@@ -210,7 +210,7 @@ export class TokenSyncService {
   async syncTokenPrices(): Promise<void> {
     let tokensWithTypes = await getTokensWithTypes(this.prisma);
 
-    for (const handler of getPriceHandlers(this.prisma)) {
+    for (const handler of getPriceHandlers()) {
       const accepted = await handler.getAcceptedTokens(tokensWithTypes);
       const acceptedTokens: PrismaTokenWithTypes[] = tokensWithTypes.filter((token) =>
         accepted.includes(token.address),

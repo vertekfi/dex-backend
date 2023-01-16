@@ -6,22 +6,25 @@ import {
   DS_ADDRESS_CAP,
   DS_CHAIN_MAP,
   getDexPairInfo,
-  getDexPriceFromPair,
 } from 'src/modules/common/token/pricing/dexscreener';
 import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 import { chunk, uniq } from 'lodash';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
+import { isDexscreenerToken } from '../utils';
+import { nestApp } from 'src/main';
 
 export class DexscreenerPriceHandlerService implements TokenPriceHandler {
   public readonly exitIfFails = false;
   public readonly id = 'DexscreenerPriceHandlerService';
 
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly prisma: PrismaService;
+
+  constructor() {
+    this.prisma = nestApp.get(PrismaService);
+  }
 
   async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    return tokens
-      .filter((token) => token.useDexscreener && token.dexscreenPairAddress)
-      .map((token) => token.address);
+    return tokens.filter(isDexscreenerToken).map((token) => token.address);
   }
 
   async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {

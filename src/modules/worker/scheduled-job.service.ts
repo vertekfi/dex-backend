@@ -168,87 +168,87 @@ export class ScheduledJobService {
       true,
     );
 
-    // every 30 seconds
-    this.scheduleJob(
-      '*/30 * * * * *',
-      'poolUpdateLiquidityValuesForAllPools',
-      TWO_MINUTES_IN_MS,
-      async () => {
-        await this.poolService.updateLiquidityValuesForPools();
-        await this.poolService.updatePoolAprs();
-      },
-    );
+    // // every 30 seconds
+    // this.scheduleJob(
+    //   '*/30 * * * * *',
+    //   'poolUpdateLiquidityValuesForAllPools',
+    //   TWO_MINUTES_IN_MS,
+    //   async () => {
+    //     await this.poolService.updateLiquidityValuesForPools();
+    //     await this.poolService.updatePoolAprs();
+    //   },
+    // );
 
-    // every 30 seconds
-    this.scheduleJob(
-      '*/30 * * * * *',
-      'loadOnChainDataForPoolsWithActiveUpdates',
-      TWO_MINUTES_IN_MS,
-      async () => {
-        await this.poolService.loadOnChainDataForPoolsWithActiveUpdates();
-      },
-    );
+    // // every 30 seconds
+    // this.scheduleJob(
+    //   '*/30 * * * * *',
+    //   'loadOnChainDataForPoolsWithActiveUpdates',
+    //   TWO_MINUTES_IN_MS,
+    //   async () => {
+    //     await this.poolService.loadOnChainDataForPoolsWithActiveUpdates();
+    //   },
+    // );
 
-    // every 5 minutes
-    this.scheduleJob('*/5 * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
-      await this.poolService.syncNewPoolsFromSubgraph();
-    });
+    // // every 5 minutes
+    // this.scheduleJob('*/5 * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
+    //   await this.poolService.syncNewPoolsFromSubgraph();
+    // });
 
-    // every 3 minutes
-    this.scheduleJob('*/3 * * * *', 'syncPoolConfigData', FIVE_MINUTES_IN_MS, async () => {
-      await this.poolDataLoader.syncPoolConfigData();
-    });
+    // // every 3 minutes
+    // this.scheduleJob('*/3 * * * *', 'syncPoolConfigData', FIVE_MINUTES_IN_MS, async () => {
+    //   await this.poolDataLoader.syncPoolConfigData();
+    // });
 
-    // every 5 minutes
-    this.scheduleJob('*/5 * * * *', 'syncTokensFromPoolTokens', TEN_MINUTES_IN_MS, async () => {
-      await this.tokenSyncService.syncTokenDefinitions();
-    });
+    // // every 5 minutes
+    // this.scheduleJob('*/5 * * * *', 'syncTokensFromPoolTokens', TEN_MINUTES_IN_MS, async () => {
+    //   await this.tokenSyncService.syncTokenDefinitions();
+    // });
 
-    //  every 5 minutes
-    this.scheduleJob(
-      '*/5 * * * *',
-      'updateLiquidity24hAgoForAllPools',
-      TEN_MINUTES_IN_MS,
-      async () => {
-        await this.poolService.updateLiquidity24hAgoForAllPools();
-      },
-    );
+    // //  every 5 minutes
+    // this.scheduleJob(
+    //   '*/5 * * * *',
+    //   'updateLiquidity24hAgoForAllPools',
+    //   TEN_MINUTES_IN_MS,
+    //   async () => {
+    //     await this.poolService.updateLiquidity24hAgoForAllPools();
+    //   },
+    // );
 
-    // // once a minute
-    // this.scheduleJob('* * * * *', 'sor-reload-graph', TWO_MINUTES_IN_MS, async () => {
-    //       await balancerSdk.sor.reloadGraph();
-    //   });
+    // // // once a minute
+    // // this.scheduleJob('* * * * *', 'sor-reload-graph', TWO_MINUTES_IN_MS, async () => {
+    // //       await balancerSdk.sor.reloadGraph();
+    // //   });
 
-    // every minute
-    this.scheduleJob('*/1 * * * *', 'syncTokenDynamicData', TEN_MINUTES_IN_MS, async () => {
-      await this.tokenSyncService.syncTokenDynamicData();
-    });
+    // // every minute
+    // this.scheduleJob('*/1 * * * *', 'syncTokenDynamicData', TEN_MINUTES_IN_MS, async () => {
+    //   await this.tokenSyncService.syncTokenDynamicData();
+    // });
 
-    // every 5 minutes
-    this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
-      await this.gaugeSyncService.syncGaugeData();
-    });
-    // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeService.getAllGauges);
+    // // every 5 minutes
+    // this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
+    //   await this.gaugeSyncService.syncGaugeData();
+    // });
+    // // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeService.getAllGauges);
 
-    // every 30 seconds
-    this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
-      await this.protocolService.getMetrics();
-    });
+    // // every 30 seconds
+    // this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
+    //   await this.protocolService.getMetrics();
+    // });
 
-    // once an hour at minute 1
-    this.scheduleJob('1 * * * *', 'syncLatestSnapshotsForAllPools', TEN_MINUTES_IN_MS, async () => {
-      await this.poolService.syncLatestSnapshotsForAllPools();
-    });
+    // // once an hour at minute 1
+    // this.scheduleJob('1 * * * *', 'syncLatestSnapshotsForAllPools', TEN_MINUTES_IN_MS, async () => {
+    //   await this.poolService.syncLatestSnapshotsForAllPools();
+    // });
 
-    // every 20 minutes
-    this.scheduleJob(
-      '*/20 * * * *',
-      'updateLifetimeValuesForAllPools',
-      TEN_MINUTES_IN_MS,
-      async () => {
-        await this.poolService.updateLifetimeValuesForAllPools();
-      },
-    );
+    // // every 20 minutes
+    // this.scheduleJob(
+    //   '*/20 * * * *',
+    //   'updateLifetimeValuesForAllPools',
+    //   TEN_MINUTES_IN_MS,
+    //   async () => {
+    //     await this.poolService.updateLifetimeValuesForAllPools();
+    //   },
+    // );
 
     /*
       //every five minutes

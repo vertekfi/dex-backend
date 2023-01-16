@@ -2,62 +2,117 @@ import { TokenPriceHandler } from '../../types';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
-import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
+import { nestApp } from 'src/main';
+import { CoingeckoService } from '../coingecko.service';
+import { filterForGeckoTokens, isCoinGeckoToken } from '../utils';
+import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
+import { TokenService } from '../../token.service';
+import { networkConfig } from 'src/modules/config/network-config';
 
 export class CoingeckoPriceHandlerService implements TokenPriceHandler {
-  public readonly exitIfFails = false;
-  public readonly id = 'DexscreenerPriceHandlerService';
+  public readonly exitIfFails = true;
+  public readonly id = 'CoingeckoPriceHandlerService';
 
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly prisma: PrismaService;
+  private readonly gecko: CoingeckoService;
+  private readonly tokenService: TokenService;
+  private readonly weth: string;
+
+  constructor() {
+    this.prisma = nestApp.get(PrismaService);
+    this.gecko = nestApp.get(CoingeckoService);
+    this.tokenService = nestApp.get(TokenService);
+    this.weth = networkConfig.weth.address;
+  }
 
   async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    return tokens
-      .filter((token) => token.coingeckoContractAddress && token.coingeckoPlatformId)
-      .map((token) => token.address);
+    return tokens.filter(isCoinGeckoToken).map((token) => token.address);
   }
 
   async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
     const timestamp = timestampRoundedUpToNearestHour();
+    const nativeAsset = tokens.find((token) => token.address === this.weth);
+    const tokensUpdated: string[] = [];
 
-    let updated: string[] = [];
-    let operations: any[] = [];
+    if (nativeAsset) {
+      const price = await this.gecko.getNativeAssetPrice();
+      const usdPrice = price.usd;
 
-    for (const token of tokens) {
-      // We know the token has thecoingecko data at this point
-      // const screenerPrice = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
-      // const price = screenerPrice.priceNum;
-      // updated.push(token.address);
-      // operations.push(
-      //   this.prisma.prismaTokenPrice.upsert({
-      //     where: { tokenAddress_timestamp: { tokenAddress: token.address, timestamp } },
-      //     update: { price: price, close: price },
-      //     create: {
-      //       // create a history record
-      //       tokenAddress: token.address,
-      //       timestamp,
-      //       price,
-      //       high: price,
-      //       low: price,
-      //       open: price,
-      //       close: price,
-      //     },
-      //   }),
-      // );
-      // operations.push(
-      //   this.prisma.prismaTokenCurrentPrice.upsert({
-      //     where: { tokenAddress: token.address },
-      //     update: { price: price },
-      //     create: {
-      //       tokenAddress: token.address,
-      //       timestamp,
-      //       price,
-      //     },
-      //   }),
-      // );
+      if (typeof usdPrice === 'undefined') {
+        throw new Error('failed to load native asset price');
+      }
+
+      await this.prisma.prismaTokenPrice.upsert({
+        where: { tokenAddress_timestamp: { tokenAddress: this.weth, timestamp } },
+        update: { price: usdPrice, close: usdPrice },
+        create: {
+          tokenAddress: this.weth,
+          timestamp,
+          price: usdPrice,
+          high: usdPrice,
+          low: usdPrice,
+          open: usdPrice,
+          close: usdPrice,
+        },
+      });
+
+      tokensUpdated.push(this.weth);
     }
 
-    await Promise.all(operations);
+    const tokenAddresses = tokens.map((item) => item.address);
 
-    return updated;
+    const tokenPricesByAddress = await this.gecko.getTokenPrices(
+      tokenAddresses,
+      filterForGeckoTokens(await this.tokenService.getTokenDefinitions()),
+    );
+
+    let operations: any[] = [];
+    for (let tokenAddress of Object.keys(tokenPricesByAddress)) {
+      const priceUsd = tokenPricesByAddress[tokenAddress].usd;
+      const normalizedTokenAddress = tokenAddress.toLowerCase();
+      const exists = tokenAddresses.includes(normalizedTokenAddress);
+
+      if (!exists) {
+        console.log('skipping token', normalizedTokenAddress);
+      }
+
+      if (exists && priceUsd) {
+        operations.push(
+          this.prisma.prismaTokenPrice.upsert({
+            where: { tokenAddress_timestamp: { tokenAddress: normalizedTokenAddress, timestamp } },
+            update: { price: priceUsd, close: priceUsd },
+            create: {
+              tokenAddress: normalizedTokenAddress,
+              timestamp,
+              price: priceUsd,
+              high: priceUsd,
+              low: priceUsd,
+              open: priceUsd,
+              close: priceUsd,
+              coingecko: true,
+            },
+          }),
+        );
+
+        operations.push(
+          this.prisma.prismaTokenCurrentPrice.upsert({
+            where: { tokenAddress: normalizedTokenAddress },
+            update: { price: priceUsd },
+            create: {
+              tokenAddress: normalizedTokenAddress,
+              timestamp,
+              price: priceUsd,
+              coingecko: true,
+            },
+          }),
+        );
+
+        tokensUpdated.push(normalizedTokenAddress);
+      }
+    }
+
+    await prismaBulkExecuteOperations(operations);
+
+    return tokensUpdated;
   }
 }

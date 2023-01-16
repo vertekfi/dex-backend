@@ -3,6 +3,7 @@ import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
 import { chunk, uniq } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { TokenDefinition } from 'src/modules/common/token/types';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
@@ -15,8 +16,7 @@ import { isDexscreenerToken, validateDexscreenerToken } from './utils';
 
 @Injectable()
 export class DexScreenerService implements TokenPricingService {
-  exitIfFails: boolean = false;
-  readonly id = 'DexScreenerService';
+  readonly coinGecko = false;
 
   constructor(@Inject(RPC) private rpc: AccountWeb3, private readonly prisma: PrismaService) {}
 
@@ -112,9 +112,7 @@ export class DexScreenerService implements TokenPricingService {
   }
 
   async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    return tokens
-      .filter((token) => token.useDexscreener && token.dexscreenPairAddress)
-      .map((token) => token.address);
+    return tokens.filter(isDexscreenerToken).map((token) => token.address);
   }
 
   async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
@@ -122,28 +120,71 @@ export class DexScreenerService implements TokenPricingService {
 
     let updated: string[] = [];
     let operations: any[] = [];
+    const chainId = parseInt(process.env.CHAIN_ID);
+    tokens = tokens.filter((t) => t.chainId === chainId);
+    let price: number;
 
-    for (const token of tokens) {
+    const chunks = chunk(tokens, DS_ADDRESS_CAP);
+
+    for (const chunk of chunks) {
       // We know the token has the pair address at this point
-      let price: number;
-      const chainId = parseInt(process.env.CHAIN_ID);
-      if (chainId === 5 && token.address === PROTOCOL_TOKEN[chainId]) {
-        // TODO: For testing only
-        price = 7;
-      } else {
-        const screenerPrice = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
-        price = screenerPrice.priceNum;
+      const pairAddresses = uniq(chunk.map((t) => t.dexscreenPairAddress));
+      const data = await getDexPairInfo(DS_CHAIN_MAP[chainId], pairAddresses.join(','));
+
+      for (const item of data.pairs) {
+        price = parseFloat(item.priceUsd);
+
+        const token = tokens.find(
+          (t) => t.dexscreenPairAddress.toLowerCase() === item.pairAddress.toLowerCase(),
+        );
+
+        // create a history record
+        operations.push(
+          this.prisma.prismaTokenPrice.upsert({
+            where: { tokenAddress_timestamp: { tokenAddress: token.address, timestamp } },
+            update: { price: price, close: price },
+            create: {
+              tokenAddress: token.address,
+              timestamp,
+              price,
+              high: price,
+              low: price,
+              open: price,
+              close: price,
+            },
+          }),
+        );
+
+        // Update current price record
+        operations.push(
+          this.prisma.prismaTokenCurrentPrice.upsert({
+            where: { tokenAddress: token.address },
+            update: { price: price },
+            create: {
+              tokenAddress: token.address,
+              timestamp,
+              price,
+            },
+          }),
+        );
+
+        updated.push(token.address);
       }
+    }
 
-      updated.push(token.address);
+    // TODO: For testing only until screener or gecko is setup
+    if (chainId === 5) {
+      const tokenAddress = PROTOCOL_TOKEN[chainId].toLowerCase();
 
+      price = 7;
+
+      // create a history record
       operations.push(
         this.prisma.prismaTokenPrice.upsert({
-          where: { tokenAddress_timestamp: { tokenAddress: token.address, timestamp } },
+          where: { tokenAddress_timestamp: { tokenAddress: tokenAddress, timestamp } },
           update: { price: price, close: price },
           create: {
-            // create a history record
-            tokenAddress: token.address,
+            tokenAddress: tokenAddress,
             timestamp,
             price,
             high: price,
@@ -154,20 +195,23 @@ export class DexScreenerService implements TokenPricingService {
         }),
       );
 
+      // Update current price record
       operations.push(
         this.prisma.prismaTokenCurrentPrice.upsert({
-          where: { tokenAddress: token.address },
+          where: { tokenAddress: tokenAddress },
           update: { price: price },
           create: {
-            tokenAddress: token.address,
+            tokenAddress: tokenAddress,
             timestamp,
             price,
           },
         }),
       );
+
+      updated.push(tokenAddress);
     }
 
-    await Promise.all(operations);
+    await prismaBulkExecuteOperations(operations);
 
     return updated;
   }

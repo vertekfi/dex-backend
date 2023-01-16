@@ -2,16 +2,17 @@ import { PrismaToken } from '@prisma/client';
 import { sortBy } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+import { TokenDefinition } from '../types';
 
-export function isCoinGeckoToken(token: PrismaToken): boolean {
-  return !!(token && token.coingeckoTokenId);
+export function isCoinGeckoToken(token: PrismaToken | TokenDefinition): boolean {
+  return !!(token && token.coingeckoTokenId && token.coingeckoTokenId);
 }
 
 export function isDexscreenerToken(token: PrismaToken): boolean {
   return !!(token && token.useDexscreener && token.dexscreenPairAddress);
 }
 
-export function validateCoinGeckoToken(token: PrismaToken) {
+export function validateCoinGeckoToken(token: PrismaToken | TokenDefinition) {
   if (!token || !token.coingeckoTokenId || !token.coingeckoContractAddress) {
     throw new Error('Missing token or token is missing coingecko data');
   }
@@ -21,6 +22,10 @@ export function validateDexscreenerToken(token: PrismaToken) {
   if (!token || !token.useDexscreener || !token.dexscreenPairAddress) {
     throw new Error('Missing token or token is missing dexscreener data');
   }
+}
+
+export function filterForGeckoTokens(tokens: TokenDefinition[]) {
+  return tokens.filter(isCoinGeckoToken);
 }
 
 export async function getTokensWithTypes(prisma: PrismaService): Promise<PrismaTokenWithTypes[]> {

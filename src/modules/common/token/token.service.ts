@@ -54,6 +54,7 @@ export class TokenService {
     return tokenPrices.filter((tokenPrice) => tokenPrice.price > 0.000000001);
   }
 
+  // @CacheDecorator(TOKEN_DEFINITION_CACHE_KEY, 1000 * 20)
   async getTokenDefinitions(): Promise<TokenDefinition[]> {
     const tokens = await this.prisma.prismaToken.findMany({
       where: { chainId: this.rpc.chainId, types: { some: { type: 'WHITE_LISTED' } } },
