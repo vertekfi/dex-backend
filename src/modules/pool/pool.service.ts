@@ -36,7 +36,7 @@ import { ProtocolService } from '../protocol/protocol.service';
 import { CacheDecorator } from '../common/decorators/cache.decorator';
 import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
-import { VeGaugeAprService } from './lib/aprs/ve-bal-guage-apr.service';
+import { VeGaugeAprService } from './lib/aprs/ve-bal-gauge-apr.service';
 import { GaugeService } from '../gauge/gauge.service';
 import { TokenService } from '../common/token/token.service';
 import { PROTOCOL_TOKEN } from '../common/web3/contract.service';
@@ -173,17 +173,6 @@ export class PoolService {
     }
   }
 
-  async reloadStakingForAllPools(
-    stakingTypes: PrismaPoolStakingType[],
-    poolStakingServices: PoolStakingService[],
-  ): Promise<void> {
-    await Promise.all(
-      poolStakingServices.map((stakingService) =>
-        stakingService.reloadStakingForAllPools(stakingTypes),
-      ),
-    );
-  }
-
   async syncPoolAllTokensRelationship(): Promise<void> {
     const pools = await this.prisma.prismaPool.findMany({ select: { id: true } });
 
@@ -257,16 +246,6 @@ export class PoolService {
     console.timeEnd('syncSwapsForLast48Hours');
 
     return poolIds;
-  }
-
-  async syncStakingForPools(poolStakingServices: PoolStakingService[]) {
-    if (!poolStakingServices.length) {
-      throw new Error('PoolService.syncStakingForPools not given poolStakingServices params');
-    }
-
-    await Promise.all(
-      poolStakingServices.map((stakingService) => stakingService.syncStakingForPools()),
-    );
   }
 
   async updatePoolAprs() {

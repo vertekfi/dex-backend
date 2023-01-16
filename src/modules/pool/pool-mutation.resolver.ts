@@ -86,20 +86,6 @@ export class PoolMutationResolver {
   }
 
   @Mutation()
-  async poolReloadStakingForAllPools(@Args() args) {
-    throw new Error('Not setup yet');
-    await this.poolService.reloadStakingForAllPools([], []);
-    return 'success';
-  }
-
-  @Mutation()
-  async poolSyncStakingForPools() {
-    throw new Error('Not setup yet');
-    await this.poolService.syncStakingForPools([]);
-    return 'success';
-  }
-
-  @Mutation()
   async poolUpdateLiquidity24hAgoForAllPools() {
     await this.poolService.updateLiquidity24hAgoForAllPools();
     return 'success';

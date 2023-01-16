@@ -108,6 +108,8 @@ export class GaugeService {
       this.protocolService.getProtocolConfigDataForChain(),
     ]);
 
+    console.log(subgraphGauges);
+
     const rewardTokens = await this.getGaugesRewardData(subgraphGauges);
 
     const gauges = [];

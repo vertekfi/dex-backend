@@ -44,8 +44,6 @@ extend type Mutation {
   poolSyncPoolAllTokensRelationship: String!
   poolReloadAllPoolAprs: String!
   poolSyncTotalShares: String!
-  poolReloadStakingForAllPools(stakingTypes: [GqlPoolStakingType!]!): String!
-  poolSyncStakingForPools: String!
   poolUpdateLiquidity24hAgoForAllPools: String!
   poolLoadSnapshotsForAllPools: String!
   poolSyncLatestSnapshotsForAllPools(daysToSync: Int): String!

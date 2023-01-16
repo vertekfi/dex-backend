@@ -28,7 +28,7 @@ export class ScheduledJobService {
     private readonly poolService: PoolService,
     private readonly tokenSyncService: TokenSyncService,
     private readonly protocolService: ProtocolService,
-    private readonly gaugeService: GaugeSyncService,
+    private readonly gaugeSyncService: GaugeSyncService,
     private readonly poolDataLoader: PoolDataLoaderService,
   ) {}
 
@@ -201,7 +201,7 @@ export class ScheduledJobService {
 
     // every 5 minutes
     this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
-      await this.gaugeService.syncGaugeData();
+      await this.gaugeSyncService.syncGaugeData();
     });
     // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeService.getAllGauges);
 
