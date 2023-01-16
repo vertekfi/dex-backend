@@ -1,14 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
 import { chunk, uniq } from 'lodash';
+import * as moment from 'moment-timezone';
 import { PrismaService } from 'nestjs-prisma';
-import { PrismaTokenWithTypes } from 'prisma/prisma-types';
-import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { TokenDefinition } from 'src/modules/common/token/types';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
-import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { AccountWeb3 } from '../../types';
-import { PROTOCOL_TOKEN } from '../../web3/contract.service';
 import { RPC } from '../../web3/rpc.provider';
 import { TokenPricingService } from '../types';
 import { DS_ADDRESS_CAP, DS_CHAIN_MAP, getDexPairInfo, getDexPriceFromPair } from './dexscreener';
@@ -29,11 +26,10 @@ export class DexScreenerService implements TokenPricingService {
     const chunks = chunk(tokens, DS_ADDRESS_CAP);
     for (const chunk of chunks) {
       let pairAddresses = uniq(chunk.map((t) => t.dexscreenPairAddress));
-      // if (pairAddresses.length > DS_ADDRESS_CAP) {
-      //   pairAddresses = pairAddresses.slice(0, DS_ADDRESS_CAP);
-      // }
 
       const result = await getDexPairInfo(DS_CHAIN_MAP[this.rpc.chainId], pairAddresses.join(','));
+
+      // Could multicall the total supply get market cap if it's really needed
 
       for (const item of result.pairs) {
         const marketData: PrismaTokenDynamicData = {
@@ -66,7 +62,7 @@ export class DexScreenerService implements TokenPricingService {
 
     const { priceNum } = await getDexPriceFromPair(
       DS_CHAIN_MAP[this.rpc.chainId],
-      token.dexScreenerPairAddress,
+      token.dexscreenPairAddress,
     );
 
     return priceNum;
@@ -101,118 +97,42 @@ export class DexScreenerService implements TokenPricingService {
     //   low: item[3],
     //   close: item[4],
     //   price: item[4],
-    //   coingecko: true,
+    //   coingecko: false,
     // }
     return [];
   }
 
-  async getTokenHistoricalPrices(address: string, days: number): Promise<HistoricalPrice[]> {
+  async getTokenHistoricalPrices(
+    address: string,
+    days: number,
+    tokens: TokenDefinition[],
+  ): Promise<HistoricalPrice[]> {
+    tokens = tokens.filter(isDexscreenerToken);
     // Retrieve from database
+
+    // gecko flow
+    // const now = Math.floor(Date.now() / 1000);
+    // const end = now;
+    // const start = end - days * ONE_DAY_SECONDS;
+
+    // const mapped = this.getMappedTokenDetails(address, tokenDefinitions);
+
+    // const endpoint = `/coins/${mapped.platformId}/contract/${mapped.coingGeckoContractAddress}/market_chart/range?vs_currency=${this.fiatParam}&from=${start}&to=${end}`;
+    // const result = await this.get<HistoricalPriceResponse>(endpoint);
+    // return result.prices.map((item) => ({
+    //   // anchor to the start of the hour
+    //   timestamp:
+    //     moment
+    //       .unix(item[0] / 1000)
+    //       .startOf('hour')
+    //       .unix() * 1000,
+    //   price: item[1],
+    // }));
+
+    // Get screener tokens price history data that was created by the scheduled job
+    const timestamp = moment().subtract();
+    // So a prisma.tokenthingie.findMany({ where: { timestamp: { gt: } }})
+
     return [];
-  }
-
-  async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    return tokens.filter(isDexscreenerToken).map((token) => token.address);
-  }
-
-  async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    const timestamp = timestampRoundedUpToNearestHour();
-
-    let updated: string[] = [];
-    let operations: any[] = [];
-    const chainId = parseInt(process.env.CHAIN_ID);
-    tokens = tokens.filter((t) => t.chainId === chainId);
-    let price: number;
-
-    const chunks = chunk(tokens, DS_ADDRESS_CAP);
-
-    for (const chunk of chunks) {
-      // We know the token has the pair address at this point
-      const pairAddresses = uniq(chunk.map((t) => t.dexscreenPairAddress));
-      const data = await getDexPairInfo(DS_CHAIN_MAP[chainId], pairAddresses.join(','));
-
-      for (const item of data.pairs) {
-        price = parseFloat(item.priceUsd);
-
-        const token = tokens.find(
-          (t) => t.dexscreenPairAddress.toLowerCase() === item.pairAddress.toLowerCase(),
-        );
-
-        // create a history record
-        operations.push(
-          this.prisma.prismaTokenPrice.upsert({
-            where: { tokenAddress_timestamp: { tokenAddress: token.address, timestamp } },
-            update: { price: price, close: price },
-            create: {
-              tokenAddress: token.address,
-              timestamp,
-              price,
-              high: price,
-              low: price,
-              open: price,
-              close: price,
-            },
-          }),
-        );
-
-        // Update current price record
-        operations.push(
-          this.prisma.prismaTokenCurrentPrice.upsert({
-            where: { tokenAddress: token.address },
-            update: { price: price },
-            create: {
-              tokenAddress: token.address,
-              timestamp,
-              price,
-            },
-          }),
-        );
-
-        updated.push(token.address);
-      }
-    }
-
-    // TODO: For testing only until screener or gecko is setup
-    if (chainId === 5) {
-      const tokenAddress = PROTOCOL_TOKEN[chainId].toLowerCase();
-
-      price = 7;
-
-      // create a history record
-      operations.push(
-        this.prisma.prismaTokenPrice.upsert({
-          where: { tokenAddress_timestamp: { tokenAddress: tokenAddress, timestamp } },
-          update: { price: price, close: price },
-          create: {
-            tokenAddress: tokenAddress,
-            timestamp,
-            price,
-            high: price,
-            low: price,
-            open: price,
-            close: price,
-          },
-        }),
-      );
-
-      // Update current price record
-      operations.push(
-        this.prisma.prismaTokenCurrentPrice.upsert({
-          where: { tokenAddress: tokenAddress },
-          update: { price: price },
-          create: {
-            tokenAddress: tokenAddress,
-            timestamp,
-            price,
-          },
-        }),
-      );
-
-      updated.push(tokenAddress);
-    }
-
-    await prismaBulkExecuteOperations(operations);
-
-    return updated;
   }
 }

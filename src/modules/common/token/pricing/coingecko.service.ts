@@ -106,30 +106,17 @@ export class CoingeckoService implements TokenPricingService {
 
     const mapped = this.getMappedTokenDetails(address, tokenDefinitions);
 
-    if (mapped) {
-      const endpoint = `/coins/${mapped.platformId}/contract/${mapped.coingGeckoContractAddress}/market_chart/range?vs_currency=${this.fiatParam}&from=${start}&to=${end}`;
-      const result = await this.get<HistoricalPriceResponse>(endpoint);
-      return result.prices.map((item) => ({
-        // anchor to the start of the hour
-        timestamp:
-          moment
-            .unix(item[0] / 1000)
-            .startOf('hour')
-            .unix() * 1000,
-        price: item[1],
-      }));
-    }
-
-    // TODO: Need to store some of these ourself since gecko won't have them listed
-    // if (mapped.priceProvider === 'DEXSCREENER') {
-    //   // TODO: token price testing
-    //   if (mapped.address !== PROTOCOL_TOKEN[this.rpc.chainId]) {
-    //     const tokenInfo = await getDexPairInfo('bsc', mapped.platformId);
-    //     console.log(tokenInfo);
-    //   }
-    // }
-
-    return [];
+    const endpoint = `/coins/${mapped.platformId}/contract/${mapped.coingGeckoContractAddress}/market_chart/range?vs_currency=${this.fiatParam}&from=${start}&to=${end}`;
+    const result = await this.get<HistoricalPriceResponse>(endpoint);
+    return result.prices.map((item) => ({
+      // anchor to the start of the hour
+      timestamp:
+        moment
+          .unix(item[0] / 1000)
+          .startOf('hour')
+          .unix() * 1000,
+      price: item[1],
+    }));
   }
 
   async getTokenPrice(token: TokenDefinition): Promise<number> {
@@ -206,7 +193,10 @@ export class CoingeckoService implements TokenPricingService {
    * Support instances where a token address is not supported by the platform id, provide the option to use a different platform
    */
   getMappedTokenDetails(address: string, tokens: TokenDefinition[]): MappedToken {
-    const token = tokens.find((token) => token.address.toLowerCase() === address.toLowerCase());
+    const token = tokens.find((token) => {
+      // console.log(`${address.toLowerCase()}: ${token.address.toLowerCase()}`);
+      return token.address.toLowerCase() === address.toLowerCase();
+    });
 
     if (token) {
       return {

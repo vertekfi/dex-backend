@@ -52,7 +52,7 @@ export interface TokenDefinition {
   coingeckoTokenId?: string | null;
   tradable: boolean;
   useDexscreener?: boolean;
-  dexScreenerPairAddress?: string;
+  dexscreenPairAddress?: string;
 }
 
 export interface TokenPriceItem {
@@ -154,3 +154,5 @@ export interface TokenMarketData {
   price_change_percentage_30d_in_currency: number;
   price_change_percentage_7d_in_currency: number;
 }
+
+export interface CandleStickData {}

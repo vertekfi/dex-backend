@@ -8,7 +8,7 @@ export function isCoinGeckoToken(token: PrismaToken | TokenDefinition): boolean 
   return !!(token && token.coingeckoTokenId && token.coingeckoTokenId);
 }
 
-export function isDexscreenerToken(token: PrismaToken): boolean {
+export function isDexscreenerToken(token: PrismaToken | TokenDefinition): boolean {
   return !!(token && token.useDexscreener && token.dexscreenPairAddress);
 }
 

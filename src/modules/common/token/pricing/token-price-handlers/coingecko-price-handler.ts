@@ -59,12 +59,10 @@ export class CoingeckoPriceHandlerService implements TokenPriceHandler {
       tokensUpdated.push(this.weth);
     }
 
-    const tokenAddresses = tokens.map((item) => item.address);
+    const geckoTokens = filterForGeckoTokens(await this.tokenService.getTokenDefinitions());
+    const tokenAddresses = geckoTokens.map((item) => item.address);
 
-    const tokenPricesByAddress = await this.gecko.getTokenPrices(
-      tokenAddresses,
-      filterForGeckoTokens(await this.tokenService.getTokenDefinitions()),
-    );
+    const tokenPricesByAddress = await this.gecko.getTokenPrices(tokenAddresses, geckoTokens);
 
     let operations: any[] = [];
     for (let tokenAddress of Object.keys(tokenPricesByAddress)) {

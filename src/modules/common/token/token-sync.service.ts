@@ -237,7 +237,7 @@ export class TokenSyncService {
     // await this.prisma.prismaTokenPrice.deleteMany({ where: { timestamp: { lt: yesterday } } });
   }
 
-  async syncDexScreenerTokenInfo() {
+  async syncDexScreenerTokenPriceInfo() {
     const screenerTokens = await this.prisma.prismaToken.findMany({
       where: {
         AND: [
