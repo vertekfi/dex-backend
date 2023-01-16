@@ -30,14 +30,11 @@ export class TokenChartDataService {
     }
 
     for (const pricing of this.pricingServices) {
-      // TODO: Do the getAcceptedTokens pattern here
       // const acceptedTokens = pricing.getAcceptedTokens(token);
 
       // If not for the proper type
       const monthData = await pricing.getCoinCandlestickData(tokens[0], 30);
       const twentyFourHourData = await pricing.getCoinCandlestickData(tokens[0], 1);
-
-      console.log(twentyFourHourData);
 
       // Merge 30 min data into hourly data
       const hourlyData = Object.values(

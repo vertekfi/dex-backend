@@ -42,8 +42,6 @@ export class TokenSyncService {
       orderBy: { dynamicData: { updatedAt: 'asc' } },
     });
 
-    console.log(tokensWithIds);
-
     const chunks = chunk(tokensWithIds, 100);
 
     // for each chunk
@@ -67,8 +65,6 @@ export class TokenSyncService {
           } else {
             token = tokensWithIds.find((token) => token.coingeckoTokenId === item.coingeckoId);
           }
-
-          console.log(token);
 
           if (!token) {
             continue;
@@ -255,6 +251,18 @@ export class TokenSyncService {
       },
       // orderBy: { dynamicData: { updatedAt: 'asc' } },
     });
+
+    // delete records over 30 days old (Not keeping all of those records to go back too far..?)
+    // ** Use PrismaDexScreenerTokenDynamicData to then write into PrismaTokenDynamicData to update those fields accordingly **
+
+    // Get current screener results and compare against database history
+
+    // db job once an hour?
+    // Would need to add database table to fill with screener data to compare for things like % changes
+    // Could run a job that runs at the start and end of the day for a timestamp reference to use
+    // Would give open/close prices then
+    // There is % change up to 30 days in the database. Need that for charts
+    // All time high? Can manually input all time high once and compare after
   }
 
   private async loadPoolData() {

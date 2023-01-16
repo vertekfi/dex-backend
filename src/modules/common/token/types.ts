@@ -113,6 +113,11 @@ export interface TokenDataDexScreener {
   fdv: number;
 }
 
+export interface DexScreenerApiResult {
+  pairs: TokenDataDexScreener[];
+  pair: TokenDataDexScreener | null;
+}
+
 export interface TokenMarketData {
   id: string;
   symbol: string;

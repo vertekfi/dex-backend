@@ -76,6 +76,7 @@ export class ProtocolService {
       },
       include: { dynamicData: true },
     });
+
     const swaps = await this.prisma.prismaPoolSwap.findMany({
       where: { timestamp: { gte: oneDayAgo } },
     });

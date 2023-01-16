@@ -360,27 +360,28 @@ model PrismaPoolSnapshot {
 
 
 model PrismaToken {
-    chainId             Int?
-    address             String              @id
-    symbol              String
-    name                String
-    description         String?
-    decimals            Int
+    chainId                  Int?
+    address                  String              @id
+    symbol                   String
+    name                     String
+    description              String?
+    decimals                 Int
 
-    logoURI             String?
-    websiteUrl          String?
-    discordUrl          String?
-    telegramUrl         String?
-    twitterUsername     String?
-    priority            Int                 @default(0)
-    coingeckoPlatformId String?
+    logoURI                  String?
+    websiteUrl               String?
+    discordUrl               String?
+    telegramUrl              String?
+    twitterUsername          String?
+    priority                 Int                 @default(0)
+    coingeckoPlatformId      String?
     coingeckoContractAddress String?
-    coingeckoTokenId    String?
+    coingeckoTokenId         String?
 
-    dynamicData         PrismaTokenDynamicData?
-    currentPrice        PrismaTokenCurrentPrice?
-    prices              PrismaTokenPrice[]
-    types               PrismaTokenType[]
+    dynamicData              PrismaTokenDynamicData?
+    screenerDynamicData      PrismaDexScreenerTokenDynamicData?
+    currentPrice             PrismaTokenCurrentPrice?
+    prices                   PrismaTokenPrice[]
+    types                    PrismaTokenType[]
 
     expandedPools       PrismaPoolExpandedTokens[]
     poolTokens          PrismaPoolToken[]
@@ -439,6 +440,16 @@ model PrismaTokenDynamicData {
     priceChangePercent7d  Float?
     priceChangePercent14d Float?
     priceChangePercent30d Float?
+}
+
+model PrismaDexScreenerTokenDynamicData {
+    tokenAddress          String              @id
+    token                 PrismaToken         @relation(fields:[tokenAddress], references: [address])
+    timestamp             Int
+    price                 Float
+    priceChange24h        Float
+    open                  Float
+    close                 Float
 }
 
 model PrismaTokenType {

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { DexScreenerApiResult } from '../types';
 
 const DEXSCREENER_PAIR_BASE_URL = 'https://api.dexscreener.io/latest/dex/pairs/';
 
@@ -7,7 +8,13 @@ export const DS_CHAIN_MAP = {
   56: 'bsc',
 };
 
-export async function getDexPairInfo(chainSymbol: 'bsc', pairAddress: string) {
+export // They allow at most 30 to be used in one call
+const DS_ADDRESS_CAP = 30;
+
+export async function getDexPairInfo(
+  chainSymbol: 'bsc',
+  pairAddress: string,
+): Promise<DexScreenerApiResult> {
   try {
     const req = await axios.get(`${DEXSCREENER_PAIR_BASE_URL}${chainSymbol}/${pairAddress}`);
     return req.data;

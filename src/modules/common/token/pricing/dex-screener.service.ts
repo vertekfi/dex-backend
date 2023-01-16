@@ -1,20 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
-import { uniq } from 'lodash';
+import { chunk, uniq } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
-import { TokenDefinition, TokenMarketData } from 'src/modules/common/token/types';
+import { TokenDefinition } from 'src/modules/common/token/types';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { AccountWeb3 } from '../../types';
 import { PROTOCOL_TOKEN } from '../../web3/contract.service';
 import { RPC } from '../../web3/rpc.provider';
 import { TokenPricingService } from '../types';
-import { DS_CHAIN_MAP, getDexPairInfo, getDexPriceFromPair } from './dexscreener';
+import { DS_ADDRESS_CAP, DS_CHAIN_MAP, getDexPairInfo, getDexPriceFromPair } from './dexscreener';
 import { isDexscreenerToken, validateDexscreenerToken } from './utils';
-
-// They allow at most 30 to be used in one call
-const DS_ADDRESS_CAP = 30;
 
 @Injectable()
 export class DexScreenerService implements TokenPricingService {
@@ -28,47 +25,38 @@ export class DexScreenerService implements TokenPricingService {
 
     const data: PrismaTokenDynamicData[] = [];
 
-    let pairAddresses = uniq(tokens.map((t) => t.dexscreenPairAddress));
-    if (pairAddresses.length > DS_ADDRESS_CAP) {
-      pairAddresses = pairAddresses.slice(0, DS_ADDRESS_CAP);
+    // Account for future growth now instead of an issue popping up later
+    const chunks = chunk(tokens, DS_ADDRESS_CAP);
+    for (const chunk of chunks) {
+      let pairAddresses = uniq(chunk.map((t) => t.dexscreenPairAddress));
+      // if (pairAddresses.length > DS_ADDRESS_CAP) {
+      //   pairAddresses = pairAddresses.slice(0, DS_ADDRESS_CAP);
+      // }
+
+      const result = await getDexPairInfo(DS_CHAIN_MAP[this.rpc.chainId], pairAddresses.join(','));
+
+      for (const item of result.pairs) {
+        const marketData: PrismaTokenDynamicData = {
+          price: parseFloat(item.priceUsd),
+          ath: 0, // db
+          atl: 0, // db
+          marketCap: 0, // Have to manually call the contract for total supply (then * current price)
+          fdv: item.fdv,
+          high24h: 0, // db
+          low24h: 0, // db
+          priceChange24h: item.priceChange.h24,
+          priceChangePercent24h: item.priceChange.h24,
+          priceChangePercent7d: 0, // db
+          priceChangePercent14d: 0, // db
+          priceChangePercent30d: 0, // db
+          updatedAt: new Date(new Date().toUTCString()), // correct format?
+          coingeckoId: null,
+          dexscreenerPair: item.pairAddress,
+        };
+
+        data.push(marketData);
+      }
     }
-
-    const result = await getDexPairInfo(DS_CHAIN_MAP[this.rpc.chainId], pairAddresses.join(','));
-
-    // console.log(result);
-
-    // Get current screener results and compare against database history
-
-    // db job once an hour?
-    // Would need to add database table to fill with screener data to compare for things like % changes
-    // Could run a job that runs at the start and end of the day for a timestamp reference to use
-    // Would give open/close prices then
-    // There is % change up to 30 days in the database. Need that for charts
-    // All time high?
-
-    for (const item of result.pairs) {
-      const marketData: PrismaTokenDynamicData = {
-        price: parseFloat(item.priceUsd),
-        ath: 0, // db
-        atl: 0, // db
-        marketCap: 0, // Have to manually call the contract for total supply (then * current price)
-        fdv: item.fdv,
-        high24h: 0, // db
-        low24h: 0, // db
-        priceChange24h: item.priceChange.h24,
-        priceChangePercent24h: item.priceChange.h24,
-        priceChangePercent7d: 0, // db
-        priceChangePercent14d: 0, // db
-        priceChangePercent30d: 0, // db
-        updatedAt: new Date(new Date().toUTCString()), // correct format?
-        coingeckoId: null,
-        dexscreenerPair: item.pairAddress,
-      };
-
-      data.push(marketData);
-    }
-
-    console.log(data);
 
     return data;
   }

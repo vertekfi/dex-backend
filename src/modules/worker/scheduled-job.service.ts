@@ -157,9 +157,9 @@ export class ScheduledJobService {
   }
 
   scheduleLocalWorkerTasks() {
-    // every 30 seconds
+    // every 1 minute
     this.scheduleJob(
-      '*/30 * * * * *',
+      '*/1 * * * *',
       'loadTokenPrices',
       ONE_MINUTE_IN_MS,
       async () => {
