@@ -156,7 +156,6 @@ export class CoingeckoService implements TokenPricingService {
       );
 
       mapped = mapped.filter((t) => t !== undefined);
-      console.log(mapped);
 
       const groupedByPlatform = groupBy(mapped, 'platformId');
       const requests: Promise<CoingeckoPriceResponse>[] = [];
@@ -179,8 +178,6 @@ export class CoingeckoService implements TokenPricingService {
 
       const paginatedResults = await Promise.all(requests);
       const results = this.parsePaginatedTokens(paginatedResults, mapped);
-
-      console.log(results);
 
       // Inject native asset price if included in requested addresses
       if (addresses.includes(this.nativeAssetAddress)) {
@@ -267,6 +264,7 @@ export class CoingeckoService implements TokenPricingService {
       }
     }
 
+    // Keep things intact for testnet situation
     mappedTokens.forEach((tk) => {
       delete prices[tk.coingGeckoContractAddress];
     });

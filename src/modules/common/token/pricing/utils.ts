@@ -25,7 +25,9 @@ export function validateDexscreenerToken(token: PrismaToken) {
 }
 
 export function filterForGeckoTokens(tokens: TokenDefinition[]) {
-  return tokens.filter(isCoinGeckoToken);
+  return tokens.filter(
+    (tk) => isCoinGeckoToken(tk) && parseInt(process.env.CHAIN_ID) === tk.chainId,
+  );
 }
 
 export async function getTokensWithTypes(prisma: PrismaService): Promise<PrismaTokenWithTypes[]> {
