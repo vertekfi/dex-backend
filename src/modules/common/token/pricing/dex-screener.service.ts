@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
+import { uniq } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { TokenDefinition, TokenMarketData } from 'src/modules/common/token/types';
@@ -9,8 +10,11 @@ import { AccountWeb3 } from '../../types';
 import { PROTOCOL_TOKEN } from '../../web3/contract.service';
 import { RPC } from '../../web3/rpc.provider';
 import { TokenPricingService } from '../types';
-import { DS_CHAIN_MAP, getDexPriceFromPair } from './dexscreener';
+import { DS_CHAIN_MAP, getDexPairInfo, getDexPriceFromPair } from './dexscreener';
 import { isDexscreenerToken, validateDexscreenerToken } from './utils';
+
+// They allow at most 30 to be used in one call
+const DS_ADDRESS_CAP = 30;
 
 @Injectable()
 export class DexScreenerService implements TokenPricingService {
@@ -21,31 +25,50 @@ export class DexScreenerService implements TokenPricingService {
 
   async getMarketDataForToken(tokens: PrismaToken[]): Promise<PrismaTokenDynamicData[]> {
     tokens = tokens.filter(isDexscreenerToken);
+
     const data: PrismaTokenDynamicData[] = [];
 
-    // for (const token of tokens) {
-    //   // These are the fields actualy used to store this
-    //   const item: any = {};
-    //   const marketData: PrismaTokenDynamicData = {
-    //     // id: token.dexscreenPairAddress,
-    //     price: item.current_price,
-    //     ath: item.ath,
-    //     atl: item.atl,
-    //     marketCap: item.market_cap,
-    //     fdv: item.fully_diluted_valuation,
-    //     high24h: item.high_24h ?? undefined,
-    //     low24h: item.low_24h ?? undefined,
-    //     priceChange24h: item.price_change_24h ?? undefined,
-    //     priceChangePercent24h: item.price_change_percentage_24h,
-    //     priceChangePercent7d: item.price_change_percentage_7d_in_currency,
-    //     priceChangePercent14d: item.price_change_percentage_14d_in_currency,
-    //     priceChangePercent30d: item.price_change_percentage_30d_in_currency,
-    //     updatedAt: item.last_updated,
-    //     coingeckoId: token.coingeckoTokenId,
-    //     dexscreenerPair: null,
-    //    // tokenAddress: token.address,
-    //   };
-    // }
+    let pairAddresses = uniq(tokens.map((t) => t.dexscreenPairAddress));
+    if (pairAddresses.length > DS_ADDRESS_CAP) {
+      pairAddresses = pairAddresses.slice(0, DS_ADDRESS_CAP);
+    }
+
+    const result = await getDexPairInfo(DS_CHAIN_MAP[this.rpc.chainId], pairAddresses.join(','));
+
+    // console.log(result);
+
+    // Get current screener results and compare against database history
+
+    // db job once an hour?
+    // Would need to add database table to fill with screener data to compare for things like % changes
+    // Could run a job that runs at the start and end of the day for a timestamp reference to use
+    // Would give open/close prices then
+    // There is % change up to 30 days in the database. Need that for charts
+    // All time high?
+
+    for (const item of result.pairs) {
+      const marketData: PrismaTokenDynamicData = {
+        price: parseFloat(item.priceUsd),
+        ath: 0, // db
+        atl: 0, // db
+        marketCap: 0, // Have to manually call the contract for total supply (then * current price)
+        fdv: item.fdv,
+        high24h: 0, // db
+        low24h: 0, // db
+        priceChange24h: item.priceChange.h24,
+        priceChangePercent24h: item.priceChange.h24,
+        priceChangePercent7d: 0, // db
+        priceChangePercent14d: 0, // db
+        priceChangePercent30d: 0, // db
+        updatedAt: new Date(new Date().toUTCString()), // correct format?
+        coingeckoId: null,
+        dexscreenerPair: item.pairAddress,
+      };
+
+      data.push(marketData);
+    }
+
+    console.log(data);
 
     return data;
   }

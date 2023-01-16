@@ -18,6 +18,9 @@ import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer
 import { TokenHistoricalPrices } from 'src/modules/token/token-types-old';
 import { CoingeckoService } from 'src/modules/common/token/pricing/coingecko.service';
 import { TokenService } from 'src/modules/common/token/token.service';
+import { TokenPricingService } from 'src/modules/common/token/types';
+import { isCoinGeckoToken } from 'src/modules/common/token/pricing/utils';
+import { DexScreenerService } from 'src/modules/common/token/pricing/dex-screener.service';
 
 @Injectable()
 export class PoolSnapshotService {
@@ -26,6 +29,7 @@ export class PoolSnapshotService {
     private readonly balancerSubgraphService: BalancerSubgraphService,
     private readonly blockService: BlockService,
     private readonly coingeckoService: CoingeckoService,
+    private readonly dexscreenerService: DexScreenerService,
     private readonly tokenService: TokenService,
   ) {}
 
@@ -98,8 +102,6 @@ export class PoolSnapshotService {
       orderDirection: OrderDirection.Asc,
     });
 
-    console.log(allSnapshots);
-
     const latestSyncedSnapshots = await this.prisma.prismaPoolSnapshot.findMany({
       where: {
         timestamp: moment()
@@ -109,8 +111,6 @@ export class PoolSnapshotService {
           .unix(),
       },
     });
-
-    console.log(latestSyncedSnapshots);
 
     const poolIds = _.uniq(allSnapshots.map((snapshot) => snapshot.pool.id));
 
@@ -194,7 +194,11 @@ export class PoolSnapshotService {
         }));
       } else {
         try {
-          tokenPriceMap[token.address] = await this.coingeckoService.getTokenHistoricalPrices(
+          const pricingService: TokenPricingService = isCoinGeckoToken(token.token)
+            ? this.coingeckoService
+            : this.dexscreenerService;
+
+          tokenPriceMap[token.address] = await pricingService.getTokenHistoricalPrices(
             token.address,
             numDays,
             await this.tokenService.getTokenDefinitions(),

@@ -1,6 +1,6 @@
 import { isSameAddress } from '@balancer-labs/sdk';
 import { Inject, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaToken } from '@prisma/client';
 import { chunk } from 'lodash';
 import * as moment from 'moment-timezone';
 import { PrismaService } from 'nestjs-prisma';
@@ -11,10 +11,13 @@ import { getPriceHandlers } from './pricing/token-price-handlers';
 import { getTokensWithTypes } from './pricing/utils';
 import { TokenChartDataService } from './token-chart-data.service';
 import { TokenPricingService } from './types';
+import { RPC } from '../web3/rpc.provider';
+import { AccountWeb3 } from '../types';
 
 @Injectable()
 export class TokenSyncService {
   constructor(
+    @Inject(RPC) private rpc: AccountWeb3,
     @Inject(PRICE_SERVICES) private readonly pricingServices: TokenPricingService[],
     private readonly prisma: PrismaService,
     private readonly chartDataService: TokenChartDataService,
@@ -32,9 +35,14 @@ export class TokenSyncService {
             dexscreenPairAddress: { not: null },
           },
         ],
+        AND: {
+          chainId: { equals: this.rpc.chainId },
+        },
       },
       orderBy: { dynamicData: { updatedAt: 'asc' } },
     });
+
+    console.log(tokensWithIds);
 
     const chunks = chunk(tokensWithIds, 100);
 
@@ -49,30 +57,37 @@ export class TokenSyncService {
         // for each market data item returned from the price service
         for (const item of response) {
           // Each service will set the id as needed
-          const token = tokensWithIds.find(
-            (token) =>
-              token.coingeckoTokenId === item.coingeckoId ||
-              token.dexscreenPairAddress === item.dexscreenerPair,
-          );
+          let token: PrismaToken;
+          const isScreener = item.dexscreenerPair !== null;
+          if (isScreener) {
+            token = tokensWithIds.find(
+              (token) =>
+                token.dexscreenPairAddress.toLowerCase() === item.dexscreenerPair.toLowerCase(),
+            );
+          } else {
+            token = tokensWithIds.find((token) => token.coingeckoTokenId === item.coingeckoId);
+          }
+
+          console.log(token);
 
           if (!token) {
             continue;
           }
 
-          if (moment(item.updatedAt).isAfter(moment().subtract(10, 'minutes'))) {
-            operations.push(
-              this.prisma.prismaTokenDynamicData.upsert({
-                where: { tokenAddress: token.address },
-                update: item,
-                create: {
-                  coingeckoId: token.coingeckoTokenId,
-                  dexscreenerPair: token.dexscreenPairAddress,
-                  tokenAddress: token.address,
-                  ...item,
-                },
-              }),
-            );
-          }
+          //   if (moment(item.updatedAt).isAfter(moment().subtract(10, 'minutes'))) {
+          operations.push(
+            this.prisma.prismaTokenDynamicData.upsert({
+              where: { tokenAddress: token.address },
+              update: item,
+              create: {
+                coingeckoId: token.coingeckoTokenId,
+                dexscreenerPair: token.dexscreenPairAddress,
+                tokenAddress: token.address,
+                ...item,
+              },
+            }),
+          );
+          //  }
         }
 
         await Promise.all(operations);
@@ -224,6 +239,22 @@ export class TokenSyncService {
     // we only keep token prices for the last 24 hours
     // const yesterday = moment().subtract(1, 'day').unix();
     // await this.prisma.prismaTokenPrice.deleteMany({ where: { timestamp: { lt: yesterday } } });
+  }
+
+  async syncDexScreenerTokenInfo() {
+    const screenerTokens = await this.prisma.prismaToken.findMany({
+      where: {
+        AND: [
+          {
+            useDexscreener: { not: false },
+          },
+          {
+            dexscreenPairAddress: { not: null },
+          },
+        ],
+      },
+      // orderBy: { dynamicData: { updatedAt: 'asc' } },
+    });
   }
 
   private async loadPoolData() {
