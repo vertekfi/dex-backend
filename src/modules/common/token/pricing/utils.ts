@@ -3,6 +3,14 @@ import { sortBy } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 
+export function isCoinGeckoToken(token: PrismaToken): boolean {
+  return !!(token && token.coingeckoTokenId);
+}
+
+export function isDexscreenerToken(token: PrismaToken): boolean {
+  return !!(token && token.useDexscreener && token.dexscreenPairAddress);
+}
+
 export function validateCoinGeckoToken(token: PrismaToken) {
   if (!token || !token.coingeckoTokenId || !token.coingeckoContractAddress) {
     throw new Error('Missing token or token is missing coingecko data');

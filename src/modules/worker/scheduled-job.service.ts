@@ -15,6 +15,19 @@ const TWO_MINUTES_IN_MS = 120000;
 const FIVE_MINUTES_IN_MS = 300000;
 const TEN_MINUTES_IN_MS = 600000;
 
+const asyncCallWithTimeout = async (fn: () => Promise<any>, timeLimit: number) => {
+  let timeoutHandle: NodeJS.Timeout;
+
+  const timeoutPromise = new Promise((_resolve, reject) => {
+    timeoutHandle = setTimeout(() => reject(new Error('Call timed out!')), timeLimit);
+  });
+
+  return Promise.race([fn(), timeoutPromise]).then((result) => {
+    clearTimeout(timeoutHandle);
+    return result;
+  });
+};
+
 export class ScheduledJobService {
   private _jobs: {
     [jobName: string]: {
@@ -99,6 +112,18 @@ export class ScheduledJobService {
         console.log(`${taskName} already running, skipping call...`);
         return;
       }
+
+      running = true;
+      console.time(taskName);
+      asyncCallWithTimeout(func, timeout)
+        .catch((error) => {
+          console.log(`Error ${taskName}`, error);
+        })
+        .finally(() => {
+          running = false;
+          console.timeEnd(taskName);
+          console.log(`${taskName} done`);
+        });
     });
   }
 
@@ -132,9 +157,9 @@ export class ScheduledJobService {
   }
 
   scheduleLocalWorkerTasks() {
-    // every 20 seconds
+    // every 30 seconds
     this.scheduleJob(
-      '*/20 * * * * *',
+      '*/30 * * * * *',
       'loadTokenPrices',
       ONE_MINUTE_IN_MS,
       async () => {
@@ -164,13 +189,13 @@ export class ScheduledJobService {
       },
     );
 
-    // every 30 seconds
-    this.scheduleJob('*/30 * * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
+    // every 5 minutes
+    this.scheduleJob('*/5 * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
       await this.poolService.syncNewPoolsFromSubgraph();
     });
 
     // every 3 minutes
-    this.scheduleJob('*/3 * * * *', 'poolSyncSanityPoolData', FIVE_MINUTES_IN_MS, async () => {
+    this.scheduleJob('*/3 * * * *', 'syncPoolConfigData', FIVE_MINUTES_IN_MS, async () => {
       await this.poolDataLoader.syncPoolConfigData();
     });
 

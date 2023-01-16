@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as moment from 'moment-timezone';
 import { RateLimiter } from 'limiter';
 import axios from 'axios';
@@ -11,17 +11,12 @@ import {
   Price,
 } from '../../../token/token-types-old';
 import { isAddress } from 'ethers/lib/utils';
-import { MappedToken, TokenDefinition } from '../types';
-import { TokenService } from '../token.service';
+import { MappedToken, TokenDefinition, TokenMarketData } from '../types';
 import { ConfigService } from 'src/modules/common/config.service';
-import { RPC } from 'src/modules/common/web3/rpc.provider';
-import { AccountWeb3 } from 'src/modules/common/types';
-import { getDexPairInfo } from 'src/modules/common/token/pricing/dexscreener';
-import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 import { TokenPricingService } from '../types';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
-import { PrismaToken } from '@prisma/client';
-import { validateCoinGeckoToken } from './utils';
+import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
+import { isCoinGeckoToken, validateCoinGeckoToken } from './utils';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -41,8 +36,10 @@ export class CoingeckoService implements TokenPricingService {
   private readonly nativeAssetId: string;
   private readonly nativeAssetAddress: string;
 
+  exitIfFails: boolean = false;
+  readonly id = 'CoingeckoService';
+
   constructor(
-    @Inject(RPC) private rpc: AccountWeb3,
     private readonly config: ConfigService, // private readonly tokenService: TokenService,
   ) {
     this.baseUrl = 'https://api.coingecko.com/api/v3';
@@ -51,8 +48,73 @@ export class CoingeckoService implements TokenPricingService {
     this.nativeAssetId = this.config.env.COINGECKO_NATIVE_ASSET_ID;
     this.nativeAssetAddress = this.config.env.NATIVE_ASSET_ADDRESS;
   }
-  exitIfFails: boolean;
-  id: string;
+
+  async getMarketDataForToken(tokens: PrismaToken[]): Promise<PrismaTokenDynamicData[]> {
+    tokens = tokens.filter(isCoinGeckoToken);
+    const data: PrismaTokenDynamicData[] = [];
+
+    for (const token of tokens) {
+      // These are the fields actualy used to store this
+      const item: any = {};
+      const marketData: PrismaTokenDynamicData = {
+        // id: token.dexscreenPairAddress,
+        price: item.current_price,
+        ath: item.ath,
+        atl: item.atl,
+        marketCap: item.market_cap,
+        fdv: item.fully_diluted_valuation,
+        high24h: item.high_24h ?? undefined,
+        low24h: item.low_24h ?? undefined,
+        priceChange24h: item.price_change_24h ?? undefined,
+        priceChangePercent24h: item.price_change_percentage_24h,
+        priceChangePercent7d: item.price_change_percentage_7d_in_currency,
+        priceChangePercent14d: item.price_change_percentage_14d_in_currency,
+        priceChangePercent30d: item.price_change_percentage_30d_in_currency,
+        updatedAt: item.last_updated,
+        coingeckoId: null,
+        dexscreenerPair: token.dexscreenPairAddress,
+        tokenAddress: token.address,
+      };
+
+      // if (moment(item.last_updated).isAfter(moment().subtract(10, 'minutes'))) {
+      //   const data = {
+      //     price: item.current_price,
+      //     ath: item.ath,
+      //     atl: item.atl,
+      //     marketCap: item.market_cap,
+      //     fdv: item.fully_diluted_valuation,
+      //     high24h: item.high_24h ?? undefined,
+      //     low24h: item.low_24h ?? undefined,
+      //     priceChange24h: item.price_change_24h ?? undefined,
+      //     priceChangePercent24h: item.price_change_percentage_24h,
+      //     priceChangePercent7d: item.price_change_percentage_7d_in_currency,
+      //     priceChangePercent14d: item.price_change_percentage_14d_in_currency,
+      //     priceChangePercent30d: item.price_change_percentage_30d_in_currency,
+      //     updatedAt: item.last_updated,
+      //   };
+
+      //   operations.push(
+      //     this.prisma.prismaTokenDynamicData.upsert({
+      //       where: { tokenAddress: token.address },
+      //       update: data,
+      //       create: {
+      //         coingeckoId: item.id,
+      //         tokenAddress: token.address,
+      //         ...data,
+      //       },
+      //     }),
+      //   );
+      // }
+    }
+
+    const tokenIds = tokens.map((t) => t.coingeckoTokenId);
+    const endpoint = `/coins/markets?vs_currency=${this.fiatParam}&ids=${tokenIds}&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d%2C14d%2C30d`;
+
+    const result = await this.get<TokenMarketData[]>(endpoint);
+    console.log(result);
+
+    return data;
+  }
 
   async getNativeAssetPrice(): Promise<Price> {
     try {
@@ -118,7 +180,7 @@ export class CoingeckoService implements TokenPricingService {
     token: PrismaToken,
     days: 1 | 30,
   ): Promise<[number, number, number, number, number][]> {
-    if (!token.coingeckoTokenId) {
+    if (!isCoinGeckoToken(token)) {
       throw new Error(`getCoinCandlestickData: missing coingeckoTokenId`);
     }
     const endpoint = `/coins/${token.coingeckoTokenId}/ohlc?vs_currency=usd&days=${days}`;

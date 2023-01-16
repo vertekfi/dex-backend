@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaPoolStakingType } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { GaugeService } from './gauge.service';

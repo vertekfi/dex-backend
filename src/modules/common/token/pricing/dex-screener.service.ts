@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PrismaToken } from '@prisma/client';
+import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
-import { TokenDefinition } from 'src/modules/common/token/types';
+import { TokenDefinition, TokenMarketData } from 'src/modules/common/token/types';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { AccountWeb3 } from '../../types';
@@ -10,7 +10,7 @@ import { PROTOCOL_TOKEN } from '../../web3/contract.service';
 import { RPC } from '../../web3/rpc.provider';
 import { TokenPricingService } from '../types';
 import { DS_CHAIN_MAP, getDexPriceFromPair } from './dexscreener';
-import { validateDexscreenerToken } from './utils';
+import { isDexscreenerToken, validateDexscreenerToken } from './utils';
 
 @Injectable()
 export class DexScreenerService implements TokenPricingService {
@@ -18,6 +18,37 @@ export class DexScreenerService implements TokenPricingService {
   readonly id = 'DexScreenerService';
 
   constructor(@Inject(RPC) private rpc: AccountWeb3, private readonly prisma: PrismaService) {}
+
+  async getMarketDataForToken(tokens: PrismaToken[]): Promise<PrismaTokenDynamicData[]> {
+    tokens = tokens.filter(isDexscreenerToken);
+    const data: PrismaTokenDynamicData[] = [];
+
+    for (const token of tokens) {
+      // These are the fields actualy used to store this
+      const item: any = {};
+      const marketData: PrismaTokenDynamicData = {
+        // id: token.dexscreenPairAddress,
+        price: item.current_price,
+        ath: item.ath,
+        atl: item.atl,
+        marketCap: item.market_cap,
+        fdv: item.fully_diluted_valuation,
+        high24h: item.high_24h ?? undefined,
+        low24h: item.low_24h ?? undefined,
+        priceChange24h: item.price_change_24h ?? undefined,
+        priceChangePercent24h: item.price_change_percentage_24h,
+        priceChangePercent7d: item.price_change_percentage_7d_in_currency,
+        priceChangePercent14d: item.price_change_percentage_14d_in_currency,
+        priceChangePercent30d: item.price_change_percentage_30d_in_currency,
+        updatedAt: item.last_updated,
+        coingeckoId: token.coingeckoTokenId,
+        dexscreenerPair: null,
+        tokenAddress: token.address,
+      };
+    }
+
+    return data;
+  }
 
   async getTokenPrice(token: TokenDefinition): Promise<number> {
     validateDexscreenerToken(token as unknown as PrismaToken);
@@ -37,7 +68,7 @@ export class DexScreenerService implements TokenPricingService {
     // "tokenId" should be the dexscreener pair address instead of coingecko id
     // validateDexscreenerToken(token as unknown as PrismaToken);
 
-    if (!token.useDexscreener || !token.dexscreenPairAddress) {
+    if (!isDexscreenerToken(token)) {
       return [];
     }
 

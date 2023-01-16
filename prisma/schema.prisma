@@ -421,22 +421,22 @@ model PrismaTokenPrice {
 }
 
 model PrismaTokenDynamicData {
-    coingeckoId         String
-    dexscreenerPair     String?
-    tokenAddress        String              @id
-    token               PrismaToken         @relation(fields:[tokenAddress], references: [address])
-    updatedAt           DateTime            @updatedAt
+    tokenAddress          String              @id
+    token                 PrismaToken         @relation(fields:[tokenAddress], references: [address])
+    updatedAt             DateTime            @updatedAt
+    coingeckoId           String?
+    dexscreenerPair       String?
 
-    price               Float
-    ath                 Float
-    atl                 Float
-    marketCap           Float?
-    fdv                 Float?
-    high24h             Float
-    low24h              Float
-    priceChange24h      Float
+    price                 Float
+    ath                   Float
+    atl                   Float
+    marketCap             Float?
+    fdv                   Float?
+    high24h               Float
+    low24h                Float
+    priceChange24h        Float
     priceChangePercent24h Float
-    priceChangePercent7d Float?
+    priceChangePercent7d  Float?
     priceChangePercent14d Float?
     priceChangePercent30d Float?
 }

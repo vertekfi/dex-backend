@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import * as _ from 'lodash';
-import { PrismaPoolFilter, PrismaPoolStakingType, PrismaPoolSwap } from '@prisma/client';
+import { PrismaPoolFilter, PrismaPoolSwap } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import * as moment from 'moment-timezone';
 
@@ -27,7 +27,6 @@ import { PoolOnChainDataService } from '../common/pool/pool-on-chain-data.servic
 import { PoolSnapshotService } from './lib/pool-snapshot.service';
 import { PoolSwapService } from '../common/pool/pool-swap.service';
 import { PoolUsdDataService } from './lib/pool-usd-data.service';
-import { PoolStakingService } from './pool-types';
 import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
 import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
 import { PoolSyncService } from './lib/pool-sync.service';
@@ -38,7 +37,6 @@ import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
 import { VeGaugeAprService } from './lib/aprs/ve-bal-gauge-apr.service';
 import { GaugeService } from '../gauge/gauge.service';
-import { TokenService } from '../common/token/token.service';
 import { PROTOCOL_TOKEN } from '../common/web3/contract.service';
 import { TokenPriceService } from '../common/token/pricing/token-price.service';
 
@@ -61,7 +59,6 @@ export class PoolService {
     private readonly poolSyncService: PoolSyncService,
     private readonly protocolService: ProtocolService,
     private readonly gaugeService: GaugeService,
-    private readonly tokenService: TokenService,
     private readonly pricingService: TokenPriceService,
   ) {}
 
