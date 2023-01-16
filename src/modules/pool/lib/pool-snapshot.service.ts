@@ -281,7 +281,7 @@ export class PoolSnapshotService {
       try {
         await this.prisma.prismaPoolSnapshot.upsert({ where: { id }, create: data, update: data });
       } catch (e) {
-        console.log('pool snapshot upsert for ' + id, data);
+        console.log('pool snapshot upsert error for ' + id, data);
         throw e;
       }
     }

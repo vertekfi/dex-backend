@@ -54,11 +54,10 @@ export class ProtocolService {
   async getProtocolTokenListAllChains() {
     const url = 'https://raw.githubusercontent.com/vertekfi/token-list/main/tokenlist.json';
     const { data } = await axios.get(url);
-    console.log(data);
     return data['https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json'].tokens;
   }
 
-  @CacheDecorator(PROTOCOL_METRICS_CACHE_KEY, THIRTY_MINUTES_SECONDS)
+  @CacheDecorator(PROTOCOL_METRICS_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getMetrics(): Promise<ProtocolMetrics> {
     const { totalSwapFee, totalSwapVolume, poolCount } =
       await this.balancerSubgraphService.getProtocolData({});
