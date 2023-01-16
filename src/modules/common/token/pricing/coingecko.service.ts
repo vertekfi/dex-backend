@@ -250,13 +250,6 @@ export class CoingeckoService implements TokenPricingService {
     const results = paginatedResults.reduce((result, page) => ({ ...result, ...page }), {});
     const prices: TokenPrices = mapKeys(results, (val, address) => address);
 
-    const mappedResult = {};
-    // // Replacing to keep the testnet pricing situation intact also
-    // mappedTokens.forEach((tk) => {
-    //   const price = results[tk.coingGeckoContractAddress];
-    //   mappedResult[tk.originalAddress] = price;
-    // });
-
     const resultAddresses = Object.keys(results);
     for (const mappedToken of mappedTokens) {
       if (mappedToken.originalAddress) {
