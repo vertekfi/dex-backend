@@ -11,7 +11,7 @@ import { ContractService } from './web3/contract.service';
 import { PoolOnChainDataService } from './pool/pool-on-chain-data.service';
 import { CoingeckoService } from './token/pricing/coingecko.service';
 import { DexScreenerService } from './token/pricing/dex-screener.service';
-import { TokenPriceServicesProvider } from './token/pricing/price-services.provider';
+import { TokenPriceServicesProvider } from './token/providers/price-services.provider';
 import { TokenChartDataService } from './token/token-chart-data.service';
 import { TokenService } from './token/token.service';
 import { TokenPriceService } from './token/pricing/token-price.service';

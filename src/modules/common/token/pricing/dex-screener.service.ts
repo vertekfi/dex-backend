@@ -23,29 +23,29 @@ export class DexScreenerService implements TokenPricingService {
     tokens = tokens.filter(isDexscreenerToken);
     const data: PrismaTokenDynamicData[] = [];
 
-    for (const token of tokens) {
-      // These are the fields actualy used to store this
-      const item: any = {};
-      const marketData: PrismaTokenDynamicData = {
-        // id: token.dexscreenPairAddress,
-        price: item.current_price,
-        ath: item.ath,
-        atl: item.atl,
-        marketCap: item.market_cap,
-        fdv: item.fully_diluted_valuation,
-        high24h: item.high_24h ?? undefined,
-        low24h: item.low_24h ?? undefined,
-        priceChange24h: item.price_change_24h ?? undefined,
-        priceChangePercent24h: item.price_change_percentage_24h,
-        priceChangePercent7d: item.price_change_percentage_7d_in_currency,
-        priceChangePercent14d: item.price_change_percentage_14d_in_currency,
-        priceChangePercent30d: item.price_change_percentage_30d_in_currency,
-        updatedAt: item.last_updated,
-        coingeckoId: token.coingeckoTokenId,
-        dexscreenerPair: null,
-        tokenAddress: token.address,
-      };
-    }
+    // for (const token of tokens) {
+    //   // These are the fields actualy used to store this
+    //   const item: any = {};
+    //   const marketData: PrismaTokenDynamicData = {
+    //     // id: token.dexscreenPairAddress,
+    //     price: item.current_price,
+    //     ath: item.ath,
+    //     atl: item.atl,
+    //     marketCap: item.market_cap,
+    //     fdv: item.fully_diluted_valuation,
+    //     high24h: item.high_24h ?? undefined,
+    //     low24h: item.low_24h ?? undefined,
+    //     priceChange24h: item.price_change_24h ?? undefined,
+    //     priceChangePercent24h: item.price_change_percentage_24h,
+    //     priceChangePercent7d: item.price_change_percentage_7d_in_currency,
+    //     priceChangePercent14d: item.price_change_percentage_14d_in_currency,
+    //     priceChangePercent30d: item.price_change_percentage_30d_in_currency,
+    //     updatedAt: item.last_updated,
+    //     coingeckoId: token.coingeckoTokenId,
+    //     dexscreenerPair: null,
+    //    // tokenAddress: token.address,
+    //   };
+    // }
 
     return data;
   }

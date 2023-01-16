@@ -5,7 +5,7 @@ import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { groupBy } from 'lodash';
 import { TokenPricingService } from './types';
-import { PRICE_SERVICES } from './pricing/price-services.provider';
+import { PRICE_SERVICES } from './providers/price-services.provider';
 import { getTokensWithTypes } from './pricing/utils';
 import { isSameAddress } from '@balancer-labs/sdk';
 

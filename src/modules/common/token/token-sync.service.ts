@@ -6,7 +6,7 @@ import * as moment from 'moment-timezone';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { ProtocolService } from 'src/modules/protocol/protocol.service';
-import { PRICE_SERVICES } from './pricing/price-services.provider';
+import { PRICE_SERVICES } from './providers/price-services.provider';
 import { getPriceHandlers } from './pricing/token-price-handlers';
 import { getTokensWithTypes } from './pricing/utils';
 import { TokenChartDataService } from './token-chart-data.service';
@@ -37,13 +37,16 @@ export class TokenSyncService {
     });
 
     const chunks = chunk(tokensWithIds, 100);
+
+    // for each chunk
     for (const chunk of chunks) {
-      //
+      // for each price handler
       for (const pricing of this.pricingServices) {
+        // Passes at most 100 token items each time into the call
+        const operations: any[] = [];
         const response = await pricing.getMarketDataForToken(chunk.map((item) => item));
 
-        const operations: any[] = [];
-        //
+        // for each market data item returned from the price service
         for (const item of response) {
           // Each service will set the id as needed
           const token = tokensWithIds.find(
@@ -56,35 +59,20 @@ export class TokenSyncService {
             continue;
           }
 
-          // if (moment(item.last_updated).isAfter(moment().subtract(10, 'minutes'))) {
-          //   const data = {
-          //     price: item.current_price,
-          //     ath: item.ath,
-          //     atl: item.atl,
-          //     marketCap: item.market_cap,
-          //     fdv: item.fully_diluted_valuation,
-          //     high24h: item.high_24h ?? undefined,
-          //     low24h: item.low_24h ?? undefined,
-          //     priceChange24h: item.price_change_24h ?? undefined,
-          //     priceChangePercent24h: item.price_change_percentage_24h,
-          //     priceChangePercent7d: item.price_change_percentage_7d_in_currency,
-          //     priceChangePercent14d: item.price_change_percentage_14d_in_currency,
-          //     priceChangePercent30d: item.price_change_percentage_30d_in_currency,
-          //     updatedAt: item.last_updated,
-          //   };
-
-          //   operations.push(
-          //     this.prisma.prismaTokenDynamicData.upsert({
-          //       where: { tokenAddress: token.address },
-          //       update: data,
-          //       create: {
-          //         coingeckoId: item.id,
-          //         tokenAddress: token.address,
-          //         ...data,
-          //       },
-          //     }),
-          //   );
-          // }
+          if (moment(item.updatedAt).isAfter(moment().subtract(10, 'minutes'))) {
+            operations.push(
+              this.prisma.prismaTokenDynamicData.upsert({
+                where: { tokenAddress: token.address },
+                update: item,
+                create: {
+                  coingeckoId: token.coingeckoTokenId,
+                  dexscreenerPair: token.dexscreenPairAddress,
+                  tokenAddress: token.address,
+                  ...item,
+                },
+              }),
+            );
+          }
         }
 
         await Promise.all(operations);

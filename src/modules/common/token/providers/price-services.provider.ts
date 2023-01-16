@@ -1,7 +1,7 @@
 import { Provider } from '@nestjs/common';
 import { TokenPricingService } from '../types';
-import { CoingeckoService } from './coingecko.service';
-import { DexScreenerService } from './dex-screener.service';
+import { CoingeckoService } from '../pricing/coingecko.service';
+import { DexScreenerService } from '../pricing/dex-screener.service';
 
 export const PRICE_SERVICES = 'PRICE_HANDLERS';
 

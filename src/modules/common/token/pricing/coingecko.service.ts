@@ -53,11 +53,12 @@ export class CoingeckoService implements TokenPricingService {
     tokens = tokens.filter(isCoinGeckoToken);
     const data: PrismaTokenDynamicData[] = [];
 
-    for (const token of tokens) {
-      // These are the fields actualy used to store this
-      const item: any = {};
+    const tokenIds = tokens.map((t) => t.coingeckoTokenId);
+    const endpoint = `/coins/markets?vs_currency=${this.fiatParam}&ids=${tokenIds}&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d%2C14d%2C30d`;
+    const result = await this.get<TokenMarketData[]>(endpoint);
+
+    for (const item of result) {
       const marketData: PrismaTokenDynamicData = {
-        // id: token.dexscreenPairAddress,
         price: item.current_price,
         ath: item.ath,
         atl: item.atl,
@@ -71,47 +72,12 @@ export class CoingeckoService implements TokenPricingService {
         priceChangePercent14d: item.price_change_percentage_14d_in_currency,
         priceChangePercent30d: item.price_change_percentage_30d_in_currency,
         updatedAt: item.last_updated,
-        coingeckoId: null,
-        dexscreenerPair: token.dexscreenPairAddress,
-        tokenAddress: token.address,
+        coingeckoId: item.id,
+        dexscreenerPair: null,
       };
 
-      // if (moment(item.last_updated).isAfter(moment().subtract(10, 'minutes'))) {
-      //   const data = {
-      //     price: item.current_price,
-      //     ath: item.ath,
-      //     atl: item.atl,
-      //     marketCap: item.market_cap,
-      //     fdv: item.fully_diluted_valuation,
-      //     high24h: item.high_24h ?? undefined,
-      //     low24h: item.low_24h ?? undefined,
-      //     priceChange24h: item.price_change_24h ?? undefined,
-      //     priceChangePercent24h: item.price_change_percentage_24h,
-      //     priceChangePercent7d: item.price_change_percentage_7d_in_currency,
-      //     priceChangePercent14d: item.price_change_percentage_14d_in_currency,
-      //     priceChangePercent30d: item.price_change_percentage_30d_in_currency,
-      //     updatedAt: item.last_updated,
-      //   };
-
-      //   operations.push(
-      //     this.prisma.prismaTokenDynamicData.upsert({
-      //       where: { tokenAddress: token.address },
-      //       update: data,
-      //       create: {
-      //         coingeckoId: item.id,
-      //         tokenAddress: token.address,
-      //         ...data,
-      //       },
-      //     }),
-      //   );
-      // }
+      data.push(marketData);
     }
-
-    const tokenIds = tokens.map((t) => t.coingeckoTokenId);
-    const endpoint = `/coins/markets?vs_currency=${this.fiatParam}&ids=${tokenIds}&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d%2C14d%2C30d`;
-
-    const result = await this.get<TokenMarketData[]>(endpoint);
-    console.log(result);
 
     return data;
   }
