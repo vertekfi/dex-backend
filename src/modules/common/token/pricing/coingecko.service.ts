@@ -75,6 +75,7 @@ export class CoingeckoService implements TokenPricingService {
         updatedAt: item.last_updated,
         coingeckoId: item.id,
         dexscreenerPair: null,
+        tokenAddress: tokens.find((t) => t.coingeckoTokenId === item.id).address,
       };
 
       data.push(marketData);

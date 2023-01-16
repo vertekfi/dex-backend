@@ -48,6 +48,7 @@ export class DexScreenerService implements TokenPricingService {
           updatedAt: new Date(new Date().toUTCString()), // correct format?
           coingeckoId: null,
           dexscreenerPair: item.pairAddress,
+          tokenAddress: chunk.find((t) => t.dexscreenPairAddress === item.pairAddress).address,
         };
 
         data.push(marketData);
