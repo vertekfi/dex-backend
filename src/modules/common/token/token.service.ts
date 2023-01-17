@@ -8,7 +8,7 @@ import { TokenDefinition } from './types';
 import { RPC } from '../web3/rpc.provider';
 import { AccountWeb3 } from '../types';
 import { CacheDecorator } from '../decorators/cache.decorator';
-import { FIVE_MINUTES_SECONDS } from 'src/modules/utils/time';
+import { ONE_MINUTE_SECONDS } from 'src/modules/utils/time';
 
 const ALL_TOKENS_CACHE_KEY = 'tokens:all';
 
@@ -20,7 +20,7 @@ export class TokenService {
     private readonly config: ConfigService,
   ) {}
 
-  @CacheDecorator(ALL_TOKENS_CACHE_KEY, FIVE_MINUTES_SECONDS)
+  @CacheDecorator(ALL_TOKENS_CACHE_KEY, ONE_MINUTE_SECONDS)
   async getTokens(addresses?: string[]): Promise<PrismaToken[]> {
     const tokens = await this.prisma.prismaToken.findMany({});
     if (addresses) {

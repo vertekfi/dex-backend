@@ -3,13 +3,11 @@ import { PrismaTokenCurrentPrice, PrismaTokenPrice } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { networkConfig } from 'src/modules/config/network-config';
 import * as moment from 'moment-timezone';
-import * as _ from 'lodash';
-import { TokenPriceHandler } from '../types';
+import { TokenPriceItem } from '../types';
 import { GqlTokenChartDataRange } from 'src/gql-addons';
 import { CacheDecorator } from '../../decorators/cache.decorator';
 import { TokenChartDataService } from '../token-chart-data.service';
 import { FIVE_MINUTES_SECONDS } from 'src/modules/utils/time';
-import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 
 const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
 const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
@@ -90,6 +88,44 @@ export class TokenPriceService {
         id: `${tokenPrice.tokenAddress}-${tokenPrice.timestamp}`,
         ...tokenPrice,
       }));
+  }
+
+  async getRelativeDataForRange(
+    tokenIn: string,
+    tokenOut: string,
+    range: GqlTokenChartDataRange,
+  ): Promise<TokenPriceItem[]> {
+    tokenIn = tokenIn.toLowerCase();
+    tokenOut = tokenOut.toLowerCase();
+    const startTimestamp = this.getStartTimestampFromRange(range);
+
+    const data = await this.prisma.prismaTokenPrice.findMany({
+      where: {
+        tokenAddress: { in: [tokenIn, tokenOut] },
+        timestamp: { gt: startTimestamp },
+      },
+      orderBy: { timestamp: 'asc' },
+    });
+
+    const tokenInData = data.filter((item) => item.tokenAddress === tokenIn);
+    const tokenOutData = data.filter((item) => item.tokenAddress === tokenOut);
+    const items: TokenPriceItem[] = [];
+
+    for (const tokenInItem of tokenInData) {
+      const tokenOutItem = tokenOutData.find(
+        (tokenOutItem) => tokenOutItem.timestamp == tokenInItem.timestamp,
+      );
+
+      if (tokenOutItem) {
+        items.push({
+          id: `${tokenIn}-${tokenOut}-${tokenInItem.timestamp}`,
+          timestamp: tokenInItem.timestamp,
+          price: tokenInItem.close / tokenOutItem.close,
+        });
+      }
+    }
+
+    return items;
   }
 
   async getDataForRange(

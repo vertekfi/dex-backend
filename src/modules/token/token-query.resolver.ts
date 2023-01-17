@@ -43,7 +43,6 @@ export class TokenQueryResolver {
   @Query()
   async tokenGetPriceChartData(@Args() args) {
     const data = await this.pricingService.getDataForRange(args.address, args.range);
-    console.log(data);
 
     return data.map((item) => ({
       id: `${args.address}-${item.timestamp}`,
@@ -52,23 +51,51 @@ export class TokenQueryResolver {
     }));
   }
 
-  // @Query()
-  // async tokenGetRelativePriceChartData() {
-  //   // return this.tokenService.getProtocolTokenPrice();
-  // }
+  @Query()
+  async tokenGetRelativePriceChartData(@Args() args) {
+    const data = await this.pricingService.getRelativeDataForRange(
+      args.tokenIn,
+      args.tokenOut,
+      args.range,
+    );
 
-  // @Query()
-  // async tokenGetCandlestickChartData() {
-  //   // return this.tokenService.getProtocolTokenPrice();
-  // }
+    return data.map((item) => ({
+      id: `${args.tokenIn}-${args.tokenOut}-${item.timestamp}`,
+      timestamp: item.timestamp,
+      price: `${item.price}`,
+    }));
+  }
 
-  // @Query()
-  // async tokenGetTokenData() {
-  //   // return this.tokenService.getProtocolTokenPrice();
-  // }
+  @Query()
+  async tokenGetCandlestickChartData(@Args() args) {
+    const data = await this.pricingService.getDataForRange(args.address, args.range);
 
-  // @Query()
-  // async tokenGetTokensData() {
-  //   // return this.tokenService.getProtocolTokenPrice();
-  // }
+    return data.map((item) => ({
+      id: `${args.address}-${item.timestamp}`,
+      timestamp: item.timestamp,
+      open: `${item.open}`,
+      high: `${item.high}`,
+      low: `${item.low}`,
+      close: `${item.close}`,
+    }));
+  }
+
+  @Query()
+  async tokenGetTokenData(@Args('address') address: string) {
+    const token = await this.tokenService.getToken(address);
+    if (token) {
+      return {
+        ...token,
+        id: token.address,
+        tokenAddress: token.address,
+      };
+    }
+    return null;
+  }
+
+  @Query()
+  async tokenGetTokensData(@Args('addresses') addresses: string[]) {
+    const tokens = await this.tokenService.getTokens(addresses);
+    return tokens.map((token) => ({ ...token, id: token.address, tokenAddress: token.address }));
+  }
 }
