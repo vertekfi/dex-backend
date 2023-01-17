@@ -3,7 +3,7 @@ import * as moment from 'moment-timezone';
 import { RateLimiter } from 'limiter';
 import axios from 'axios';
 
-import { ONE_DAY_SECONDS } from 'src/modules/utils/time';
+import { ONE_DAY_SECONDS, timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import {
   CoingeckoPriceResponse,
   HistoricalPrice,
@@ -19,6 +19,8 @@ import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
 import { filterForGeckoTokens, isCoinGeckoToken, validateCoinGeckoToken } from './utils';
 import { forEach, groupBy, mapKeys } from 'lodash';
+import { PrismaService } from 'nestjs-prisma';
+import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -40,9 +42,7 @@ export class CoingeckoService implements TokenPricingService {
 
   readonly coinGecko = true;
 
-  constructor(
-    private readonly config: ConfigService, // private readonly tokenService: TokenService,
-  ) {
+  constructor(private readonly config: ConfigService, private readonly prisma: PrismaService) {
     this.baseUrl = 'https://api.coingecko.com/api/v3';
     this.fiatParam = 'usd';
     this.platformId = this.config.env.COINGECKO_PLATFORM_ID;
@@ -178,16 +178,82 @@ export class CoingeckoService implements TokenPricingService {
     }
   }
 
-  async getCoinCandlestickData(
-    token: PrismaToken,
-    days: 1 | 30,
-  ): Promise<[number, number, number, number, number][]> {
-    if (!isCoinGeckoToken(token)) {
-      throw new Error(`getCoinCandlestickData: missing coingeckoTokenId`);
-    }
-    const endpoint = `/coins/${token.coingeckoTokenId}/ohlc?vs_currency=usd&days=${days}`;
+  async updateCoinCandlestickData(token: PrismaToken) {
+    validateCoinGeckoToken(token);
 
-    return this.get(endpoint);
+    const monthUrl = `/coins/${token.coingeckoTokenId}/ohlc?vs_currency=usd&days=${30}`;
+    const twentyFourHourUrl = `/coins/${token.coingeckoTokenId}/ohlc?vs_currency=usd&days=${1}`;
+
+    const monthData = await this.get<[number, number, number, number, number][]>(monthUrl);
+    const twentyFourHourData = await this.get<[number, number, number, number, number][]>(
+      twentyFourHourUrl,
+    );
+
+    // Merge 30 min data into hourly data
+    const hourlyData = Object.values(
+      groupBy(twentyFourHourData, (item) =>
+        timestampRoundedUpToNearestHour(moment.unix(item[0] / 1000)),
+      ),
+    ).map((hourData) => {
+      if (hourData.length === 1) {
+        const item = hourData[0];
+        item[0] = timestampRoundedUpToNearestHour(moment.unix(item[0] / 1000)) * 1000;
+
+        return item;
+      }
+
+      const thirty = hourData[0];
+      const hour = hourData[1];
+
+      return [
+        hour[0],
+        thirty[1],
+        Math.max(thirty[2], hour[2]),
+        Math.min(thirty[3], hour[3]),
+        hour[4],
+      ];
+    });
+
+    const tokenAddress = token.address.toLowerCase();
+    const operations: any[] = [];
+    operations.push(this.prisma.prismaTokenPrice.deleteMany({ where: { tokenAddress } }));
+
+    operations.push(
+      this.prisma.prismaTokenPrice.createMany({
+        data: monthData
+          .filter((item) => item[0] / 1000 <= timestampRoundedUpToNearestHour())
+          .map((item) => ({
+            tokenAddress,
+            timestamp: item[0] / 1000,
+            open: item[1],
+            high: item[2],
+            low: item[3],
+            close: item[4],
+            price: item[4],
+            coingecko: true,
+            dexscreener: false,
+          })),
+      }),
+    );
+
+    operations.push(
+      this.prisma.prismaTokenPrice.createMany({
+        data: hourlyData.map((item) => ({
+          tokenAddress,
+          timestamp: Math.floor(item[0] / 1000),
+          open: item[1],
+          high: item[2],
+          low: item[3],
+          close: item[4],
+          price: item[4],
+          coingecko: true,
+          dexscreener: false,
+        })),
+        skipDuplicates: true,
+      }),
+    );
+
+    await prismaBulkExecuteOperations(operations, true);
   }
 
   /**
@@ -195,7 +261,6 @@ export class CoingeckoService implements TokenPricingService {
    */
   getMappedTokenDetails(address: string, tokens: TokenDefinition[]): MappedToken {
     const token = tokens.find((token) => {
-      // console.log(`${address.toLowerCase()}: ${token.address.toLowerCase()}`);
       return token.address.toLowerCase() === address.toLowerCase();
     });
 

@@ -25,10 +25,7 @@ export interface TokenPricingService {
 
   getTokenPrice: (token: TokenDefinition) => Promise<number>;
 
-  getCoinCandlestickData: (
-    token: PrismaToken,
-    days: 1 | 30,
-  ) => Promise<[number, number, number, number, number][]>;
+  updateCoinCandlestickData: (token: PrismaToken) => Promise<void>;
 
   getTokenHistoricalPrices: (
     address: string,

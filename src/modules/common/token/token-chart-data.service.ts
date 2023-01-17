@@ -1,9 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import * as moment from 'moment';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
-import { groupBy } from 'lodash';
 import { TokenPricingService } from './types';
 import { PRICE_SERVICES } from './providers/price-services.provider';
 import { getTokensWithTypes } from './pricing/utils';
@@ -17,10 +15,8 @@ export class TokenChartDataService {
   ) {}
 
   async initTokenChartData(tokenAddress: string) {
-    const latestTimestamp = timestampRoundedUpToNearestHour();
     tokenAddress = tokenAddress.toLowerCase();
 
-    const operations: any[] = [];
     const tokens = (await getTokensWithTypes(this.prisma)).filter((t) =>
       isSameAddress(t.address, tokenAddress),
     );
@@ -30,78 +26,7 @@ export class TokenChartDataService {
     }
 
     for (const pricing of this.pricingServices) {
-      // const acceptedTokens = pricing.getAcceptedTokens(token);
-
-      // If not for the proper type
-      const monthData = await pricing.getCoinCandlestickData(tokens[0], 30);
-      const twentyFourHourData = await pricing.getCoinCandlestickData(tokens[0], 1);
-
-      // Merge 30 min data into hourly data
-      const hourlyData = Object.values(
-        groupBy(twentyFourHourData, (item) =>
-          timestampRoundedUpToNearestHour(moment.unix(item[0] / 1000)),
-        ),
-      ).map((hourData) => {
-        if (hourData.length === 1) {
-          const item = hourData[0];
-          item[0] = timestampRoundedUpToNearestHour(moment.unix(item[0] / 1000)) * 1000;
-
-          return item;
-        }
-
-        const thirty = hourData[0];
-        const hour = hourData[1];
-
-        return [
-          hour[0],
-          thirty[1],
-          Math.max(thirty[2], hour[2]),
-          Math.min(thirty[3], hour[3]),
-          hour[4],
-        ];
-      });
-
-      operations.push(this.prisma.prismaTokenPrice.deleteMany({ where: { tokenAddress } }));
-
-      const coingecko = pricing.coinGecko === true;
-      const dexscreener = pricing.coinGecko === false;
-
-      operations.push(
-        this.prisma.prismaTokenPrice.createMany({
-          data: monthData
-            .filter((item) => item[0] / 1000 <= latestTimestamp)
-            .map((item) => ({
-              tokenAddress,
-              timestamp: item[0] / 1000,
-              open: item[1],
-              high: item[2],
-              low: item[3],
-              close: item[4],
-              price: item[4],
-              coingecko,
-              dexscreener,
-            })),
-        }),
-      );
-
-      operations.push(
-        this.prisma.prismaTokenPrice.createMany({
-          data: hourlyData.map((item) => ({
-            tokenAddress,
-            timestamp: Math.floor(item[0] / 1000),
-            open: item[1],
-            high: item[2],
-            low: item[3],
-            close: item[4],
-            price: item[4],
-            coingecko: pricing.coinGecko,
-            dexscreener: pricing.coinGecko,
-          })),
-          skipDuplicates: true,
-        }),
-      );
-
-      await prismaBulkExecuteOperations(operations, true);
+      await pricing.updateCoinCandlestickData(tokens[0]);
     }
   }
 
@@ -122,6 +47,6 @@ export class TokenChartDataService {
       );
     }
 
-    await Promise.all(operations);
+    await prismaBulkExecuteOperations(operations);
   }
 }

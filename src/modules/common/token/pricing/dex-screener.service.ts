@@ -69,15 +69,12 @@ export class DexScreenerService implements TokenPricingService {
     return priceNum;
   }
 
-  async getCoinCandlestickData(
-    token: PrismaToken,
-    days: 1 | 30,
-  ): Promise<[number, number, number, number, number][]> {
+  async updateCoinCandlestickData(token: PrismaToken) {
     // "tokenId" should be the dexscreener pair address instead of coingecko id
     // validateDexscreenerToken(token as unknown as PrismaToken);
 
     if (!isDexscreenerToken(token)) {
-      return [];
+      return;
     }
 
     // TODO: from database
@@ -100,7 +97,6 @@ export class DexScreenerService implements TokenPricingService {
     //   price: item[4],
     //   coingecko: false,
     // }
-    return [];
   }
 
   async getTokenHistoricalPrices(
