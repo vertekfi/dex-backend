@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PrismaToken, PrismaTokenCurrentPrice } from '@prisma/client';
+import { PrismaToken, PrismaTokenCurrentPrice, PrismaTokenDynamicData } from '@prisma/client';
 import * as _ from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { ConfigService } from '../config.service';
@@ -38,10 +38,12 @@ export class TokenService {
           types: { some: { type: 'WHITE_LISTED' } },
         },
       },
+      include: { token: true },
     });
 
     const wethPrice = tokenPrices.find(
-      (tokenPrice) => tokenPrice.tokenAddress === networkConfig.weth.address,
+      (tokenPrice) =>
+        tokenPrice.tokenAddress.toLowerCase() === networkConfig.weth.address.toLowerCase(),
     );
 
     if (wethPrice) {
@@ -51,7 +53,11 @@ export class TokenService {
       });
     }
 
-    return tokenPrices.filter((tokenPrice) => tokenPrice.price > 0.000000001);
+    const filtered = tokenPrices
+      .filter((p) => p.token.chainId === this.rpc.chainId)
+      .filter((tokenPrice) => tokenPrice.price > 0.000000001);
+
+    return filtered;
   }
 
   // @CacheDecorator(TOKEN_DEFINITION_CACHE_KEY, 1000 * 20)
@@ -94,6 +100,18 @@ export class TokenService {
       include: {
         currentPrice: true,
       },
+    });
+  }
+
+  async getTokenDynamicData(tokenAddress: string): Promise<PrismaTokenDynamicData | null> {
+    return this.prisma.prismaTokenDynamicData.findUnique({
+      where: { tokenAddress: tokenAddress.toLowerCase() },
+    });
+  }
+
+  async getTokensDynamicData(tokenAddresses: string[]): Promise<PrismaTokenDynamicData[]> {
+    return this.prisma.prismaTokenDynamicData.findMany({
+      where: { tokenAddress: { in: tokenAddresses.map((address) => address.toLowerCase()) } },
     });
   }
 }

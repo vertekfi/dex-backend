@@ -26,19 +26,46 @@ export class TokenQueryResolver {
   }
 
   // @Query()
-  // async tokenGetHistoricalPrices() {
-  //   // return this.tokenService.getProtocolTokenPrice();
+  // async tokenGetHistoricalPrices(@Args('addresses') addresses: string[]) {
+  //   const tokenPrices = await this.pricingService.getHistoricalTokenPrices();
+  //   const filtered = _.pickBy(tokenPrices, (entries, address) => addresses.includes(address));
+
+  //   return _.map(filtered, (entries, address) => ({
+  //       address,
+  //       prices: entries.map((entry) => ({
+  //           timestamp: `${entry.timestamp}`,
+  //           price: entry.price,
+  //       })),
+  //   }));
   // }
 
-  // @Query()
-  // async tokenGetTokenDynamicData() {
-  //   // return this.tokenService.getProtocolTokenPrice();
-  // }
+  @Query()
+  async tokenGetTokenDynamicData(@Args('address') address: string) {
+    const data = await this.tokenService.getTokenDynamicData(address);
 
-  // @Query()
-  // async tokenGetTokensDynamicData() {
-  //   // return this.tokenService.getProtocolTokenPrice();
-  // }
+    return data
+      ? {
+          ...data,
+          id: data.coingeckoId,
+          fdv: data.fdv ? `${data.fdv}` : null,
+          marketCap: data.marketCap ? `${data.marketCap}` : null,
+          updatedAt: data.updatedAt.toUTCString(),
+        }
+      : null;
+  }
+
+  @Query()
+  async tokenGetTokensDynamicData(@Args('addresses') addresses: string[]) {
+    const items = await this.tokenService.getTokensDynamicData(addresses);
+
+    return items.map((item) => ({
+      ...item,
+      id: item.coingeckoId,
+      fdv: item.fdv ? `${item.fdv}` : null,
+      marketCap: item.marketCap ? `${item.marketCap}` : null,
+      updatedAt: item.updatedAt.toUTCString(),
+    }));
+  }
 
   @Query()
   async tokenGetPriceChartData(@Args() args) {
@@ -83,6 +110,7 @@ export class TokenQueryResolver {
   @Query()
   async tokenGetTokenData(@Args('address') address: string) {
     const token = await this.tokenService.getToken(address);
+
     if (token) {
       return {
         ...token,
