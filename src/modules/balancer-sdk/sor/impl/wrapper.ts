@@ -170,7 +170,7 @@ export class SOR {
     pools: SubgraphPoolBase[],
     swapOptions: SwapOptions,
   ): Promise<SwapInfo> {
-    console.log('SOR: proessSwaps');
+    console.log('SOR: processSwaps');
     if (pools.length === 0) return cloneDeep(EMPTY_SWAPINFO);
 
     const paths = this.routeProposer.getCandidatePaths(

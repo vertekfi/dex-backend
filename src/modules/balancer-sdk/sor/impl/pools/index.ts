@@ -5,44 +5,38 @@ import { WeightedPool } from './weightedPool/weightedPool';
 // import { PhantomStablePool } from './phantomStablePool/phantomStablePool';
 import { BigNumber as OldBigNumber, INFINITY, scale, ZERO } from '../utils/bignumber';
 import { SubgraphPoolBase, PoolBase, SwapTypes, PoolPairBase, PoolTypes } from '../types';
+import { StablePool } from './stablePool/stablePool';
 
 export function parseNewPool(
   pool: SubgraphPoolBase,
   currentBlockTimestamp = 0,
 ):
   | WeightedPool
-  // | StablePool
+  | StablePool
   // | ElementPool
   // | LinearPool
   // | MetaStablePool
   // | PhantomStablePool
-  // | Gyro2Pool
-  // | Gyro3Pool
-  // | GyroEPool
   | undefined {
   // We're not interested in any pools which don't allow swapping
   if (!pool.swapEnabled) return undefined;
 
-  let newPool: WeightedPool;
-  // | StablePool
+  let newPool: WeightedPool | StablePool;
   // | ElementPool
   // | LinearPool
   // | MetaStablePool
   // | PhantomStablePool
-  // | Gyro2Pool
-  // | Gyro3Pool
-  // | GyroEPool;
 
   try {
     if (pool.poolType === 'Weighted' || pool.poolType === 'Investment') {
       newPool = WeightedPool.fromPool(pool, false);
+    } else if (pool.poolType === 'Stable') {
+      newPool = StablePool.fromPool(pool);
     }
 
     // else if (pool.poolType === 'LiquidityBootstrapping') {
     //     newPool = WeightedPool.fromPool(pool, true);
-    // } else if (pool.poolType === 'Stable') {
-    //     newPool = StablePool.fromPool(pool);
-    // } else if (pool.poolType === 'MetaStable') {
+    // }  else if (pool.poolType === 'MetaStable') {
     //     newPool = MetaStablePool.fromPool(pool);
     // } else if (pool.poolType === 'Element') {
     //     newPool = ElementPool.fromPool(pool);
@@ -54,9 +48,6 @@ export function parseNewPool(
     //     pool.poolType === 'ComposableStable'
     // )
     //     newPool = PhantomStablePool.fromPool(pool);
-    // else if (pool.poolType === 'Gyro2') newPool = Gyro2Pool.fromPool(pool);
-    // else if (pool.poolType === 'Gyro3') newPool = Gyro3Pool.fromPool(pool);
-    // else if (pool.poolType === 'GyroE') newPool = GyroEPool.fromPool(pool);
     else {
       console.error(`Unknown pool type or type field missing: ${pool.poolType} ${pool.id}`);
       return undefined;

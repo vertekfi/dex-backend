@@ -51,7 +51,13 @@ export class ProtocolService {
     ].tokens.filter((tk) => tk.chainId === this.rpc.chainId);
   }
 
-  @CacheDecorator(PROTOCOL_METRICS_CACHE_KEY, THIRTY_MINUTES_SECONDS)
+  async getProtocolTokenListAllChains() {
+    const url = 'https://raw.githubusercontent.com/vertekfi/token-list/main/tokenlist.json';
+    const { data } = await axios.get(url);
+    return data['https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json'].tokens;
+  }
+
+  @CacheDecorator(PROTOCOL_METRICS_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getMetrics(): Promise<ProtocolMetrics> {
     const { totalSwapFee, totalSwapVolume, poolCount } =
       await this.balancerSubgraphService.getProtocolData({});
@@ -69,6 +75,7 @@ export class ProtocolService {
       },
       include: { dynamicData: true },
     });
+
     const swaps = await this.prisma.prismaPoolSwap.findMany({
       where: { timestamp: { gte: oneDayAgo } },
     });

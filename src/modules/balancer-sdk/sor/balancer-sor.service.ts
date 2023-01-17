@@ -24,8 +24,8 @@ import { SorPriceService } from './api/sor-price.service';
 import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
 import { SOR } from './impl/wrapper';
 import { PrismaService } from 'nestjs-prisma';
-import { getDexPriceFromPair } from 'src/modules/common/token/dexscreener';
-import { TokenDefinition } from 'src/modules/token/token-types';
+import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
+import { TokenDefinition } from 'src/modules/common/token/types';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';

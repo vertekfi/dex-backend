@@ -3,21 +3,21 @@ import { PrismaPoolAprItem } from '@prisma/client';
 import { prisma } from '../../../../../prisma/prisma-client';
 import { prismaBulkExecuteOperations } from '../../../../../prisma/prisma-util';
 import { PoolAprService } from '../../pool-types';
-import { TokenService } from 'src/modules/common/token/token.service';
 import { GaugeService } from 'src/modules/gauge/gauge.service';
 import { ONE_YEAR_SECONDS } from 'src/modules/utils/time';
+import { TokenPriceService } from 'src/modules/common/token/pricing/token-price.service';
 
 export class VeGaugeAprService implements PoolAprService {
   constructor(
     private readonly gaugeService: GaugeService,
-    private readonly tokenService: TokenService,
     private readonly primaryTokens: string[],
+    private readonly pricingService: TokenPriceService,
   ) {}
 
   public async updateAprForPools(pools: PrismaPoolWithExpandedNesting[]): Promise<void> {
     const operations: any[] = [];
     const gauges = await this.gaugeService.getCoreGauges();
-    const tokenPrices = await this.tokenService.getTokenPrices();
+    const tokenPrices = await this.pricingService.getCurrentTokenPrices();
     for (const pool of pools) {
       // TODO:Need to sync pool staking data
       const gauge = gauges.find((g) => g.address === pool.staking?.gauge?.gaugeAddress);
@@ -35,7 +35,7 @@ export class VeGaugeAprService implements PoolAprService {
 
       for (let rewardToken of gauge.rewardTokens) {
         const tokenPrice =
-          this.tokenService.getPriceForToken(tokenPrices, rewardToken.address) || 0.1;
+          this.pricingService.getPriceForToken(tokenPrices, rewardToken.address) || 0.1;
         const rewardTokenPerYear = rewardToken.rewardsPerSecond * ONE_YEAR_SECONDS;
         const rewardTokenValuePerYear = tokenPrice * rewardTokenPerYear;
         const rewardApr = gaugeTvl > 0 ? rewardTokenValuePerYear / gaugeTvl : 0;

@@ -18,15 +18,15 @@ import {
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import * as moment from 'moment-timezone';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
-import { TokenService } from 'src/modules/common/token/token.service';
 import * as _ from 'lodash';
+import { TokenPriceService } from '../token/pricing/token-price.service';
 
 @Injectable()
 export class PoolSwapService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly balancerSubgraphService: BalancerSubgraphService,
-    private readonly tokenService: TokenService,
+    private readonly pricingService: TokenPriceService,
   ) {}
 
   async getSwaps(args: QueryPoolGetSwapsArgs): Promise<PrismaPoolSwap[]> {
@@ -187,7 +187,7 @@ export class PoolSwapService {
    * duplicate effort. Return an array of poolIds with swaps added.
    */
   async syncSwapsForLast48Hours(): Promise<string[]> {
-    const tokenPrices = await this.tokenService.getTokenPrices();
+    const tokenPrices = await this.pricingService.getCurrentTokenPrices();
     const lastSwap = await this.prisma.prismaPoolSwap.findFirst({ orderBy: { timestamp: 'desc' } });
     const twoDaysAgo = moment().subtract(2, 'day').unix();
     //ensure we only sync the last 48 hours worth of swaps
@@ -218,8 +218,8 @@ export class PoolSwapService {
         skipDuplicates: true,
         data: swaps.map((swap) => {
           let valueUSD = 0;
-          const tokenInPrice = this.tokenService.getPriceForToken(tokenPrices, swap.tokenIn);
-          const tokenOutPrice = this.tokenService.getPriceForToken(tokenPrices, swap.tokenOut);
+          const tokenInPrice = this.pricingService.getPriceForToken(tokenPrices, swap.tokenIn);
+          const tokenOutPrice = this.pricingService.getPriceForToken(tokenPrices, swap.tokenOut);
 
           if (tokenInPrice > 0) {
             valueUSD = tokenInPrice * parseFloat(swap.tokenAmountIn);
@@ -273,7 +273,7 @@ export class PoolSwapService {
   }
 
   private async createBatchSwaps(txs: string[]) {
-    const tokenPrices = await this.tokenService.getTokenPrices();
+    const tokenPrices = await this.pricingService.getCurrentTokenPrices();
     const swaps = await this.prisma.prismaPoolSwap.findMany({ where: { tx: { in: txs } } });
     const groupedByTxAndUser = _.groupBy(swaps, (swap) => `${swap.tx}${swap.userAddress}`);
     let operations: any[] = [
@@ -316,8 +316,8 @@ export class PoolSwapService {
                 tokenAmountOut: endSwap.tokenAmountOut,
                 tx: startSwap.tx,
                 valueUSD: endSwap.valueUSD,
-                tokenInPrice: this.tokenService.getPriceForToken(tokenPrices, startSwap.tokenIn),
-                tokenOutPrice: this.tokenService.getPriceForToken(tokenPrices, endSwap.tokenOut),
+                tokenInPrice: this.pricingService.getPriceForToken(tokenPrices, startSwap.tokenIn),
+                tokenOutPrice: this.pricingService.getPriceForToken(tokenPrices, endSwap.tokenOut),
               },
             }),
             ...batchSwaps.map((swap, index) =>

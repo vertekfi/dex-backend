@@ -1,8 +1,7 @@
-import { set } from 'lodash';
+import { chunk, map, set } from 'lodash';
 import { Fragment, JsonFragment, Interface, Result } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
 import { Provider } from '@ethersproject/providers';
-import _ from 'lodash';
 import ERC20Abi from './abi/ERC20.json';
 import { BigNumber } from 'ethers';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
@@ -88,7 +87,7 @@ export class Multicaller {
     rpc: AccountWeb3;
     balancesToFetch: { erc20Address: string; userAddress: string }[];
   }): Promise<MulticallUserBalance[]> {
-    const chunks = _.chunk(balancesToFetch, 100);
+    const chunks = chunk(balancesToFetch, 100);
     let data: MulticallUserBalance[] = [];
 
     for (const chunk of chunks) {
@@ -104,8 +103,8 @@ export class Multicaller {
 
       data = [
         ...data,
-        ..._.map(response, (item, erc20Address) =>
-          _.map(item, (balance, userAddress) => ({
+        ...map(response, (item, erc20Address) =>
+          map(item, (balance, userAddress) => ({
             erc20Address: erc20Address.toLowerCase(),
             userAddress: userAddress.toLowerCase(),
             balance,

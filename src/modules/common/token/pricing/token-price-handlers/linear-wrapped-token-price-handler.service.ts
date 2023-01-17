@@ -1,13 +1,18 @@
 import { PrismaService } from 'nestjs-prisma/dist/prisma.service';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+import { nestApp } from 'src/main';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
-import { TokenPriceHandler } from '../../../common/token/types';
+import { TokenPriceHandler } from '../../types';
 
 export class LinearWrappedTokenPriceHandlerService implements TokenPriceHandler {
   public readonly exitIfFails = false;
   public readonly id = 'LinearWrappedTokenPriceHandlerService';
 
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly prisma: PrismaService;
+
+  constructor() {
+    this.prisma = nestApp.get(PrismaService);
+  }
 
   async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
     return tokens

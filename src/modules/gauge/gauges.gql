@@ -5,6 +5,7 @@ extend type Query {
 
 extend type Mutation {
   syncGaugeData: Boolean!
+  poolReloadStakingForAllPools: String!
 }
 
 type GaugePool {

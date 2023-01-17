@@ -16,7 +16,11 @@ import {
 } from 'src/modules/subgraphs/balancer/generated/balancer-subgraph-types';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import { TokenHistoricalPrices } from 'src/modules/token/token-types-old';
-import { CoingeckoService } from 'src/modules/common/token/coingecko.service';
+import { CoingeckoService } from 'src/modules/common/token/pricing/coingecko.service';
+import { TokenService } from 'src/modules/common/token/token.service';
+import { TokenPricingService } from 'src/modules/common/token/types';
+import { isCoinGeckoToken } from 'src/modules/common/token/pricing/utils';
+import { DexScreenerService } from 'src/modules/common/token/pricing/dex-screener.service';
 
 @Injectable()
 export class PoolSnapshotService {
@@ -25,6 +29,8 @@ export class PoolSnapshotService {
     private readonly balancerSubgraphService: BalancerSubgraphService,
     private readonly blockService: BlockService,
     private readonly coingeckoService: CoingeckoService,
+    private readonly dexscreenerService: DexScreenerService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async getSnapshotsForPool(poolId: string, range: GqlPoolSnapshotDataRange) {
@@ -108,15 +114,19 @@ export class PoolSnapshotService {
       },
     });
 
-    console.log(latestSyncedSnapshots);
-
     const poolIds = _.uniq(allSnapshots.map((snapshot) => snapshot.pool.id));
 
     for (const poolId of poolIds) {
       const snapshots = allSnapshots.filter((snapshot) => snapshot.pool.id === poolId);
+
+      console.log(snapshots);
+
       const latestSyncedSnapshot = latestSyncedSnapshots.find(
         (snapshot) => snapshot.poolId === poolId,
       );
+
+      console.log(latestSyncedSnapshot);
+
       const startTotalSwapVolume = `${latestSyncedSnapshot?.totalSwapVolume || '0'}`;
       const startTotalSwapFee = `${latestSyncedSnapshot?.totalSwapFee || '0'}`;
 
@@ -137,6 +147,7 @@ export class PoolSnapshotService {
           update: data,
         });
       });
+
       operations.push(...poolOperations);
     }
 
@@ -192,9 +203,14 @@ export class PoolSnapshotService {
         }));
       } else {
         try {
-          tokenPriceMap[token.address] = await this.coingeckoService.getTokenHistoricalPrices(
+          const pricingService: TokenPricingService = isCoinGeckoToken(token.token)
+            ? this.coingeckoService
+            : this.dexscreenerService;
+
+          tokenPriceMap[token.address] = await pricingService.getTokenHistoricalPrices(
             token.address,
             numDays,
+            await this.tokenService.getTokenDefinitions(),
           );
           await sleep(5000);
         } catch (error: any) {
@@ -274,7 +290,7 @@ export class PoolSnapshotService {
       try {
         await this.prisma.prismaPoolSnapshot.upsert({ where: { id }, create: data, update: data });
       } catch (e) {
-        console.log('pool snapshot upsert for ' + id, data);
+        console.log('pool snapshot upsert error for ' + id, data);
         throw e;
       }
     }

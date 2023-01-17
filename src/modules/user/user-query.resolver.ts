@@ -1,12 +1,12 @@
 import { Args, Context, Query, Resolver } from '@nestjs/graphql';
 import { getRequiredAccountAddress } from '../common/middleware/auth.middleware';
-import { TokenService } from '../common/token/token.service';
+import { TokenPriceService } from '../common/token/pricing/token-price.service';
 import { UserService } from './user.service';
 
 @Resolver()
 export class UserQueryResolver {
   constructor(
-    private readonly tokenService: TokenService,
+    private readonly pricingService: TokenPriceService,
     private readonly userService: UserService,
   ) {}
 
@@ -14,14 +14,14 @@ export class UserQueryResolver {
   async userGetPoolBalances(@Context() context) {
     const accountAddress = getRequiredAccountAddress(context);
     const [tokenPrices, balances] = await Promise.all([
-      this.tokenService.getTokenPrices(),
+      this.pricingService.getCurrentTokenPrices(),
       this.userService.getUserPoolBalances(accountAddress),
     ]);
 
     return balances.map((balance) => {
       return {
         ...balance,
-        tokenPrice: this.tokenService.getPriceForToken(tokenPrices, balance.tokenAddress),
+        tokenPrice: this.pricingService.getPriceForToken(tokenPrices, balance.tokenAddress),
       };
     });
   }

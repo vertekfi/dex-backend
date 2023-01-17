@@ -1,34 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaPoolStakingType } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
-import { CacheService } from '../common/cache.service';
-import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { GaugeService } from './gauge.service';
-
-const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
-const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
 
 @Injectable()
 export class GaugeSyncService {
-  constructor(
-    private gaugeService: GaugeService,
-    private readonly cache: CacheService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private gaugeService: GaugeService, private readonly prisma: PrismaService) {}
 
-  async syncGaugeData() {
-    // These do not change often and front end makes its immediate calls to contracts as needed also
-    // await this.cache.set(
-    //   GAUGE_CACHE_KEY,
-    //   await this.gaugeService.getAllGauges(),
-    //   FIVE_MINUTES_SECONDS,
-    // );
-
-    await this.syncStakingForPools();
-  }
-
-  async syncStakingForPools(): Promise<void> {
+  async syncGaugeData(): Promise<void> {
     const gauges = await this.gaugeService.getCoreGauges();
 
     const pools = await this.prisma.prismaPool.findMany({
@@ -98,15 +77,13 @@ export class GaugeSyncService {
     await prismaBulkExecuteOperations(operations, true, undefined);
   }
 
-  async reloadStakingForAllPools(stakingTypes: PrismaPoolStakingType[]): Promise<void> {
-    if (stakingTypes.includes('GAUGE')) {
-      await this.prisma.prismaUserStakedBalance.deleteMany({
-        where: { staking: { type: 'GAUGE' } },
-      });
-      await this.prisma.prismaPoolStakingGaugeReward.deleteMany({});
-      await this.prisma.prismaPoolStakingGauge.deleteMany({});
-      await this.prisma.prismaPoolStaking.deleteMany({});
-      await this.syncStakingForPools();
-    }
+  async reloadStakingForAllPools(): Promise<void> {
+    await this.prisma.prismaUserStakedBalance.deleteMany({
+      where: { staking: { type: 'GAUGE' } },
+    });
+    await this.prisma.prismaPoolStakingGaugeReward.deleteMany({});
+    await this.prisma.prismaPoolStakingGauge.deleteMany({});
+    await this.prisma.prismaPoolStaking.deleteMany({});
+    await this.syncGaugeData();
   }
 }

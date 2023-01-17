@@ -1,8 +1,8 @@
-import { TokenPriceHandler } from '../../token-types';
+import { TokenPriceHandler } from '../../../common/token/types';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
-import { getDexPriceFromPair } from 'src/modules/common/token/dexscreener';
+import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
 import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 
 export class DexscreenerPriceHandlerService implements TokenPriceHandler {

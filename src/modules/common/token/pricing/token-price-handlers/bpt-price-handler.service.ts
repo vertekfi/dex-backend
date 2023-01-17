@@ -1,13 +1,19 @@
-import { TokenPriceHandler } from '../../../common/token/types';
+import { TokenPriceHandler } from '../../types';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
+import { nestApp } from 'src/main';
+import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 
 export class BptPriceHandlerService implements TokenPriceHandler {
   public readonly exitIfFails = false;
   public readonly id = 'BptPriceHandlerService';
 
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly prisma: PrismaService;
+
+  constructor() {
+    this.prisma = nestApp.get(PrismaService);
+  }
 
   async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
     return tokens
@@ -61,7 +67,7 @@ export class BptPriceHandlerService implements TokenPriceHandler {
       }
     }
 
-    await Promise.all(operations);
+    await prismaBulkExecuteOperations(operations);
 
     return updated;
   }

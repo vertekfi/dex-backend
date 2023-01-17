@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { parseUnits } from 'ethers/lib/utils';
 import { PrismaService } from 'nestjs-prisma';
-import { CoingeckoService } from 'src/modules/common/token/coingecko.service';
-import { getDexPriceFromPair } from 'src/modules/common/token/dexscreener';
+import { CoingeckoService } from 'src/modules/common/token/pricing/coingecko.service';
+import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
-import { TokenDefinition } from 'src/modules/token/token-types';
+import { TokenDefinition } from 'src/modules/common/token/types';
 import { TokenPriceService } from '../types';
 
 const priceCache: {

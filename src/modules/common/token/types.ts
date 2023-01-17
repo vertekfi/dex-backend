@@ -1,4 +1,6 @@
+import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+import { HistoricalPrice } from 'src/modules/token/token-types-old';
 
 export interface TokenPriceHandler {
   exitIfFails: boolean;
@@ -18,6 +20,22 @@ export interface TokenPriceHandler {
   updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]>;
 }
 
+export interface TokenPricingService {
+  coinGecko: boolean;
+
+  getTokenPrice: (token: TokenDefinition) => Promise<number>;
+
+  updateCoinCandlestickData: (token: PrismaToken) => Promise<void>;
+
+  getTokenHistoricalPrices: (
+    address: string,
+    days: number,
+    tokenDefinitions: TokenDefinition[],
+  ) => Promise<HistoricalPrice[]>;
+
+  getMarketDataForToken: (tokens: PrismaToken[]) => Promise<PrismaTokenDynamicData[]>;
+}
+
 export interface TokenDefinition {
   name: string;
   address: string;
@@ -31,7 +49,7 @@ export interface TokenDefinition {
   coingeckoTokenId?: string | null;
   tradable: boolean;
   useDexscreener?: boolean;
-  dexScreenerPairAddress?: string;
+  dexscreenPairAddress?: string;
 }
 
 export interface TokenPriceItem {
@@ -44,7 +62,7 @@ export type PriceProvider = 'GECKO' | 'DEXSCREENER';
 
 export interface MappedToken {
   platformId: string;
-  address: string;
+  coingGeckoContractAddress: string;
   originalAddress?: string;
   priceProvider: PriceProvider;
 }
@@ -93,3 +111,45 @@ export interface TokenDataDexScreener {
   };
   fdv: number;
 }
+
+export interface DexScreenerApiResult {
+  pairs: TokenDataDexScreener[];
+  pair: TokenDataDexScreener | null;
+}
+
+export interface TokenMarketData {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+  price: number;
+  current_price: number;
+  market_cap: number;
+  market_cap_rank: number;
+  fully_diluted_valuation: number | null;
+  total_volume: number;
+  high_24h: number;
+  low_24h: number;
+  price_change_24h: number;
+  price_change_percentage_24h: number;
+  market_cap_change_24h: number;
+  market_cap_change_percentage_24h: number;
+  circulating_supply: number;
+  total_supply: number;
+  max_supply: number | null;
+  ath: number;
+  ath_change_percentage: number;
+  ath_date: Date;
+  atl: number;
+  atl_change_percentage: number;
+  atl_date: Date;
+  roi: null;
+  last_updated: Date;
+  price_change_percentage_14d_in_currency: number;
+  price_change_percentage_1h_in_currency: number;
+  price_change_percentage_24h_in_currency: number;
+  price_change_percentage_30d_in_currency: number;
+  price_change_percentage_7d_in_currency: number;
+}
+
+export interface CandleStickData {}

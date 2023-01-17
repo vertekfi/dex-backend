@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import * as _ from 'lodash';
-import { PrismaPoolFilter, PrismaPoolStakingType, PrismaPoolSwap } from '@prisma/client';
+import { PrismaPoolFilter, PrismaPoolSwap } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import * as moment from 'moment-timezone';
 
@@ -27,7 +27,6 @@ import { PoolOnChainDataService } from '../common/pool/pool-on-chain-data.servic
 import { PoolSnapshotService } from './lib/pool-snapshot.service';
 import { PoolSwapService } from '../common/pool/pool-swap.service';
 import { PoolUsdDataService } from './lib/pool-usd-data.service';
-import { PoolStakingService } from './pool-types';
 import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
 import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
 import { PoolSyncService } from './lib/pool-sync.service';
@@ -36,10 +35,10 @@ import { ProtocolService } from '../protocol/protocol.service';
 import { CacheDecorator } from '../common/decorators/cache.decorator';
 import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
-import { VeGaugeAprService } from './lib/aprs/ve-bal-guage-apr.service';
+import { VeGaugeAprService } from './lib/aprs/ve-bal-gauge-apr.service';
 import { GaugeService } from '../gauge/gauge.service';
-import { TokenService } from '../common/token/token.service';
 import { PROTOCOL_TOKEN } from '../common/web3/contract.service';
+import { TokenPriceService } from '../common/token/pricing/token-price.service';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -60,7 +59,7 @@ export class PoolService {
     private readonly poolSyncService: PoolSyncService,
     private readonly protocolService: ProtocolService,
     private readonly gaugeService: GaugeService,
-    private readonly tokenService: TokenService,
+    private readonly pricingService: TokenPriceService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -171,17 +170,6 @@ export class PoolService {
     }
   }
 
-  async reloadStakingForAllPools(
-    stakingTypes: PrismaPoolStakingType[],
-    poolStakingServices: PoolStakingService[],
-  ): Promise<void> {
-    await Promise.all(
-      poolStakingServices.map((stakingService) =>
-        stakingService.reloadStakingForAllPools(stakingTypes),
-      ),
-    );
-  }
-
   async syncPoolAllTokensRelationship(): Promise<void> {
     const pools = await this.prisma.prismaPool.findMany({ select: { id: true } });
 
@@ -257,23 +245,15 @@ export class PoolService {
     return poolIds;
   }
 
-  async syncStakingForPools(poolStakingServices: PoolStakingService[]) {
-    if (!poolStakingServices.length) {
-      throw new Error('PoolService.syncStakingForPools not given poolStakingServices params');
-    }
-
-    await Promise.all(
-      poolStakingServices.map((stakingService) => stakingService.syncStakingForPools()),
-    );
-  }
-
   async updatePoolAprs() {
     // TODO: Use fee collector to get protocol fee
     // Also move all of this apr stuff into its own concern/service
     const swaps = new SwapFeeAprService(this.prisma, 0.25);
-    const gauges = new VeGaugeAprService(this.gaugeService, this.tokenService, [
-      PROTOCOL_TOKEN[this.rpc.chainId],
-    ]);
+    const gauges = new VeGaugeAprService(
+      this.gaugeService,
+      [PROTOCOL_TOKEN[this.rpc.chainId]],
+      this.pricingService,
+    );
     await this.poolAprUpdaterService.updatePoolAprs([swaps, gauges]);
   }
 

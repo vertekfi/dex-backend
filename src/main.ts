@@ -25,7 +25,7 @@ async function bootstrap() {
       cluster.fork();
     });
   } else {
-    // App platform does not use .env
+    // App hosting platform does not use .env
     if (process.env.NODE_ENV === 'development') {
       config();
     }
@@ -52,7 +52,6 @@ async function bootstrap() {
     const prismaService: PrismaService = nestApp.get(PrismaService);
     await prismaService.enableShutdownHooks(nestApp);
 
-    // const HOST = process.env.HOST;
     const PORT = process.env.PORT || 5000;
     await nestApp.listen(PORT, () => console.log(`DEX Backend running at: ${PORT}`));
   }

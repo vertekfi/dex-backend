@@ -64,6 +64,6 @@ export class AppModule {
   constructor(jobs: ScheduledJobService) {
     // if (process.env.NODE_ENV === 'production') {
     jobs.init();
-    //}
+    // }
   }
 }

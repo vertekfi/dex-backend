@@ -1,21 +1,32 @@
 import * as cron from 'node-cron';
 import * as schedule from 'node-schedule';
 import * as _ from 'lodash';
-import { TokenService } from '../common/token/token.service';
 import { PoolService } from '../pool/pool.service';
 import { RPC } from '../common/web3/rpc.provider';
 import { Inject } from '@nestjs/common';
 import { AccountWeb3 } from '../common/types';
-import { UserService } from '../user/user.service';
 import { ProtocolService } from '../protocol/protocol.service';
 import { GaugeSyncService } from '../gauge/gauge-sync.service';
-import { runWithMinimumInterval } from './scheduling';
 import { PoolDataLoaderService } from '../pool/lib/pool-data-loader.service';
+import { TokenSyncService } from '../common/token/token-sync.service';
 
 const ONE_MINUTE_IN_MS = 60000;
 const TWO_MINUTES_IN_MS = 120000;
 const FIVE_MINUTES_IN_MS = 300000;
 const TEN_MINUTES_IN_MS = 600000;
+
+const asyncCallWithTimeout = async (fn: () => Promise<any>, timeLimit: number) => {
+  let timeoutHandle: NodeJS.Timeout;
+
+  const timeoutPromise = new Promise((_resolve, reject) => {
+    timeoutHandle = setTimeout(() => reject(new Error('Call timed out!')), timeLimit);
+  });
+
+  return Promise.race([fn(), timeoutPromise]).then((result) => {
+    clearTimeout(timeoutHandle);
+    return result;
+  });
+};
 
 export class ScheduledJobService {
   private _jobs: {
@@ -27,11 +38,10 @@ export class ScheduledJobService {
 
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
-    private readonly tokenService: TokenService,
     private readonly poolService: PoolService,
-    private readonly userService: UserService,
+    private readonly tokenSyncService: TokenSyncService,
     private readonly protocolService: ProtocolService,
-    private readonly gaugeService: GaugeSyncService,
+    private readonly gaugeSyncService: GaugeSyncService,
     private readonly poolDataLoader: PoolDataLoaderService,
   ) {}
 
@@ -102,6 +112,18 @@ export class ScheduledJobService {
         console.log(`${taskName} already running, skipping call...`);
         return;
       }
+
+      running = true;
+      console.time(taskName);
+      asyncCallWithTimeout(func, timeout)
+        .catch((error) => {
+          console.log(`Error ${taskName}`, error);
+        })
+        .finally(() => {
+          running = false;
+          console.timeEnd(taskName);
+          console.log(`${taskName} done`);
+        });
     });
   }
 
@@ -135,13 +157,13 @@ export class ScheduledJobService {
   }
 
   scheduleLocalWorkerTasks() {
-    // every 20 seconds
+    // every 1 minute
     this.scheduleJob(
-      '*/20 * * * * *',
+      '*/1 * * * *',
       'loadTokenPrices',
       ONE_MINUTE_IN_MS,
       async () => {
-        await this.tokenService.loadTokenPrices();
+        await this.tokenSyncService.syncTokenPrices();
       },
       true,
     );
@@ -167,19 +189,19 @@ export class ScheduledJobService {
       },
     );
 
-    // every 30 seconds
-    this.scheduleJob('*/30 * * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
+    // every 5 minutes
+    this.scheduleJob('*/5 * * * *', 'syncNewPoolsFromSubgraph', TWO_MINUTES_IN_MS, async () => {
       await this.poolService.syncNewPoolsFromSubgraph();
     });
 
     // every 3 minutes
-    this.scheduleJob('*/3 * * * *', 'poolSyncSanityPoolData', FIVE_MINUTES_IN_MS, async () => {
+    this.scheduleJob('*/3 * * * *', 'syncPoolConfigData', FIVE_MINUTES_IN_MS, async () => {
       await this.poolDataLoader.syncPoolConfigData();
     });
 
     // every 5 minutes
     this.scheduleJob('*/5 * * * *', 'syncTokensFromPoolTokens', TEN_MINUTES_IN_MS, async () => {
-      await this.tokenService.syncTokenData();
+      await this.tokenSyncService.syncTokenDefinitions();
     });
 
     //  every 5 minutes
@@ -199,12 +221,12 @@ export class ScheduledJobService {
 
     // every minute
     this.scheduleJob('*/1 * * * *', 'syncTokenDynamicData', TEN_MINUTES_IN_MS, async () => {
-      await this.tokenService.syncTokenDynamicData();
+      await this.tokenSyncService.syncTokenDynamicData();
     });
 
     // every 5 minutes
     this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
-      await this.gaugeService.syncGaugeData();
+      await this.gaugeSyncService.syncGaugeData();
     });
     // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeService.getAllGauges);
 
