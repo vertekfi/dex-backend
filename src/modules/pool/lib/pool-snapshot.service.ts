@@ -102,6 +102,8 @@ export class PoolSnapshotService {
       orderDirection: OrderDirection.Asc,
     });
 
+    console.log(allSnapshots);
+
     const latestSyncedSnapshots = await this.prisma.prismaPoolSnapshot.findMany({
       where: {
         timestamp: moment()
@@ -116,9 +118,15 @@ export class PoolSnapshotService {
 
     for (const poolId of poolIds) {
       const snapshots = allSnapshots.filter((snapshot) => snapshot.pool.id === poolId);
+
+      console.log(snapshots);
+
       const latestSyncedSnapshot = latestSyncedSnapshots.find(
         (snapshot) => snapshot.poolId === poolId,
       );
+
+      console.log(latestSyncedSnapshot);
+
       const startTotalSwapVolume = `${latestSyncedSnapshot?.totalSwapVolume || '0'}`;
       const startTotalSwapFee = `${latestSyncedSnapshot?.totalSwapFee || '0'}`;
 
@@ -139,6 +147,7 @@ export class PoolSnapshotService {
           update: data,
         });
       });
+
       operations.push(...poolOperations);
     }
 
