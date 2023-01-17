@@ -550,11 +550,11 @@ export function getPathsUsingStaBalPool(
   return [];
 }
 
-export function parseToPoolsDict(pools: SubgraphPoolBase[], timestamp: number): PoolDictionary {
+export function parseToPoolsDict(pools: SubgraphPoolBase[]): PoolDictionary {
   return Object.fromEntries(
     cloneDeep(pools)
       .filter((pool) => pool.tokensList.length > 0 && pool.tokens[0].balance !== '0')
-      .map((pool) => [pool.id, parseNewPool(pool, timestamp)])
+      .map((pool) => [pool.id, parseNewPool(pool)])
       .filter(([, pool]) => pool !== undefined),
   );
 }

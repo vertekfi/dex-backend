@@ -45,7 +45,7 @@ export class RouteProposer {
       return cache.paths;
     }
 
-    const poolsAllDict = parseToPoolsDict(pools, swapOptions.timestamp);
+    const poolsAllDict = parseToPoolsDict(pools);
 
     // console.log('SOR -> getCandidatePaths: poolsAllDict');
     // console.log(poolsAllDict);
