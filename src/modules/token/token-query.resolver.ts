@@ -17,7 +17,11 @@ export class TokenQueryResolver {
 
   @Query()
   async tokenGetCurrentPrices() {
-    return this.tokenService.getWhiteListedCurrentTokenPrices();
+    const prices = await this.tokenService.getWhiteListedCurrentTokenPrices();
+    return prices.map((price) => ({
+      address: price.tokenAddress,
+      price: price.price,
+    }));
   }
 
   @Query()
