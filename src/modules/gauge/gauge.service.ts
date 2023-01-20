@@ -15,7 +15,7 @@ import { VeBalHelpers } from './lib/ve-helpers';
 import { Multicaller } from '../common/web3/multicaller';
 import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
-import { FIVE_MINUTES_SECONDS } from '../utils/time';
+import { FIVE_MINUTES_SECONDS, THIRTY_SECONDS_SECONDS } from '../utils/time';
 import { CONTRACT_MAP } from '../data/contracts';
 import { gql } from 'graphql-request';
 import { PrismaService } from 'nestjs-prisma';
@@ -75,8 +75,7 @@ export class GaugeService {
     return liquidityGauges;
   }
 
-  // Cache: These do not change often and front end makes its immediate calls to contracts as needed also
-  // @CacheDecorator(GAUGE_CACHE_KEY, FIVE_MINUTES_SECONDS)
+  @CacheDecorator(GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getAllGauges() {
     const gauges = await this.getCoreGauges();
     const { pools, tokens } = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
