@@ -183,8 +183,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
         'https://github.com/vertekfi/token-list/blob/497628d8444900ddd3fecc4dd37595308b3548f4/tokenlist.json',
       tokenListMappingKey:
         'https://raw.githubusercontent.com/vertekfi/token-list/dev/tokenlist.json',
-      poolDataUrl:
-        'https://github.com/vertekfi/pool-data-config/blob/855ae62c84e108ef536aac1af483c429913ee3e2/pool-data.json',
+      poolDataUrl: 'https://raw.githubusercontent.com/vertekfi/pool-data-config/dev/pool-data.json',
     },
   },
 };

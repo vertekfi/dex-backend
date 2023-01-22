@@ -36,8 +36,10 @@ export class ProtocolService {
 
   @CacheDecorator(PROTOCOL_CONFIG_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getProtocolConfigDataForChain(): Promise<ProtocolConfigData> {
-    const url = 'https://raw.githubusercontent.com/vertekfi/pool-data-config/main/pool-data.json';
+    const url = networkConfig.protocol.poolDataUrl;
     const { data } = await axios.get(url);
+
+    console.log(data);
 
     return data[String(this.rpc.chainId)];
   }
@@ -46,8 +48,6 @@ export class ProtocolService {
   async getProtocolTokenList() {
     const url = this.getTokenListUri();
     const { data } = await axios.get(url);
-
-    console.log(data);
 
     return data[networkConfig.protocol.tokenListMappingKey].tokens.filter(
       (tk) => tk.chainId === this.rpc.chainId,
@@ -61,7 +61,6 @@ export class ProtocolService {
     return data[networkConfig.protocol.tokenListMappingKey].tokens;
   }
 
-  @CacheDecorator(PROTOCOL_METRICS_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getMetrics(): Promise<ProtocolMetrics> {
     const { totalSwapFee, totalSwapVolume, poolCount } =
       await this.balancerSubgraphService.getProtocolData({});

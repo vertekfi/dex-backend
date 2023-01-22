@@ -29,4 +29,9 @@ export class ProtocolResolver {
   async getProtocolTokenList() {
     return this.protocolService.getProtocolTokenList();
   }
+
+  @Query()
+  async getProtocolPoolData() {
+    return this.protocolService.getProtocolConfigDataForChain();
+  }
 }

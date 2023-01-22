@@ -83,19 +83,21 @@ export class GaugeService {
     // These can be cached along with the gauges since only static(mostly) data is asked for
     pools.forEach((p) => {
       const gauge = gauges.find((g) => g.poolId == p.id);
-      gauge.pool = {
-        ...p,
-        poolType: p.type,
-        name: p.name,
-        tokensList: p.tokens.map((t) => t.address),
-        tokens: p.tokens.map((t) => {
-          return {
-            weight: t.dynamicData.weight,
-            address: t.address,
-            logoURI: tokens.find((t2) => t2.address == t.address)?.logoURI,
-          };
-        }),
-      };
+      if (gauge) {
+        gauge.pool = {
+          ...p,
+          poolType: p.type,
+          name: p.name,
+          tokensList: p.tokens.map((t) => t.address),
+          tokens: p.tokens.map((t) => {
+            return {
+              weight: t.dynamicData.weight,
+              address: t.address,
+              logoURI: tokens.find((t2) => t2.address == t.address)?.logoURI,
+            };
+          }),
+        };
+      }
     });
 
     return gauges;
