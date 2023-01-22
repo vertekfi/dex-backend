@@ -17,7 +17,7 @@ export const PROTOCOL_CONFIG_CACHE_KEY = 'protocol:config';
 export const PROTOCOL_TOKENLIST_CACHE_KEY = 'protocol:tokenlist';
 
 const MAIN_POOL_IDS = {
-  5: '0x3e9f7b85e8ee2107aeca28677b6b416fa60b6200000200000000000000000002',
+  5: '0x39f84fe24135d3c160b5e1bca36b0e66b6c11c4e000200000000000000000004',
   56: '',
 };
 
