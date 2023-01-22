@@ -5,6 +5,7 @@ extend type Query {
   blocksGetBlocksPerDay: Int!
   blocksGetAverageBlockTime: Int!
   contentGetNewsItems: [GqlContentNewsItem]!
+  getProtocolTokenList: [String]
 }
 
 extend type Mutation {

@@ -58,6 +58,11 @@ export interface NetworkConfig {
     gasPrice: BigNumber;
     swapGas: BigNumber;
   };
+  protocol: {
+    tokenListUrl: string;
+    tokenListMappingKey: string;
+    poolDataUrl: string;
+  };
 }
 
 const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
@@ -113,6 +118,11 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       gasPrice: BigNumber.from(10),
       swapGas: BigNumber.from('1000000'),
     },
+    protocol: {
+      tokenListUrl: '',
+      tokenListMappingKey: '',
+      poolDataUrl: '',
+    },
   },
   '5': {
     chain: {
@@ -167,6 +177,14 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       forceRefresh: false,
       gasPrice: BigNumber.from(10),
       swapGas: BigNumber.from('1000000'),
+    },
+    protocol: {
+      tokenListUrl:
+        'https://github.com/vertekfi/token-list/blob/497628d8444900ddd3fecc4dd37595308b3548f4/tokenlist.json',
+      tokenListMappingKey:
+        'https://raw.githubusercontent.com/vertekfi/token-list/dev/tokenlist.json',
+      poolDataUrl:
+        'https://github.com/vertekfi/pool-data-config/blob/855ae62c84e108ef536aac1af483c429913ee3e2/pool-data.json',
     },
   },
 };

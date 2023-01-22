@@ -11,13 +11,14 @@ import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
 import { FIVE_MINUTES_SECONDS, THIRTY_MINUTES_SECONDS } from '../utils/time';
 import { CacheDecorator } from '../common/decorators/cache.decorator';
+import { networkConfig } from '../config/network-config';
 
 export const PROTOCOL_METRICS_CACHE_KEY = 'protocol:metrics';
 export const PROTOCOL_CONFIG_CACHE_KEY = 'protocol:config';
 export const PROTOCOL_TOKENLIST_CACHE_KEY = 'protocol:tokenlist';
 
 const MAIN_POOL_IDS = {
-  5: '0x39f84fe24135d3c160b5e1bca36b0e66b6c11c4e000200000000000000000004',
+  5: '0x762b77980ea2d624cdc5f774352f25c598e469ce000200000000000000000000',
   56: '',
 };
 
@@ -43,18 +44,21 @@ export class ProtocolService {
 
   @CacheDecorator(PROTOCOL_TOKENLIST_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getProtocolTokenList() {
-    const url = 'https://raw.githubusercontent.com/vertekfi/token-list/main/tokenlist.json';
+    const url = this.getTokenListUri();
     const { data } = await axios.get(url);
 
-    return data[
-      'https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json'
-    ].tokens.filter((tk) => tk.chainId === this.rpc.chainId);
+    console.log(data);
+
+    return data[networkConfig.protocol.tokenListMappingKey].tokens.filter(
+      (tk) => tk.chainId === this.rpc.chainId,
+    );
   }
 
   async getProtocolTokenListAllChains() {
-    const url = 'https://raw.githubusercontent.com/vertekfi/token-list/main/tokenlist.json';
+    const url = this.getTokenListUri();
     const { data } = await axios.get(url);
-    return data['https://raw.githubusercontent.com/0xBriz/token-list/main/tokenlist.json'].tokens;
+
+    return data[networkConfig.protocol.tokenListMappingKey].tokens;
   }
 
   @CacheDecorator(PROTOCOL_METRICS_CACHE_KEY, FIVE_MINUTES_SECONDS)
@@ -122,5 +126,9 @@ export class ProtocolService {
       userStakeSyncBlock: `${userStakeSyncBlock?.blockNumber}`,
       poolSyncBlock: `${poolSyncBlock?.blockNumber}`,
     };
+  }
+
+  private getTokenListUri() {
+    return networkConfig.protocol.tokenListUrl + '?raw=true';
   }
 }

@@ -24,4 +24,9 @@ export class ProtocolResolver {
   async contentGetNewsItems() {
     return [];
   }
+
+  @Query()
+  async getProtocolTokenList() {
+    return this.protocolService.getProtocolTokenList();
+  }
 }
