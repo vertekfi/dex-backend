@@ -165,7 +165,7 @@ export class ScheduledJobService {
       async () => {
         await this.tokenSyncService.syncTokenPrices();
       },
-      true,
+      //true,
     );
 
     // every 30 seconds

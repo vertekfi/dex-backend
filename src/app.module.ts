@@ -14,6 +14,7 @@ import { WorkerModule } from './modules/worker/worker.module';
 import { ScheduledJobService } from './modules/worker/scheduled-job.service';
 import { BalancerSdkModule } from './modules/balancer-sdk/balancer-sdk.module';
 import { RewardPoolModule } from './modules/reward-pools/reward-pool.module';
+import { runInitialSyncMutations } from './modules/worker/init-sync';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,

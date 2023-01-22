@@ -6,6 +6,8 @@ import helmet from 'helmet';
 import { accountMiddleware } from './modules/common/middleware/accountMiddleware';
 import { PrismaService } from 'nestjs-prisma';
 import { INestApplication, Type } from '@nestjs/common/interfaces';
+import { runInitialSyncMutations } from './modules/worker/init-sync';
+import { ScheduledJobService } from './modules/worker/scheduled-job.service';
 const cluster = require('cluster');
 
 export let nestApp: INestApplication;
@@ -53,7 +55,10 @@ async function bootstrap() {
     await prismaService.enableShutdownHooks(nestApp);
 
     const PORT = process.env.PORT || 5000;
-    await nestApp.listen(PORT, () => console.log(`DEX Backend running at: ${PORT}`));
+    await nestApp.listen(PORT, async () => {
+      await runInitialSyncMutations(nestApp.get(ScheduledJobService));
+      console.log(`DEX Backend running at: ${PORT}`);
+    });
   }
 }
 
