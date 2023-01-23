@@ -34,17 +34,15 @@ export class ProtocolService {
     return MAIN_POOL_IDS[this.rpc.chainId];
   }
 
-  @CacheDecorator(PROTOCOL_CONFIG_CACHE_KEY, FIVE_MINUTES_SECONDS)
+  // @CacheDecorator(PROTOCOL_CONFIG_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getProtocolConfigDataForChain(): Promise<ProtocolConfigData> {
     const url = networkConfig.protocol.poolDataUrl;
     const { data } = await axios.get(url);
 
-    console.log(data);
-
     return data[String(this.rpc.chainId)];
   }
 
-  @CacheDecorator(PROTOCOL_TOKENLIST_CACHE_KEY, FIVE_MINUTES_SECONDS)
+  // @CacheDecorator(PROTOCOL_TOKENLIST_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getProtocolTokenList() {
     const url = this.getTokenListUri();
     const { data } = await axios.get(url);
