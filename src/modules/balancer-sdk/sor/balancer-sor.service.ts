@@ -11,7 +11,7 @@ import {
   GqlSorSwapType,
 } from 'src/gql-addons';
 import { AccountWeb3, TokenAmountHumanReadable } from 'src/modules/common/types';
-import { ContractService, PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
+import { ContractService } from 'src/modules/common/web3/contract.service';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { PoolService } from 'src/modules/pool/pool.service';
 import { networkConfig } from '../../config/network-config';
@@ -317,7 +317,7 @@ export class BalancerSorService {
     }
 
     // TODO: testing
-    const isProtoToken = getAddress(address) === getAddress(PROTOCOL_TOKEN[this.rpc.chainId]);
+    const isProtoToken = getAddress(address) === getAddress(networkConfig.beets.address);
     if (isProtoToken) {
       return {
         ...token,

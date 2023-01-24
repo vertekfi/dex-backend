@@ -7,11 +7,11 @@ import {
   DS_CHAIN_MAP,
   getDexPairInfo,
 } from 'src/modules/common/token/pricing/dexscreener';
-import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
 import { chunk, uniq } from 'lodash';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { isDexscreenerToken } from '../utils';
 import { nestApp } from 'src/main';
+import { networkConfig } from 'src/modules/config/network-config';
 
 export class DexscreenerPriceHandlerService implements TokenPriceHandler {
   public readonly exitIfFails = false;
@@ -90,7 +90,7 @@ export class DexscreenerPriceHandlerService implements TokenPriceHandler {
 
     // TODO: For testing only until screener or gecko is setup
     if (chainId === 5) {
-      const tokenAddress = PROTOCOL_TOKEN[chainId].toLowerCase();
+      const tokenAddress = networkConfig.beets.address.toLowerCase();
 
       price = 7;
 

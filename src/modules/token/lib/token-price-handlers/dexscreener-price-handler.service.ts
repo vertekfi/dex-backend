@@ -3,7 +3,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
-import { PROTOCOL_TOKEN } from 'src/modules/common/web3/contract.service';
+import { networkConfig } from 'src/modules/config/network-config';
 
 export class DexscreenerPriceHandlerService implements TokenPriceHandler {
   public readonly exitIfFails = false;
@@ -35,7 +35,7 @@ export class DexscreenerPriceHandlerService implements TokenPriceHandler {
       // We know the token has the pair address at this point
       let price: number;
       const chainId = parseInt(process.env.CHAIN_ID);
-      if (chainId === 5 && token.address === PROTOCOL_TOKEN[chainId]) {
+      if (chainId === 5 && token.address === networkConfig.beets.address) {
         // TODO: For testing only
         price = 9;
       } else {

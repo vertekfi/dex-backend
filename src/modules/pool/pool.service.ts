@@ -37,8 +37,8 @@ import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
 import { VeGaugeAprService } from './lib/aprs/ve-bal-gauge-apr.service';
 import { GaugeService } from '../gauge/gauge.service';
-import { PROTOCOL_TOKEN } from '../common/web3/contract.service';
 import { TokenPriceService } from '../common/token/pricing/token-price.service';
+import { networkConfig } from '../config/network-config';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -251,7 +251,7 @@ export class PoolService {
     const swaps = new SwapFeeAprService(this.prisma, 0.25);
     const gauges = new VeGaugeAprService(
       this.gaugeService,
-      [PROTOCOL_TOKEN[this.rpc.chainId]],
+      [networkConfig.beets.address],
       this.pricingService,
     );
     await this.poolAprUpdaterService.updatePoolAprs([swaps, gauges]);

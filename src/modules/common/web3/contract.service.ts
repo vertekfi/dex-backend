@@ -7,16 +7,7 @@ import * as LiqGaugeV5abi from '../../common/web3/abi/LiquidityGaugeV5.json';
 import * as protoTokenAbi from '../../common/web3/abi/ProtocolToken.json';
 import * as bptABI from './abi/BalancerPoolToken.json';
 import { RPC } from './rpc.provider';
-
-export const PROTOCOL_TOKEN = {
-  5: '0xa5694789C0BaED77d16ca36edC45C9366DBFe0A9',
-  56: '',
-};
-
-export const MAIN_POOL = {
-  5: '0x762b77980Ea2d624CDc5F774352F25C598E469CE',
-  56: '',
-};
+import { networkConfig } from 'src/modules/config/network-config';
 
 @Injectable()
 export class ContractService {
@@ -26,11 +17,15 @@ export class ContractService {
   }
 
   getProtocolToken() {
-    return new Contract(PROTOCOL_TOKEN[this.rpc.chainId], protoTokenAbi, this.rpc.provider);
+    return new Contract(networkConfig.beets.address, protoTokenAbi, this.rpc.provider);
   }
 
   getMainPool() {
-    return new Contract(MAIN_POOL[this.rpc.chainId], bptABI, this.rpc.provider);
+    return new Contract(
+      networkConfig.balancer.votingEscrow.lockPoolAddress,
+      bptABI,
+      this.rpc.provider,
+    );
   }
 
   getVault() {
