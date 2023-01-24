@@ -17,11 +17,6 @@ export const PROTOCOL_METRICS_CACHE_KEY = 'protocol:metrics';
 export const PROTOCOL_CONFIG_CACHE_KEY = 'protocol:config';
 export const PROTOCOL_TOKENLIST_CACHE_KEY = 'protocol:tokenlist';
 
-const MAIN_POOL_IDS = {
-  5: '0x762b77980ea2d624cdc5f774352f25c598e469ce000200000000000000000000',
-  56: '',
-};
-
 @Injectable()
 export class ProtocolService {
   constructor(
@@ -31,7 +26,7 @@ export class ProtocolService {
   ) {}
 
   getMainPoolId(): string {
-    return MAIN_POOL_IDS[this.rpc.chainId];
+    return networkConfig.balancer.votingEscrow.lockablePoolId;
   }
 
   // @CacheDecorator(PROTOCOL_CONFIG_CACHE_KEY, FIVE_MINUTES_SECONDS)

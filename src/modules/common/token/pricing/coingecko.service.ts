@@ -13,14 +13,13 @@ import {
 } from '../../../token/token-types-old';
 import { isAddress } from 'ethers/lib/utils';
 import { MappedToken, TokenDefinition, TokenMarketData } from '../types';
-import { ConfigService } from 'src/modules/common/config.service';
 import { TokenPricingService } from '../types';
-import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
-import { filterForGeckoTokens, isCoinGeckoToken, validateCoinGeckoToken } from './utils';
+import { isCoinGeckoToken, validateCoinGeckoToken } from './utils';
 import { forEach, groupBy, mapKeys } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
+import { networkConfig } from 'src/modules/config/network-config';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -36,18 +35,11 @@ const requestRateLimiter = new RateLimiter({ tokensPerInterval: 15, interval: 'm
 export class CoingeckoService implements TokenPricingService {
   readonly baseUrl: string;
   readonly fiatParam: string;
-  private readonly platformId: string;
-  private readonly nativeAssetId: string;
-  private readonly nativeAssetAddress: string;
-
   readonly coinGecko = true;
 
-  constructor(private readonly config: ConfigService, private readonly prisma: PrismaService) {
+  constructor(private readonly prisma: PrismaService) {
     this.baseUrl = 'https://api.coingecko.com/api/v3';
     this.fiatParam = 'usd';
-    this.platformId = this.config.env.COINGECKO_PLATFORM_ID;
-    this.nativeAssetId = this.config.env.COINGECKO_NATIVE_ASSET_ID;
-    this.nativeAssetAddress = this.config.env.NATIVE_ASSET_ADDRESS;
   }
 
   async getMarketDataForToken(tokens: PrismaToken[]): Promise<PrismaTokenDynamicData[]> {
@@ -87,9 +79,9 @@ export class CoingeckoService implements TokenPricingService {
   async getNativeAssetPrice(): Promise<Price> {
     try {
       const response = await this.get<CoingeckoPriceResponse>(
-        `/simple/price?ids=${this.nativeAssetId}&vs_currencies=${this.fiatParam}`,
+        `/simple/price?ids=${networkConfig.coingecko.nativeAssetId}&vs_currencies=${this.fiatParam}`,
       );
-      return response[this.nativeAssetId];
+      return response[networkConfig.coingecko.nativeAssetId];
     } catch (error) {
       //console.error('Unable to fetch Ether price', error);
       throw error;
@@ -168,8 +160,11 @@ export class CoingeckoService implements TokenPricingService {
       const results = this.parsePaginatedTokens(paginatedResults, mapped);
 
       // Inject native asset price if included in requested addresses
-      if (addresses.includes(this.nativeAssetAddress)) {
-        results[this.nativeAssetAddress] = await this.getNativeAssetPrice();
+      if (
+        addresses.includes(networkConfig.eth.address) ||
+        addresses.includes(networkConfig.eth.addressFormatted)
+      ) {
+        results[networkConfig.eth.address] = await this.getNativeAssetPrice();
       }
 
       return results;

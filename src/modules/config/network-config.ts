@@ -29,7 +29,7 @@ export interface NetworkConfig {
     startDate: string;
     balancer: string;
     blocks: string;
-    gauge?: string;
+    gauges: string;
     userBalances: string;
   };
   beets: {
@@ -84,6 +84,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     subgraphs: {
       startDate: '2024-01-25',
       balancer: '',
+      gauges: '',
       blocks: '',
       userBalances: '',
     },
@@ -149,10 +150,10 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     },
     subgraphs: {
       startDate: '2024-01-24',
-      balancer: 'https://api.thegraph.com/subgraphs/name/aequinoxfi/vertek-subgraph-goerli',
-      blocks: 'https://api.thegraph.com/subgraphs/name/beethovenxfi/fantom-blocks',
-      userBalances: 'https://api.thegraph.com/subgraphs/name/beethovenxfi/user-bpt-balances-fantom',
-      gauge: 'https://api.thegraph.com/subgraphs/name/aequinoxfi/gauges-goerli',
+      balancer: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-v2-goerli',
+      blocks: '',
+      userBalances: '',
+      gauges: 'https://api.thegraph.com/subgraphs/name/vertekfi/goerli-gauges-v2',
     },
     eth: {
       address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
@@ -188,11 +189,11 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
         gaugeController: '',
         veBALHelpers: '',
         tokenAdmin: '',
-        lockablePoolId: '',
-        lockPoolAddress: '',
+        lockablePoolId: '0xd0f30b415c65b99904caf716abc3da23f57d3cdd000200000000000000000000',
+        lockPoolAddress: '0xD0F30B415C65B99904caF716ABc3da23f57d3cdd',
       },
     },
-    multicall: '0xFDec6c30306F84eCC4196FA689974721fE863Dfc',
+    multicall: '0x1050Bcfb2ec4CAe624BD1Eec5dadc2a3b4f4559a',
     avgBlockSpeed: 10,
     sor: {
       url: '',

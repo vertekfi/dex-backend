@@ -1,7 +1,6 @@
 import { CacheModule, Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 
-import { ConfigService } from './config.service';
 import { CacheService } from './cache.service';
 import { RpcProvider } from './web3/rpc.provider';
 import { BlockService } from './web3/block.service';
@@ -24,9 +23,6 @@ import { TokenSyncService } from './token/token-sync.service';
       useFactory: () => {
         return {
           global: true,
-          // store: redisStore,
-          // // Store-specific configuration:
-          // host: process.env.REDIS_URL,
         };
       },
     }),
@@ -36,7 +32,6 @@ import { TokenSyncService } from './token/token-sync.service';
       provide: APP_GUARD,
       useClass: AdminGuard,
     },
-    ConfigService,
     CacheService,
     RpcProvider,
     BlockService,
@@ -54,7 +49,6 @@ import { TokenSyncService } from './token/token-sync.service';
     TokenSyncService,
   ],
   exports: [
-    ConfigService,
     CacheModule,
     CacheService,
     RpcProvider,

@@ -1,8 +1,5 @@
 import * as _ from 'lodash';
 import { PrismaLastBlockSyncedCategory } from '@prisma/client';
-import { networkConfig } from '../../config/network-config';
-import VaultAbi from '../abi/Vault.json';
-
 import { BlockService } from 'src/modules/common/web3/block.service';
 import { PrismaService } from 'nestjs-prisma';
 import { ContractService } from 'src/modules/common/web3/contract.service';

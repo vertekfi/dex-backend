@@ -1,15 +1,14 @@
 import { Provider } from '@nestjs/common';
 import { ethers } from 'ethers';
-import { ConfigService } from '../config.service';
 import { AccountWeb3 } from '../types';
 
 export const RPC = 'RPC';
 
 export const RpcProvider: Provider = {
   provide: RPC,
-  useFactory: async (config: ConfigService): Promise<AccountWeb3> => {
+  useFactory: async (): Promise<AccountWeb3> => {
     let rpcUrl = '';
-    const chainId = config.env.CHAIN_ID;
+    const chainId = parseInt(process.env.CHAIN_ID);
     if (chainId === 5) {
       rpcUrl = process.env.GOERLI_RPC;
     } else if (chainId === 56) {
@@ -40,5 +39,4 @@ export const RpcProvider: Provider = {
       wallet,
     };
   },
-  inject: [ConfigService],
 };

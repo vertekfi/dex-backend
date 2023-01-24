@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken, PrismaTokenCurrentPrice, PrismaTokenDynamicData } from '@prisma/client';
 import * as _ from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
-import { ConfigService } from '../config.service';
 import { networkConfig } from '../../config/network-config';
 import { TokenDefinition } from './types';
 import { RPC } from '../web3/rpc.provider';
@@ -14,11 +13,7 @@ const ALL_TOKENS_CACHE_KEY = 'tokens:all';
 
 @Injectable()
 export class TokenService {
-  constructor(
-    @Inject(RPC) private rpc: AccountWeb3,
-    private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(@Inject(RPC) private rpc: AccountWeb3, private readonly prisma: PrismaService) {}
 
   @CacheDecorator(ALL_TOKENS_CACHE_KEY, ONE_MINUTE_SECONDS)
   async getTokens(addresses?: string[]): Promise<PrismaToken[]> {
@@ -81,7 +76,7 @@ export class TokenService {
 
     return tokens.map((token) => ({
       ...token,
-      chainId: this.config.env.CHAIN_ID,
+      chainId: networkConfig.chain.id,
       //TODO: some linear wrapped tokens are tradable. ie: xBOO
       tradable: !token.types.find(
         (type) =>

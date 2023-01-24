@@ -7,6 +7,7 @@ import { AccountWeb3 } from 'src/modules/common/types';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { gql } from 'graphql-request';
 import { SUBGRAPHS } from 'src/modules/data/addresses';
+import { networkConfig } from 'src/modules/config/network-config';
 
 const queryWithLinear = gql`
   {
@@ -59,7 +60,7 @@ export class SubgraphPoolDataService implements PoolDataService {
     // });
 
     try {
-      const response = await fetch(SUBGRAPHS.BAL[this.rpc.chainId], {
+      const response = await fetch(networkConfig.subgraphs.balancer, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
