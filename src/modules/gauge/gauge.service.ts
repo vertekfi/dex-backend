@@ -23,6 +23,8 @@ import { CacheDecorator } from '../common/decorators/cache.decorator';
 import * as moment from 'moment-timezone';
 import { scaleDown } from '../utils/old-big-number';
 import { LiquidityGauge } from 'src/graphql';
+import * as LGV5Abi from './abis/LiquidityGaugeV5.json';
+import { BigNumber } from 'ethers';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
@@ -75,7 +77,7 @@ export class GaugeService {
     return liquidityGauges;
   }
 
-  @CacheDecorator(GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
+  // @CacheDecorator(GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getAllGauges() {
     const gauges = await this.getCoreGauges();
     const { pools, tokens } = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
@@ -110,8 +112,8 @@ export class GaugeService {
     ]);
 
     const rewardTokens = await this.getGaugesRewardData(subgraphGauges);
-
     const gauges = [];
+
     for (const gauge of subgraphGauges) {
       if (protoData.gauges.includes(gauge.poolId)) {
         gauges.push({
@@ -124,7 +126,7 @@ export class GaugeService {
             id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
           },
           isKilled: gauge.isKilled,
-          rewardTokens: rewardTokens.find((r) => r.gaugeAddress == gauge.id) || [],
+          rewardTokens: rewardTokens.filter((r) => r.gaugeAddress == gauge.id),
         });
       }
     }
@@ -133,7 +135,7 @@ export class GaugeService {
   }
 
   async getGaugesRewardData(gauges: any[]) {
-    const multiCaller = new Multicaller(this.rpc, []);
+    const multiCaller = new Multicaller(this.rpc, LGV5Abi);
     const rewardTokens = [];
 
     for (const gauge of gauges) {
@@ -145,7 +147,7 @@ export class GaugeService {
 
       const rewardDataResult = (await multiCaller.execute()) as Record<
         string,
-        { rate: string; period_finish: string }
+        { rate: BigNumber; period_finish: string }
       >;
 
       gauge.tokens?.forEach((rewardToken) => {
@@ -159,8 +161,9 @@ export class GaugeService {
           ...rewardToken,
           address,
           rewardsPerSecond: isActive
-            ? scaleDown(rewardData.rate, rewardToken.decimals).toNumber()
+            ? scaleDown(rewardData.rate.toString(), rewardToken.decimals || 18).toNumber()
             : 0,
+          id: address,
         });
       });
     }
@@ -219,7 +222,7 @@ export class GaugeService {
     return this.gaugeSubgraphService.getMetadata();
   }
 
-  @CacheDecorator(GAUGE_APR_KEY, FIVE_MINUTES_SECONDS)
+  // @CacheDecorator(GAUGE_APR_KEY, THIRTY_SECONDS_SECONDS)
   async getGaugeBALAprs({
     prices,
     pools,

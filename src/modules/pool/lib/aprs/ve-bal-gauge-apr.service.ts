@@ -19,7 +19,6 @@ export class VeGaugeAprService implements PoolAprService {
     const gauges = await this.gaugeService.getCoreGauges();
     const tokenPrices = await this.pricingService.getCurrentTokenPrices();
     for (const pool of pools) {
-      // TODO:Need to sync pool staking data
       const gauge = gauges.find((g) => g.address === pool.staking?.gauge?.gaugeAddress);
 
       if (!gauge || !pool.dynamicData) {
