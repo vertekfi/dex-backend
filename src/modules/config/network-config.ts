@@ -45,6 +45,14 @@ export interface NetworkConfig {
     composableStablePoolFactories: string[];
     yieldProtocolFeePercentage: number;
     swapProtocolFeePercentage: number;
+    votingEscrow: {
+      veAddress: string;
+      gaugeController: string;
+      veBALHelpers: string;
+      tokenAdmin: string;
+      lockablePoolId: string;
+      lockPoolAddress: string;
+    };
   };
   multicall: string;
   overnight?: {
@@ -74,10 +82,10 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       wrappedNativeAssetAddress: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
     },
     subgraphs: {
-      startDate: '2021-12-02',
-      balancer: 'https://api.thegraph.com/subgraphs/name/0xbriz/aequinox-bsc',
-      blocks: 'https://api.thegraph.com/subgraphs/name/beethovenxfi/fantom-blocks',
-      userBalances: 'https://api.thegraph.com/subgraphs/name/beethovenxfi/user-bpt-balances-fantom',
+      startDate: '2024-01-25',
+      balancer: '',
+      blocks: '',
+      userBalances: '',
     },
     eth: {
       address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
@@ -91,29 +99,37 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     },
     coingecko: {
       nativeAssetId: 'binancecoin',
-      platformId: 'bsc',
+      platformId: 'binance-smart-chain',
     },
     rpcUrl: 'https://bsc-dataseed.binance.org',
     beetsPriceProviderRpcUrl: 'https://bsc-dataseed.binance.org',
     beets: {
-      address: '0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5',
+      address: '0x5Be975013095AEa033dB098787C56e5867107060',
     },
     bal: {
       address: '',
     },
     balancer: {
-      vault: '0xEE1c8DbfBf958484c6a4571F5FB7b99B74A54AA7',
+      vault: '0x2a59fCaa63efBEFe8816A4dF510E8f216D88F6FE',
       composableStablePoolFactories: [],
-      weightedPoolV2Factories: [],
-      weightedPoolFactories: ['0x7aFB1Fff22D2EAbC5d256187472bF1989CDE2f97'],
+      weightedPoolV2Factories: ['0x65d3835D08BDCd2336E393F0Ed4D6CC99181B8c3'],
+      weightedPoolFactories: [],
       swapProtocolFeePercentage: 0.25,
-      yieldProtocolFeePercentage: 0.25,
+      yieldProtocolFeePercentage: 0.5,
+      votingEscrow: {
+        veAddress: '',
+        gaugeController: '',
+        veBALHelpers: '',
+        tokenAdmin: '',
+        lockablePoolId: '',
+        lockPoolAddress: '',
+      },
     },
-    multicall: '0xa4746ea7B23d91b7e73bAE42BaDbF786211fcA38',
+    multicall: '',
     avgBlockSpeed: 3,
     sor: {
-      url: 'https://seb3bxrechp46fx7h3d2ksmjce0minwk.lambda-url.ca-central-1.on.aws/',
-      maxPools: 8,
+      url: '',
+      maxPools: 4,
       forceRefresh: false,
       gasPrice: BigNumber.from(10),
       swapGas: BigNumber.from('1000000'),
@@ -132,7 +148,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       wrappedNativeAssetAddress: '0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6',
     },
     subgraphs: {
-      startDate: '2021-12-02',
+      startDate: '2024-01-24',
       balancer: 'https://api.thegraph.com/subgraphs/name/aequinoxfi/vertek-subgraph-goerli',
       blocks: 'https://api.thegraph.com/subgraphs/name/beethovenxfi/fantom-blocks',
       userBalances: 'https://api.thegraph.com/subgraphs/name/beethovenxfi/user-bpt-balances-fantom',
@@ -152,28 +168,35 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       nativeAssetId: 'binancecoin',
       platformId: 'binance-smart-chain',
     },
-    rpcUrl: 'https://eth-goerli.g.alchemy.com/v2/cK2OOgcOIjM2enbLpRfinpxq8hdY9aGU',
-    beetsPriceProviderRpcUrl:
-      'https://eth-goerli.g.alchemy.com/v2/cK2OOgcOIjM2enbLpRfinpxq8hdY9aGU',
+    rpcUrl: '',
+    beetsPriceProviderRpcUrl: '',
     beets: {
-      address: '0xaFbf7fB9Fa206089041218dF93c8B3A1Bb9F4497',
+      address: '0x5E1D334E7CFF8436bA39E24d452eB6E8451B5F9b',
     },
     bal: {
       address: '',
     },
     balancer: {
-      vault: '0x4b93431a1942A0F3Be0a082834200FFd9BE54FD4',
+      vault: '0xBA5CE8dFcB1E077B4537aCaD17400D843842c520',
       composableStablePoolFactories: [],
-      weightedPoolV2Factories: [],
-      weightedPoolFactories: ['0x274B157a7b312175936Dc16fCA5209ee9DE8422e'],
+      weightedPoolV2Factories: ['0x94b67Ee1359A26E0527BFafD9C37aD84D9ABda77'],
+      weightedPoolFactories: [],
       swapProtocolFeePercentage: 0.25,
-      yieldProtocolFeePercentage: 0.25,
+      yieldProtocolFeePercentage: 0.5,
+      votingEscrow: {
+        veAddress: '',
+        gaugeController: '',
+        veBALHelpers: '',
+        tokenAdmin: '',
+        lockablePoolId: '',
+        lockPoolAddress: '',
+      },
     },
     multicall: '0xFDec6c30306F84eCC4196FA689974721fE863Dfc',
-    avgBlockSpeed: 3,
+    avgBlockSpeed: 10,
     sor: {
-      url: 'https://dex-frontend-v2.vercel.app/',
-      maxPools: 8,
+      url: '',
+      maxPools: 4,
       forceRefresh: false,
       gasPrice: BigNumber.from(10),
       swapGas: BigNumber.from('1000000'),

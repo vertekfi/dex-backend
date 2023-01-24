@@ -92,7 +92,7 @@ export class TokenSyncService {
   }
 
   async syncTokenDefinitions() {
-    const tokens = await this.protocolService.getProtocolTokenListAllChains();
+    const tokens = await this.protocolService.getProtocolTokenList();
 
     for (const token of tokens) {
       const tokenAddress = token.address.toLowerCase();
