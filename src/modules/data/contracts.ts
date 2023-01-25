@@ -100,7 +100,7 @@ export const CONTRACT_MAP = {
     56: '',
   },
   FEE_DISTRIBUTOR: {
-    5: '',
+    5: '0xd4ccC5b4d7085603BB03C366F25738494B12E8c9',
     56: '',
   },
   RELAYER: {

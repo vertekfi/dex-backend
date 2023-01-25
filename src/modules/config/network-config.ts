@@ -166,7 +166,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       addressFormatted: '0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6',
     },
     coingecko: {
-      nativeAssetId: 'binancecoin',
+      nativeAssetId: 'wbnb',
       platformId: 'binance-smart-chain',
     },
     rpcUrl: '',

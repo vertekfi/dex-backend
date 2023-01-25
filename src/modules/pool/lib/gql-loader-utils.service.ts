@@ -717,6 +717,8 @@ export class PoolGqlLoaderUtils {
     let orderBy: Prisma.PrismaPoolOrderByWithRelationInput = {};
     const orderDirection = args.orderDirection || undefined;
 
+    console.log(args);
+
     switch (args.orderBy) {
       case 'totalLiquidity':
         orderBy = { dynamicData: { totalLiquidity: orderDirection } };
