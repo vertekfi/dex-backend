@@ -36,8 +36,6 @@ export class PoolGqlLoaderService {
       include: prismaPoolMinimal.include,
     });
 
-    console.log(pools);
-
     return pools.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
   }
 
