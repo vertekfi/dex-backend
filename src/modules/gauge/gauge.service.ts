@@ -181,8 +181,8 @@ export class GaugeService {
 
     const fees = await multiCaller.execute();
     for (const address in fees) {
-      fees[address].depositFee = Number(formatEther(fees[address].depositFee));
-      fees[address].withdrawFee = Number(formatEther(fees[address].withdrawFee));
+      fees[address].depositFee = fees[address].depositFee.toNumber();
+      fees[address].withdrawFee = fees[address].withdrawFee.toNumber();
     }
 
     return fees;

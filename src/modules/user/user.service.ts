@@ -65,27 +65,31 @@ export class UserService {
   }
 
   async syncUserBalance(userAddress: string, poolId: string) {
-    const pool = await this.prisma.prismaPool.findUniqueOrThrow({
-      where: { id: poolId },
-      include: { staking: true },
-    });
-
-    // we make sure the user exists
-    await this.prisma.prismaUser.upsert({
-      where: { address: userAddress },
-      update: {},
-      create: { address: userAddress },
-    });
-
-    await this.walletSyncService.syncUserBalance(userAddress, pool.id, pool.address);
-
-    if (pool.staking) {
-      this.gaugeSyncService.syncUserBalance({
-        userAddress,
-        poolId: pool.id,
-        poolAddress: pool.address,
-        staking: pool.staking!,
+    try {
+      const pool = await this.prisma.prismaPool.findUniqueOrThrow({
+        where: { id: poolId },
+        include: { staking: true },
       });
+
+      // we make sure the user exists
+      await this.prisma.prismaUser.upsert({
+        where: { address: userAddress },
+        update: {},
+        create: { address: userAddress },
+      });
+
+      await this.walletSyncService.syncUserBalance(userAddress, pool.id, pool.address);
+
+      if (pool.staking) {
+        this.gaugeSyncService.syncUserBalance({
+          userAddress,
+          poolId: pool.id,
+          poolAddress: pool.address,
+          staking: pool.staking!,
+        });
+      }
+    } catch (error) {
+      console.error(`Error syncing user ${userAddress} balance for pool ${poolId}`);
     }
   }
 
