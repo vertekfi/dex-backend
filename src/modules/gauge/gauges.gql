@@ -79,6 +79,14 @@ type LiquidityGauge {
   rewardTokens: [RewardToken]!
 
   factory: GaugeFactory
+
+  fees: GaugeFees!
+}
+
+type GaugeFees {
+  depositFee: Int!
+
+  withdrawFee: Int!
 }
 
 type GaugeShare {

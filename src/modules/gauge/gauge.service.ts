@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { isNil, mapValues } from 'lodash';
-import { formatUnits, getAddress } from 'ethers/lib/utils';
+import { formatEther, formatUnits, getAddress } from 'ethers/lib/utils';
 import { bnum } from '../balancer-sdk/sor/impl/utils/bignumber';
 import { ProtocolService } from '../protocol/protocol.service';
 import { GaugeSubgraphService } from '../subgraphs/gauge-subgraph/gauge-subgraph.service';
@@ -15,7 +15,7 @@ import { VeBalHelpers } from './lib/ve-helpers';
 import { Multicaller } from '../common/web3/multicaller';
 import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
-import { FIVE_MINUTES_SECONDS, THIRTY_SECONDS_SECONDS } from '../utils/time';
+import { THIRTY_SECONDS_SECONDS } from '../utils/time';
 import { CONTRACT_MAP } from '../data/contracts';
 import { gql } from 'graphql-request';
 import { PrismaService } from 'nestjs-prisma';
@@ -27,12 +27,7 @@ import * as LGV5Abi from './abis/LiquidityGaugeV5.json';
 import { BigNumber } from 'ethers';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
-const GAUGE_APR_KEY = 'GAUGE_APR_KEY';
-
-const MAIN_POOL_GAUGE = {
-  5: getAddress('0x5C17FbD4Ad85463F0C8A2759D767fD64a948428e'),
-  56: '',
-};
+const SUBGRAPH_GAUGE_CACHE_KEY = 'SUBGRAPH_GAUGE_CACHE_KEY';
 
 @Injectable()
 export class GaugeService {
@@ -50,6 +45,8 @@ export class GaugeService {
     return await this.gaugeSubgraphService.getAllGaugeAddresses();
   }
 
+  // TODO: Get these from database
+  //  @CacheDecorator(SUBGRAPH_GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getLiquidityGauges() {
     const { liquidityGauges } = await this.gaugeSubgraphService.client.request(gql`
       query {
@@ -105,6 +102,7 @@ export class GaugeService {
     return gauges;
   }
 
+  // @CacheDecorator(GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getCoreGauges() {
     const [subgraphGauges, protoData] = await Promise.all([
       this.getLiquidityGauges(),
@@ -112,6 +110,7 @@ export class GaugeService {
     ]);
 
     const rewardTokens = await this.getGaugesRewardData(subgraphGauges);
+    const gaugeFeesMap = await this.getGaugeFees(subgraphGauges);
     const gauges = [];
 
     for (const gauge of subgraphGauges) {
@@ -127,6 +126,7 @@ export class GaugeService {
           },
           isKilled: gauge.isKilled,
           rewardTokens: rewardTokens.filter((r) => r.gaugeAddress == gauge.id),
+          fees: gaugeFeesMap[gauge.id],
         });
       }
     }
@@ -171,6 +171,23 @@ export class GaugeService {
     return rewardTokens;
   }
 
+  async getGaugeFees(gauges: any[]) {
+    const multiCaller = new Multicaller(this.rpc, LGV5Abi);
+
+    gauges.forEach((gauge) => {
+      multiCaller.call(`${gauge.id}.depositFee`, gauge.id, 'getDepositFee');
+      multiCaller.call(`${gauge.id}.withdrawFee`, gauge.id, 'getWithdrawFee');
+    });
+
+    const fees = await multiCaller.execute();
+    for (const address in fees) {
+      fees[address].depositFee = Number(formatEther(fees[address].depositFee));
+      fees[address].withdrawFee = Number(formatEther(fees[address].withdrawFee));
+    }
+
+    return fees;
+  }
+
   private async getPoolsForGauges(poolIds: string[]) {
     const [tokens, pools] = await Promise.all([
       this.prisma.prismaToken.findMany({}),
@@ -198,6 +215,8 @@ export class GaugeService {
 
   async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {
     const userGauges: LiquidityGauge[] = [];
+
+    throw new Error(`getUserGaugeStakes: Unimplemented`);
 
     return userGauges;
   }
