@@ -62,7 +62,7 @@ export class TokenPriceService {
     return tokenPrices.filter((tokenPrice) => tokenPrice.price > 0.000000001);
   }
 
-  @CacheDecorator(TOKEN_PRICES_24H_AGO_CACHE_KEY, FIVE_MINUTES_SECONDS)
+  // @CacheDecorator(TOKEN_PRICES_24H_AGO_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getTokenPricesFrom24hAgo(): Promise<PrismaTokenCurrentPrice[]> {
     const oneDayAgo = moment().subtract(24, 'hours').unix();
     const tokenPrices = await this.prisma.prismaTokenPrice.findMany({

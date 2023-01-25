@@ -1,7 +1,6 @@
 import { isSameAddress } from '@balancer-labs/sdk';
 import { Injectable } from '@nestjs/common';
 import { formatFixed } from '@ethersproject/bignumber';
-import { TokenService } from 'src/modules/common/token/token.service';
 import { Inject } from '@nestjs/common';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
@@ -13,14 +12,14 @@ import { WeiPerEther } from '@ethersproject/constants';
 
 import * as VaultAbi from '../../pool/abi/Vault.json';
 import * as aTokenRateProvider from '../../pool/abi/StaticATokenRateProvider.json';
-import * as WeightedPoolAbi from '../../pool/abi/WeightedPool.json';
+// import * as WeightedPoolAbi from '../../pool/abi/WeightedPool.json';
 import * as StablePoolAbi from '../../pool/abi/StablePool.json';
 import * as MetaStablePool from '../../pool/abi/MetaStablePool.json';
 // import  * as ElementPoolAbi from '../../pool/abi/ConvergentCurvePool.json';
 import * as LinearPoolAbi from '../../pool/abi/LinearPool.json';
 import * as StablePhantomPoolAbi from '../../pool/abi/StablePhantomPool.json';
 //import ComposableStablePoolAbi from '../../pool/abi/ComposableStablePool.json';
-// import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
+import WeightedPoolV2Abi from '../../pool/abi/WeightedPoolV2.json';
 import * as LiquidityBootstrappingPoolAbi from '../../pool/abi/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { TokenPriceService } from '../token/pricing/token-price.service';
@@ -30,7 +29,6 @@ export class PoolOnChainDataService {
   constructor(
     @Inject(RPC) private rpc: AccountWeb3,
     private readonly prisma: PrismaService,
-    private readonly tokenService: TokenService,
     private readonly pricingService: TokenPriceService,
   ) {}
 
@@ -56,7 +54,7 @@ export class PoolOnChainDataService {
         [
           ...VaultAbi,
           ...aTokenRateProvider,
-          ...WeightedPoolAbi,
+          //...WeightedPoolAbi,
           ...StablePoolAbi,
           // ...ElementPoolAbi,
           ...LinearPoolAbi,
@@ -64,7 +62,7 @@ export class PoolOnChainDataService {
           ...StablePhantomPoolAbi,
           ...MetaStablePool,
           //...ComposableStablePoolAbi,
-          //...WeightedPoolV2Abi,
+          ...WeightedPoolV2Abi,
         ].map((row) => [row.name, row]),
       ),
     );

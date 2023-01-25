@@ -21,6 +21,7 @@ import { TokenService } from 'src/modules/common/token/token.service';
 import { TokenPricingService } from 'src/modules/common/token/types';
 import { isCoinGeckoToken } from 'src/modules/common/token/pricing/utils';
 import { DexScreenerService } from 'src/modules/common/token/pricing/dex-screener.service';
+import { networkConfig } from 'src/modules/config/network-config';
 
 @Injectable()
 export class PoolSnapshotService {
@@ -93,6 +94,11 @@ export class PoolSnapshotService {
   }
 
   async syncLatestSnapshotsForAllPools(daysToSync = 1) {
+    const currentBlock = await this.blockService.getBlockNumber();
+    if (currentBlock - networkConfig.startBlock < this.blockService.getBlocksPerDay()) {
+      return;
+    }
+
     let operations: any[] = [];
     const oneDayAgoStartOfDay = moment().utc().startOf('day').subtract(daysToSync, 'days').unix();
 
@@ -101,8 +107,6 @@ export class PoolSnapshotService {
       orderBy: PoolSnapshot_OrderBy.Timestamp,
       orderDirection: OrderDirection.Asc,
     });
-
-    console.log(allSnapshots);
 
     const latestSyncedSnapshots = await this.prisma.prismaPoolSnapshot.findMany({
       where: {
@@ -119,13 +123,9 @@ export class PoolSnapshotService {
     for (const poolId of poolIds) {
       const snapshots = allSnapshots.filter((snapshot) => snapshot.pool.id === poolId);
 
-      console.log(snapshots);
-
       const latestSyncedSnapshot = latestSyncedSnapshots.find(
         (snapshot) => snapshot.poolId === poolId,
       );
-
-      console.log(latestSyncedSnapshot);
 
       const startTotalSwapVolume = `${latestSyncedSnapshot?.totalSwapVolume || '0'}`;
       const startTotalSwapFee = `${latestSyncedSnapshot?.totalSwapFee || '0'}`;

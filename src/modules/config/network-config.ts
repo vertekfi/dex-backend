@@ -3,6 +3,7 @@ import { BigNumber } from 'ethers';
 export type DeploymentEnv = 'canary' | 'main';
 
 export interface NetworkConfig {
+  startBlock: number;
   chain: {
     slug: string;
     id: number;
@@ -75,6 +76,7 @@ export interface NetworkConfig {
 
 const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
   '56': {
+    startBlock: 10000000000000,
     chain: {
       slug: 'bsc',
       id: 56,
@@ -142,6 +144,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     },
   },
   '5': {
+    startBlock: 8370137,
     chain: {
       slug: 'goerli',
       id: 5,

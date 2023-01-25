@@ -39,6 +39,7 @@ import { VeGaugeAprService } from './lib/aprs/ve-bal-gauge-apr.service';
 import { GaugeService } from '../gauge/gauge.service';
 import { TokenPriceService } from '../common/token/pricing/token-price.service';
 import { networkConfig } from '../config/network-config';
+import { BlockService } from '../common/web3/block.service';
 
 const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
 
@@ -60,6 +61,7 @@ export class PoolService {
     private readonly protocolService: ProtocolService,
     private readonly gaugeService: GaugeService,
     private readonly pricingService: TokenPriceService,
+    private readonly blockService: BlockService,
   ) {}
 
   async getGqlPool(id: string) {
@@ -110,7 +112,7 @@ export class PoolService {
     return this.poolSwapService.getUserSwapVolume(args);
   }
 
-  @CacheDecorator(FEATURED_POOL_GROUPS_CACHE_KEY, FIVE_MINUTES_SECONDS)
+  // @CacheDecorator(FEATURED_POOL_GROUPS_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getFeaturedPoolGroups(): Promise<GqlPoolFeaturedPoolGroup[]> {
     const config = await this.protocolService.getProtocolConfigDataForChain();
     const pools = await this.prisma.prismaPool.findMany({
@@ -179,7 +181,7 @@ export class PoolService {
   }
 
   async syncNewPoolsFromSubgraph(): Promise<string[]> {
-    const blockNumber = await this.rpc.provider.getBlockNumber();
+    const blockNumber = await this.blockService.getBlockNumber();
 
     const poolIds = await this.poolCreatorService.syncNewPoolsFromSubgraph(blockNumber);
 
@@ -202,7 +204,7 @@ export class PoolService {
       },
     });
     const poolIds = result.map((item) => item.id);
-    const blockNumber = await this.rpc.provider.getBlockNumber();
+    const blockNumber = await this.blockService.getBlockNumber();
 
     const chunks = _.chunk(poolIds, 100);
 
@@ -216,7 +218,7 @@ export class PoolService {
   }
 
   async loadOnChainDataForPoolsWithActiveUpdates() {
-    const blockNumber = await this.rpc.provider.getBlockNumber();
+    const blockNumber = await this.blockService.getBlockNumber();
     const timestamp = moment().subtract(5, 'minutes').unix();
     console.time('getPoolsWithActiveUpdates');
     const poolIds = await this.balancerSubgraphService.getPoolsWithActiveUpdates(timestamp);
@@ -238,6 +240,10 @@ export class PoolService {
   }
 
   async syncSwapsForLast48Hours(): Promise<string[]> {
+    const currentBlock = await this.blockService.getBlockNumber();
+    if (currentBlock - networkConfig.startBlock < this.blockService.getBlocksPerDay()) {
+      return;
+    }
     console.time('syncSwapsForLast48Hours');
     const poolIds = await this.poolSwapService.syncSwapsForLast48Hours();
     console.timeEnd('syncSwapsForLast48Hours');
@@ -280,6 +286,10 @@ export class PoolService {
   }
 
   async updateLiquidity24hAgoForAllPools() {
+    const currentBlock = await this.blockService.getBlockNumber();
+    if (currentBlock - networkConfig.startBlock < this.blockService.getBlocksPerDay()) {
+      return;
+    }
     await this.poolUsdDataService.updateLiquidity24hAgoForAllPools();
   }
 

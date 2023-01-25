@@ -6,8 +6,6 @@ import { AccountWeb3 } from '../types';
 import { BlockFragment } from './types';
 import { BLOCKS_PER_DAY } from 'src/modules/utils/blocks';
 
-const DAILY_BLOCKS_CACHE_KEY = 'block-subgraph_daily-blocks';
-
 @Injectable()
 export class BlockService {
   constructor(@Inject(RPC) private readonly rpc: AccountWeb3) {}
