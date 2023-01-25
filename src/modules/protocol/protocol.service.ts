@@ -42,9 +42,11 @@ export class ProtocolService {
     const url = this.getTokenListUri();
     const { data } = await axios.get(url);
 
-    return data[networkConfig.protocol.tokenListMappingKey].tokens.filter(
+    const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens.filter(
       (tk) => tk.chainId === this.rpc.chainId,
     );
+
+    return tokens;
   }
 
   async getProtocolTokenListAllChains() {
@@ -55,69 +57,77 @@ export class ProtocolService {
   }
 
   async getMetrics(): Promise<ProtocolMetrics> {
-    const { totalSwapFee, totalSwapVolume, poolCount } =
-      await this.balancerSubgraphService.getProtocolData({});
+    try {
+      const { totalSwapFee, totalSwapVolume, poolCount } =
+        await this.balancerSubgraphService.getProtocolData({});
 
-    const oneDayAgo = moment().subtract(24, 'hours').unix();
-    const pools = await this.prisma.prismaPool.findMany({
-      where: {
-        categories: { none: { category: 'BLACK_LISTED' } },
-        type: { notIn: ['LINEAR'] },
-        dynamicData: {
-          totalSharesNum: {
-            gt: 0.000000000001,
+      const oneDayAgo = moment().subtract(24, 'hours').unix();
+      const pools = await this.prisma.prismaPool.findMany({
+        where: {
+          categories: { none: { category: 'BLACK_LISTED' } },
+          type: { notIn: ['LINEAR'] },
+          dynamicData: {
+            totalSharesNum: {
+              gt: 0.000000000001,
+            },
           },
         },
-      },
-      include: { dynamicData: true },
-    });
+        include: { dynamicData: true },
+      });
 
-    const swaps = await this.prisma.prismaPoolSwap.findMany({
-      where: { timestamp: { gte: oneDayAgo } },
-    });
-    const filteredSwaps = swaps.filter((swap) => pools.find((pool) => pool.id === swap.poolId));
+      const swaps = await this.prisma.prismaPoolSwap.findMany({
+        where: { timestamp: { gte: oneDayAgo } },
+      });
+      const filteredSwaps = swaps.filter((swap) => pools.find((pool) => pool.id === swap.poolId));
 
-    const totalLiquidity = _.sumBy(pools, (pool) =>
-      !pool.dynamicData ? 0 : pool.dynamicData.totalLiquidity,
-    );
+      const totalLiquidity = _.sumBy(pools, (pool) =>
+        !pool.dynamicData ? 0 : pool.dynamicData.totalLiquidity,
+      );
 
-    const swapVolume24h = _.sumBy(filteredSwaps, (swap) => swap.valueUSD);
-    const swapFee24h = _.sumBy(filteredSwaps, (swap) => {
-      const pool = pools.find((pool) => pool.id === swap.poolId);
+      const swapVolume24h = _.sumBy(filteredSwaps, (swap) => swap.valueUSD);
+      const swapFee24h = _.sumBy(filteredSwaps, (swap) => {
+        const pool = pools.find((pool) => pool.id === swap.poolId);
 
-      return parseFloat(pool?.dynamicData?.swapFee || '0') * swap.valueUSD;
-    });
+        return parseFloat(pool?.dynamicData?.swapFee || '0') * swap.valueUSD;
+      });
 
-    const protocolData: ProtocolMetrics = {
-      totalLiquidity: `${totalLiquidity}`,
-      totalSwapFee,
-      totalSwapVolume,
-      poolCount: `${poolCount}`,
-      swapVolume24h: `${swapVolume24h}`,
-      swapFee24h: `${swapFee24h}`,
-    };
+      const protocolData: ProtocolMetrics = {
+        totalLiquidity: `${totalLiquidity}`,
+        totalSwapFee,
+        totalSwapVolume,
+        poolCount: `${poolCount}`,
+        swapVolume24h: `${swapVolume24h}`,
+        swapFee24h: `${swapFee24h}`,
+      };
 
-    return protocolData;
+      return protocolData;
+    } catch (error) {
+      console.error('getMetrics: failed');
+    }
   }
 
   async getLatestSyncedBlocks(): Promise<LatestsSyncedBlocks> {
-    const userStakeSyncBlock = await this.prisma.prismaUserBalanceSyncStatus.findUnique({
-      where: { type: PrismaUserBalanceType.STAKED },
-    });
+    try {
+      const userStakeSyncBlock = await this.prisma.prismaUserBalanceSyncStatus.findUnique({
+        where: { type: PrismaUserBalanceType.STAKED },
+      });
 
-    const userWalletSyncBlock = await this.prisma.prismaUserBalanceSyncStatus.findUnique({
-      where: { type: PrismaUserBalanceType.WALLET },
-    });
+      const userWalletSyncBlock = await this.prisma.prismaUserBalanceSyncStatus.findUnique({
+        where: { type: PrismaUserBalanceType.WALLET },
+      });
 
-    const poolSyncBlock = await this.prisma.prismaLastBlockSynced.findUnique({
-      where: { category: PrismaLastBlockSyncedCategory.POOLS },
-    });
+      const poolSyncBlock = await this.prisma.prismaLastBlockSynced.findUnique({
+        where: { category: PrismaLastBlockSyncedCategory.POOLS },
+      });
 
-    return {
-      userWalletSyncBlock: `${userWalletSyncBlock?.blockNumber}`,
-      userStakeSyncBlock: `${userStakeSyncBlock?.blockNumber}`,
-      poolSyncBlock: `${poolSyncBlock?.blockNumber}`,
-    };
+      return {
+        userWalletSyncBlock: `${userWalletSyncBlock?.blockNumber}`,
+        userStakeSyncBlock: `${userStakeSyncBlock?.blockNumber}`,
+        poolSyncBlock: `${poolSyncBlock?.blockNumber}`,
+      };
+    } catch (error) {
+      console.error('getLatestSyncedBlocks: failed');
+    }
   }
 
   private getTokenListUri() {

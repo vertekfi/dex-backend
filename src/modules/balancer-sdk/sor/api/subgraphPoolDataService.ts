@@ -6,7 +6,6 @@ import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { gql } from 'graphql-request';
-import { SUBGRAPHS } from 'src/modules/data/addresses';
 import { networkConfig } from 'src/modules/config/network-config';
 
 const queryWithLinear = gql`

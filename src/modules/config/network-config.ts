@@ -203,8 +203,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       swapGas: BigNumber.from('1000000'),
     },
     protocol: {
-      tokenListUrl:
-        'https://github.com/vertekfi/token-list/blob/497628d8444900ddd3fecc4dd37595308b3548f4/tokenlist.json',
+      tokenListUrl: 'https://raw.githubusercontent.com/vertekfi/token-list/dev/tokenlist.json',
       tokenListMappingKey:
         'https://raw.githubusercontent.com/vertekfi/token-list/dev/tokenlist.json',
       poolDataUrl: 'https://raw.githubusercontent.com/vertekfi/pool-data-config/dev/pool-data.json',

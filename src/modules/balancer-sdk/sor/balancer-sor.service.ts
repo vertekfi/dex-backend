@@ -334,7 +334,7 @@ export class BalancerSorService {
         ...token,
         price: String(info.priceNum),
       };
-    } else {
+    } else if (token.coingeckoTokenId) {
       if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
         throw new Error(`Missing coingecko data for token ${token.address}`);
       }
@@ -342,6 +342,8 @@ export class BalancerSorService {
         ...token,
         price: await this.sorPriceService.getTokenPrice(token as unknown as TokenDefinition),
       };
+    } else {
+      console.error(`Token ${token.address} is not dexscreener or gecko...?`);
     }
   }
 
