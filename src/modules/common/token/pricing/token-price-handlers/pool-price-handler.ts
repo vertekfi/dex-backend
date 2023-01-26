@@ -7,6 +7,7 @@ import { nestApp } from 'src/main';
 import { TokenPriceHandler } from 'src/modules/common/token/types';
 import { ContractService } from 'src/modules/common/web3/contract.service';
 
+// Temp solution
 const addressMap = {
   '0xeD236c32f695c83Efde232c288701d6f9C23E60E': {
     poolId: '0xdd64e2ec144571b4320f7bfb14a56b2b2cbf37ad000200000000000000000000',
@@ -35,10 +36,11 @@ export class PoolPriceHandler implements TokenPriceHandler {
     console.log('PoolPriceHandler');
     console.log(tokens);
 
-    for (const token in addressMap) {
-      const matched = tokens.find((t) => t.address.toLowerCase() === token.toLowerCase());
-      if (matched) {
-        console.log(matched);
+    for (const token of tokens) {
+      const poolData = addressMap[token.address];
+      if (!poolData) {
+        console.error(`Token ${token.address} not in PoolPriceHandler mapping`);
+        continue;
       }
     }
 
