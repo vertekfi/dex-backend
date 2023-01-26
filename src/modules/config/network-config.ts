@@ -197,7 +197,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
         lockPoolAddress: '0xD0F30B415C65B99904caF716ABc3da23f57d3cdd',
       },
     },
-    multicall: '0x1050Bcfb2ec4CAe624BD1Eec5dadc2a3b4f4559a',
+    multicall: '0x4Ba82B21658CAE1975Fa26097d87bd48FF270124',
     avgBlockSpeed: 10,
     sor: {
       url: '',
