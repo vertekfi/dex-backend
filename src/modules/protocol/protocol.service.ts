@@ -34,6 +34,8 @@ export class ProtocolService {
     const url = networkConfig.protocol.poolDataUrl;
     const { data } = await axios.get(url);
 
+    console.log(data);
+
     return data[String(this.rpc.chainId)];
   }
 
@@ -42,11 +44,11 @@ export class ProtocolService {
     const url = this.getTokenListUri();
     const { data } = await axios.get(url);
 
-    console.log(data);
-
     const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens.filter(
       (tk) => tk.chainId === this.rpc.chainId,
     );
+
+    console.log(tokens);
 
     return tokens;
   }
@@ -55,7 +57,10 @@ export class ProtocolService {
     const url = this.getTokenListUri();
     const { data } = await axios.get(url);
 
-    return data[networkConfig.protocol.tokenListMappingKey].tokens;
+    const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens;
+    // console.log(tokens)
+
+    return tokens;
   }
 
   async getMetrics(): Promise<ProtocolMetrics> {

@@ -19,7 +19,7 @@ import * as MetaStablePool from '../../pool/abi/MetaStablePool.json';
 import * as LinearPoolAbi from '../../pool/abi/LinearPool.json';
 import * as StablePhantomPoolAbi from '../../pool/abi/StablePhantomPool.json';
 //import ComposableStablePoolAbi from '../../pool/abi/ComposableStablePool.json';
-import WeightedPoolV2Abi from '../../pool/abi/WeightedPoolV2.json';
+import * as WeightedPoolV2Abi from '../../pool/abi/WeightedPoolV2.json';
 import * as LiquidityBootstrappingPoolAbi from '../../pool/abi/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { TokenPriceService } from '../token/pricing/token-price.service';
