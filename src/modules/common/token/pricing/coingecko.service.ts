@@ -51,6 +51,7 @@ export class CoingeckoService implements TokenPricingService {
     const result = await this.get<TokenMarketData[]>(endpoint);
 
     for (const item of result) {
+      const tk = tokens.find((t) => t.coingeckoTokenId === item.id);
       const marketData: PrismaTokenDynamicData = {
         price: item.current_price,
         ath: item.ath,
@@ -67,7 +68,7 @@ export class CoingeckoService implements TokenPricingService {
         updatedAt: item.last_updated,
         coingeckoId: item.id,
         dexscreenerPair: null,
-        tokenAddress: tokens.find((t) => t.coingeckoTokenId === item.id).address,
+        tokenAddress: tk?.address || '',
       };
 
       data.push(marketData);

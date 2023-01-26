@@ -20,22 +20,19 @@ export class PoolPriceHandler implements TokenPriceHandler {
 
   readonly vault: Contract;
 
-  constructor(private readonly prisma: PrismaService) {
-    console.log('FKOFHIDFHIODFH[DFHSD[FHSDHFSDF');
+  constructor() {
     const cs = nestApp.get(ContractService);
     this.vault = cs.getVault();
   }
 
   async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    return tokens
-      .filter((token) => token.usePoolPricing && addressMap[token.address])
-      .map((token) => token.address);
+    return tokens.filter((token) => token.usePoolPricing).map((token) => token.address);
   }
 
   async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
     let updated: string[] = [];
     let operations: any[] = [];
-
+    console.log('PoolPriceHandler');
     console.log(tokens);
 
     for (const token in addressMap) {

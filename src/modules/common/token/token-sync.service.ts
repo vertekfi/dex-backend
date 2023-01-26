@@ -28,11 +28,14 @@ export class TokenSyncService {
     const tokensWithIds = await this.prisma.prismaToken.findMany({
       where: {
         OR: [
+          // {
+          //   coingeckoTokenId: { not: null },
+          // },
+          // {
+          //   dexscreenPairAddress: { not: null },
+          // },
           {
-            coingeckoTokenId: { not: null },
-          },
-          {
-            dexscreenPairAddress: { not: null },
+            usePoolPricing: true,
           },
         ],
         AND: {
@@ -100,6 +103,7 @@ export class TokenSyncService {
         chainId: token.chainId,
         useDexscreener: token.useDexscreener,
         dexscreenPairAddress: token.dexscreenPairAddress,
+        usePoolPricing: token.usePoolPricing || false,
       };
 
       await this.prisma.prismaToken.upsert({
@@ -141,6 +145,8 @@ export class TokenSyncService {
         isSameAddress(token.address, dbToken.tokenAddress),
       );
     });
+
+    console.log(addToWhitelist);
 
     const removeFromWhitelist = whiteListedTokens.filter((dbToken) => {
       return !tokens.some((token) => isSameAddress(dbToken.tokenAddress, token.address));

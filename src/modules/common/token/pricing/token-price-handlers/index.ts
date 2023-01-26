@@ -4,6 +4,7 @@ import { BptPriceHandlerService } from './bpt-price-handler.service';
 import { CoingeckoPriceHandlerService } from './coingecko-price-handler';
 import { DexscreenerPriceHandlerService } from './dexscreener-price-handler.service';
 import { LinearWrappedTokenPriceHandlerService } from './linear-wrapped-token-price-handler.service';
+import { PoolPriceHandler } from './pool-price-handler';
 import { SwapsPriceHandlerService } from './swaps-price-handler.service';
 
 export const PRICE_HANDLERS = [
@@ -12,6 +13,7 @@ export const PRICE_HANDLERS = [
   BptPriceHandlerService,
   LinearWrappedTokenPriceHandlerService,
   SwapsPriceHandlerService,
+  PoolPriceHandler,
 ];
 
 export function getPriceHandlers(): TokenPriceHandler[] {
