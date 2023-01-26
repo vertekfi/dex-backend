@@ -6,6 +6,7 @@ import ERC20Abi from './abi/ERC20.json';
 import { BigNumber } from 'ethers';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { AccountWeb3 } from '../types';
+import { networkConfig } from 'src/modules/config/network-config';
 
 export interface MulticallUserBalance {
   erc20Address: string;
@@ -55,7 +56,7 @@ export class Multicaller {
 
   private async executeMulticall(): Promise<Result[]> {
     const multi = new Contract(
-      CONTRACT_MAP.MULTICALL_V1[this.rpc.chainId],
+      networkConfig.multicall,
       [
         'function aggregate(tuple[](address target, bytes callData) memory calls) public view returns (uint256 blockNumber, bytes[] memory returnData)',
       ],
@@ -64,7 +65,6 @@ export class Multicaller {
 
     const [, res] = await multi.aggregate(
       this.calls.map(([address, functionName, params]) => {
-        console.log(`${address}-${functionName}`);
         return [address, this.interface.encodeFunctionData(functionName, params)];
       }),
       this.options,

@@ -46,10 +46,8 @@ export class GaugeService {
   // TODO: Get these from database
   //  @CacheDecorator(SUBGRAPH_GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getLiquidityGauges() {
-    const data = await this.protocolService.getProtocolConfigDataForChain();
-    console.log(data.gauges);
-
-    const multicaller = new Multicaller(this.rpc, LGV5Abi);
+    // const data = await this.protocolService.getProtocolConfigDataForChain();
+    // const multicaller = new Multicaller(this.rpc, LGV5Abi);
 
     const { liquidityGauges } = await this.gaugeSubgraphService.client.request(gql`
       query {
@@ -179,7 +177,6 @@ export class GaugeService {
     const multiCaller = new Multicaller(this.rpc, LGV5Abi);
 
     gauges.forEach((gauge) => {
-      console.log(gauge);
       multiCaller.call(`${gauge.id}.depositFee`, gauge.id, 'getDepositFee');
       multiCaller.call(`${gauge.id}.withdrawFee`, gauge.id, 'getWithdrawFee');
     });

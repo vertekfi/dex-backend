@@ -42,13 +42,9 @@ export class ProtocolService {
     // const url = this.getTokenListUri();
     const { data } = await axios.get(networkConfig.protocol.tokenListUrl);
 
-    console.log(data);
-
-    const tokens = JSON.parse(data)[networkConfig.protocol.tokenListMappingKey].tokens.filter(
+    const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens.filter(
       (tk) => tk.chainId === this.rpc.chainId,
     );
-
-    console.log(tokens);
 
     return tokens;
   }
