@@ -12,7 +12,7 @@ import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { networkConfig } from 'src/modules/config/network-config';
 import { BalancerSubgraphService } from 'src/modules/subgraphs/balancer/balancer-subgraph.service';
 import { BalancerUserPoolShare } from 'src/modules/subgraphs/balancer/balancer-types';
-import * as ERC20Abi from '../../common/web3/abi/ERC20.json';
+import * as ERC20Abi from '../../abis/ERC20.json';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 
 @Injectable()

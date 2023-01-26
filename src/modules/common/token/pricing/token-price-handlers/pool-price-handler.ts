@@ -33,8 +33,8 @@ export class PoolPriceHandler implements TokenPriceHandler {
   async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
     let updated: string[] = [];
     let operations: any[] = [];
-    console.log('PoolPriceHandler');
-    console.log(tokens);
+    // console.log('PoolPriceHandler');
+    // console.log(tokens);
 
     for (const token of tokens) {
       const poolData = addressMap[token.address];

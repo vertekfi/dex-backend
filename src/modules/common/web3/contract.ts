@@ -1,6 +1,7 @@
 import { getAddress } from 'ethers/lib/utils';
 import { Contract, ethers } from 'ethers';
 import { networkConfig } from 'src/modules/config/network-config';
+import { getProviderOrDefault } from './rpc.provider';
 
 export function returnChecksum() {
   return function (target: any, key: string, descriptor: PropertyDescriptor) {
@@ -17,4 +18,8 @@ export const jsonRpcProvider = new ethers.providers.JsonRpcProvider(networkConfi
 
 export function getContractAt<T extends Contract>(address: string, abi: any): T {
   return new Contract(address, abi, jsonRpcProvider) as T;
+}
+
+export async function getGaugeController(chainId?: number) {
+  return new Contract('', [], await getProviderOrDefault(chainId));
 }

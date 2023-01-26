@@ -1,10 +1,8 @@
 import { chunk, map, set } from 'lodash';
 import { Fragment, JsonFragment, Interface, Result } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
-import { Provider } from '@ethersproject/providers';
-import ERC20Abi from './abi/ERC20.json';
+import ERC20Abi from '../../abis/ERC20.json';
 import { BigNumber } from 'ethers';
-import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { AccountWeb3 } from '../types';
 import { networkConfig } from 'src/modules/config/network-config';
 

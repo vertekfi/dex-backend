@@ -4,7 +4,7 @@ import { Contract } from 'ethers';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
-import * as ba from '../abis/BalancerTokenAdmin.json';
+import * as ba from '../../abis/BalancerTokenAdmin.json';
 
 @Injectable()
 export class BalTokenAdmin {

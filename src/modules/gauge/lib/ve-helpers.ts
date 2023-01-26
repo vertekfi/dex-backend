@@ -7,7 +7,7 @@ import { mapValues } from 'lodash';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
-import * as vhABI from '../abis/VEBalHelpers.json';
+import * as vhABI from '../../abis/VEBalHelpers.json';
 
 @Injectable()
 export class VeBalHelpers {

@@ -3,17 +3,17 @@ import { formatFixed } from '@ethersproject/bignumber';
 import { Provider } from '@ethersproject/providers';
 
 // TODO: decide whether we want to trim these ABIs down to the relevant functions
-import * as VaultAbi from '../../../pool/abi/Vault.json';
-import * as aTokenRateProvider from '../../../pool/abi/StaticATokenRateProvider.json';
-import * as WeightedPoolAbi from '../../../pool/abi/WeightedPool.json';
-import * as StablePoolAbi from '../../../pool/abi/StablePool.json';
-import * as MetaStablePoolAbi from '../../../pool/abi/MetaStablePool.json';
-// import ElementPoolAbi from '../../../pool/abi/ConvergentCurvePool.json';
-import * as LinearPoolAbi from '../../../pool/abi/LinearPool.json';
-// import StablePhantomPoolAbi from '../../../pool/abi/StablePhantomPool.json';
-// import ComposableStablePoolAbi from '../../../pool/abi/ComposableStablePool.json';
+import * as VaultAbi from '../../../abis/Vault.json';
+import * as aTokenRateProvider from '../../../abis/StaticATokenRateProvider.json';
+import * as WeightedPoolAbi from '../../../abis/WeightedPool.json';
+import * as StablePoolAbi from '../../../abis/StablePool.json';
+import * as MetaStablePoolAbi from '../../../abis/MetaStablePool.json';
+// import ElementPoolAbi from '../../abis/ConvergentCurvePool.json';
+import * as LinearPoolAbi from '../../../abis/LinearPool.json';
+// import StablePhantomPoolAbi from '../../abis/StablePhantomPool.json';
+// import ComposableStablePoolAbi from '../../abis/ComposableStablePool.json';
 // import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
-import * as LiquidityBootstrappingPoolAbi from '../../../pool/abi/LiquidityBootstrappingPool.json';
+import * as LiquidityBootstrappingPoolAbi from '../../../abis/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
 import { PoolDataService, PoolFilter, SubgraphPoolBase } from '../types';

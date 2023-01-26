@@ -2,10 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Contract } from 'ethers';
 import { CONTRACT_MAP } from '../../data/contracts';
 import { AccountWeb3 } from '../types';
-import { VAULT_ABI } from './abi/VaultABI';
-import * as LiqGaugeV5abi from '../../common/web3/abi/LiquidityGaugeV5.json';
-import * as protoTokenAbi from '../../common/web3/abi/ProtocolToken.json';
-import * as bptABI from './abi/BalancerPoolToken.json';
+import { VAULT_ABI } from '../../abis/VaultABI';
+import * as LiqGaugeV5abi from '../../abis/LiquidityGaugeV5.json';
+import * as protoTokenAbi from '../../abis/ProtocolToken.json';
+import * as bptABI from '../../abis/BalancerPoolToken.json';
 import { RPC } from './rpc.provider';
 import { networkConfig } from 'src/modules/config/network-config';
 

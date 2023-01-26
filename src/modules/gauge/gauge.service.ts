@@ -21,7 +21,7 @@ import { PrismaService } from 'nestjs-prisma';
 import * as moment from 'moment-timezone';
 import { scaleDown } from '../utils/old-big-number';
 import { LiquidityGauge } from 'src/graphql';
-import * as LGV5Abi from './abis/LiquidityGaugeV5.json';
+import * as LGV5Abi from '../abis/LiquidityGaugeV5.json';
 import { BigNumber } from 'ethers';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
@@ -43,11 +43,13 @@ export class GaugeService {
     return await this.gaugeSubgraphService.getAllGaugeAddresses();
   }
 
-  // TODO: Get these from database
   //  @CacheDecorator(SUBGRAPH_GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getLiquidityGauges() {
-    // const data = await this.protocolService.getProtocolConfigDataForChain();
-    // const multicaller = new Multicaller(this.rpc, LGV5Abi);
+    // TODO: Get these from database
+    // Subgraph currently only show one created when contract call shows full count
+    // Fuckin butt cheeks. Just sync it ourselves for all that
+    const data = await this.protocolService.getProtocolConfigDataForChain();
+    const multicaller = new Multicaller(this.rpc, LGV5Abi);
 
     const { liquidityGauges } = await this.gaugeSubgraphService.client.request(gql`
       query {
@@ -71,6 +73,9 @@ export class GaugeService {
         }
       }
     `);
+
+    console.log('GAUGES');
+    console.log(liquidityGauges);
 
     return liquidityGauges;
   }

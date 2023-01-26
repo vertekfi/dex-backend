@@ -10,17 +10,17 @@ import { isComposableStablePool, isWeightedPoolV2, isStablePool } from '../../po
 import { PrismaService } from 'nestjs-prisma';
 import { WeiPerEther } from '@ethersproject/constants';
 
-import * as VaultAbi from '../../pool/abi/Vault.json';
-import * as aTokenRateProvider from '../../pool/abi/StaticATokenRateProvider.json';
-// import * as WeightedPoolAbi from '../../pool/abi/WeightedPool.json';
-import * as StablePoolAbi from '../../pool/abi/StablePool.json';
-import * as MetaStablePool from '../../pool/abi/MetaStablePool.json';
-// import  * as ElementPoolAbi from '../../pool/abi/ConvergentCurvePool.json';
-import * as LinearPoolAbi from '../../pool/abi/LinearPool.json';
-import * as StablePhantomPoolAbi from '../../pool/abi/StablePhantomPool.json';
-//import ComposableStablePoolAbi from '../../pool/abi/ComposableStablePool.json';
-import * as WeightedPoolV2Abi from '../../pool/abi/WeightedPoolV2.json';
-import * as LiquidityBootstrappingPoolAbi from '../../pool/abi/LiquidityBootstrappingPool.json';
+import * as VaultAbi from '../../abis/Vault.json';
+import * as aTokenRateProvider from '../../abis/StaticATokenRateProvider.json';
+// import * as WeightedPoolAbi from '../../abis/WeightedPool.json';
+import * as StablePoolAbi from '../../abis/StablePool.json';
+import * as MetaStablePool from '../../abis/MetaStablePool.json';
+// import  * as ElementPoolAbi from '../../abis/ConvergentCurvePool.json';
+import * as LinearPoolAbi from '../../abis/LinearPool.json';
+import * as StablePhantomPoolAbi from '../../abis/StablePhantomPool.json';
+//import ComposableStablePoolAbi from '../../abis/ComposableStablePool.json';
+import * as WeightedPoolV2Abi from '../../abis/WeightedPoolV2.json';
+import * as LiquidityBootstrappingPoolAbi from '../../abis/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { TokenPriceService } from '../token/pricing/token-price.service';
 
