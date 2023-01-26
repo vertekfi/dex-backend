@@ -34,7 +34,7 @@ export class ProtocolService {
     const url = networkConfig.protocol.poolDataUrl;
     const { data } = await axios.get(url);
 
-    console.log(data);
+    // console.log(data);
 
     return data[String(this.rpc.chainId)];
   }
@@ -48,7 +48,7 @@ export class ProtocolService {
       (tk) => tk.chainId === this.rpc.chainId,
     );
 
-    console.log(tokens);
+    //console.log(tokens);
 
     return tokens;
   }
