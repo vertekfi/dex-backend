@@ -305,6 +305,7 @@ export class PoolService {
         },
       },
     });
+
     const chunks = _.chunk(pools, 10);
 
     for (const chunk of chunks) {

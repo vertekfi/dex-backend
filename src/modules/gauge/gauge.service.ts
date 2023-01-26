@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { isNil, mapValues } from 'lodash';
-import { formatEther, formatUnits, getAddress } from 'ethers/lib/utils';
+import { formatUnits, getAddress } from 'ethers/lib/utils';
 import { bnum } from '../balancer-sdk/sor/impl/utils/bignumber';
 import { ProtocolService } from '../protocol/protocol.service';
 import { GaugeSubgraphService } from '../subgraphs/gauge-subgraph/gauge-subgraph.service';
@@ -19,13 +19,18 @@ import { CONTRACT_MAP } from '../data/contracts';
 import { gql } from 'graphql-request';
 import { PrismaService } from 'nestjs-prisma';
 import * as moment from 'moment-timezone';
-import { scaleDown } from '../utils/old-big-number';
+import { ethNum, scaleDown } from '../utils/old-big-number';
 import { LiquidityGauge } from 'src/graphql';
 import * as LGV5Abi from '../abis/LiquidityGaugeV5.json';
 import { BigNumber } from 'ethers';
+import { PrismaPoolStakingGauge } from '@prisma/client';
+import { ZERO_ADDRESS } from '../common/web3/utils';
+import { prismaPoolMinimal } from 'prisma/prisma-types';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const SUBGRAPH_GAUGE_CACHE_KEY = 'SUBGRAPH_GAUGE_CACHE_KEY';
+
+const MAX_REWARDS = 8;
 
 @Injectable()
 export class GaugeService {
@@ -43,14 +48,7 @@ export class GaugeService {
     return await this.gaugeSubgraphService.getAllGaugeAddresses();
   }
 
-  //  @CacheDecorator(SUBGRAPH_GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getLiquidityGauges() {
-    // TODO: Get these from database
-    // Subgraph currently only show one created when contract call shows full count
-    // Fuckin butt cheeks. Just sync it ourselves for all that
-    const data = await this.protocolService.getProtocolConfigDataForChain();
-    const multicaller = new Multicaller(this.rpc, LGV5Abi);
-
     const { liquidityGauges } = await this.gaugeSubgraphService.client.request(gql`
       query {
         liquidityGauges {
@@ -74,13 +72,9 @@ export class GaugeService {
       }
     `);
 
-    console.log('GAUGES');
-    console.log(liquidityGauges);
-
     return liquidityGauges;
   }
 
-  // @CacheDecorator(GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getAllGauges() {
     const gauges = await this.getCoreGauges();
     const { pools, tokens } = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
@@ -108,91 +102,113 @@ export class GaugeService {
     return gauges;
   }
 
-  // @CacheDecorator(GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getCoreGauges() {
-    const [subgraphGauges, protoData] = await Promise.all([
-      this.getLiquidityGauges(),
-      this.protocolService.getProtocolConfigDataForChain(),
+    const protoData = await this.protocolService.getProtocolConfigDataForChain();
+    const poolIds = protoData.gauges.map((g) => g.poolId);
+    const pools = await this.prisma.prismaPool.findMany({
+      where: {
+        id: { in: poolIds },
+      },
+      ...prismaPoolMinimal,
+    });
+
+    const gaugeInfos = pools.filter((p) => p.staking).map((p) => p.staking.gauge);
+    const stakingInfos = pools.filter((p) => p.staking).map((p) => p.staking);
+
+    const [rewardTokens, onchainInfo] = await Promise.all([
+      this.getGaugesRewardData(gaugeInfos),
+      this.getGaugeAdditionalInfo(gaugeInfos),
     ]);
 
-    const rewardTokens = await this.getGaugesRewardData(subgraphGauges);
-    const gaugeFeesMap = await this.getGaugeFees(subgraphGauges);
     const gauges = [];
 
-    for (const gauge of subgraphGauges) {
-      const matched = protoData.gauges.find((g) => g.poolId === gauge.poolId);
-      if (matched) {
-        gauges.push({
-          id: gauge.id,
-          symbol: gauge.symbol,
-          poolId: gauge.poolId,
-          address: gauge.id,
-          totalSupply: gauge.totalSupply,
-          factory: {
-            id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
-          },
-          isKilled: gauge.isKilled,
-          rewardTokens: rewardTokens.filter((r) => r.gaugeAddress == gauge.id),
-          fees: gaugeFeesMap[gauge.id],
-        });
-      }
+    for (const gauge of stakingInfos) {
+      const onchain = onchainInfo[gauge.id];
+      const pool = pools.find((p) => p.id === gauge.poolId);
+      const gqlPool = {
+        ...pool,
+        poolType: pool.type,
+        tokensList: pool.tokens.map((t) => t.address),
+      };
+
+      gauges.push({
+        id: gauge.id,
+        symbol: pool.staking.gauge.symbol,
+        poolId: gauge.poolId,
+        address: gauge.id,
+        totalSupply: onchain.totalSupply,
+        factory: {
+          id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
+        },
+        isKilled: onchain.isKilled,
+        rewardTokens: rewardTokens[gauge.id] || [],
+        depositFee: onchain.depositFee,
+        withdrawFee: onchain.withdrawFee,
+        pool: gqlPool,
+      });
     }
 
     return gauges;
   }
 
-  async getGaugesRewardData(gauges: any[]) {
+  async getGaugesRewardData(gauges: PrismaPoolStakingGauge[]) {
     const multiCaller = new Multicaller(this.rpc, LGV5Abi);
-    const rewardTokens = [];
 
-    for (const gauge of gauges) {
-      gauge.tokens?.forEach((rewardToken) => {
-        // id in subgraph = <tokenAddress>-<gaugeAddress>
-        const tokenAddress = rewardToken.id.split('-')[0];
-        multiCaller.call(rewardToken.id, gauge.id, 'reward_data', [tokenAddress]);
+    gauges.forEach((gauge) => {
+      [].fill(MAX_REWARDS - 1).forEach((idx) => {
+        multiCaller.call(`${gauge.id}.reward_data.${idx}`, gauge.id, 'reward_data', [idx]);
       });
+    });
 
-      const rewardDataResult = (await multiCaller.execute()) as Record<
-        string,
-        { rate: BigNumber; period_finish: string }
-      >;
+    const rewardDataResult = (await multiCaller.execute()) as Record<
+      string,
+      { rate: BigNumber; period_finish: BigNumber; token: string }
+    >;
 
-      gauge.tokens?.forEach((rewardToken) => {
-        const rewardData = rewardDataResult[rewardToken.id];
-        const isActive = moment.unix(parseInt(rewardData.period_finish)).isAfter(moment());
-        // id in subgraph = <tokenAddress>-<gaugeAddress>
-        const address = rewardToken.id.split('-')[0];
+    return gauges
+      .map((gauge) => {
+        const rewardData = rewardDataResult[gauge.id];
+        if (rewardData && rewardData.token !== ZERO_ADDRESS) {
+          const isActive = moment.unix(rewardData.period_finish.toNumber()).isAfter(moment());
 
-        rewardTokens.push({
-          gaugeAddress: gauge.id,
-          ...rewardToken,
-          address,
-          rewardsPerSecond: isActive
-            ? scaleDown(rewardData.rate.toString(), rewardToken.decimals || 18).toNumber()
-            : 0,
-          id: address,
-        });
-      });
-    }
-
-    return rewardTokens;
+          return {
+            [gauge.id]: {
+              // TODO: A none 18 decimal reward would cause issues here
+              // Could try to map to database tokens since adding tokens is "permissioned"
+              rewardPerSecond: isActive ? scaleDown(rewardData.rate.toString(), 18).toNumber() : 0,
+              tokenAddress: rewardData.token,
+              gaugeid: gauge.id,
+            },
+          };
+        }
+      })
+      .filter((g) => g !== undefined);
   }
 
-  async getGaugeFees(gauges: any[]) {
+  async getGaugeAdditionalInfo(gauges: PrismaPoolStakingGauge[]) {
     const multiCaller = new Multicaller(this.rpc, LGV5Abi);
 
     gauges.forEach((gauge) => {
       multiCaller.call(`${gauge.id}.depositFee`, gauge.id, 'getDepositFee');
       multiCaller.call(`${gauge.id}.withdrawFee`, gauge.id, 'getWithdrawFee');
+      multiCaller.call(`${gauge.id}.totalSupply`, gauge.id, 'totalSupply');
+      multiCaller.call(`${gauge.id}.iskilled`, gauge.id, 'is_killed');
+      multiCaller.call(`${gauge.id}.symbol`, gauge.id, 'symbol');
     });
 
-    const fees = await multiCaller.execute();
-    for (const address in fees) {
-      fees[address].depositFee = fees[address].depositFee.toNumber();
-      fees[address].withdrawFee = fees[address].withdrawFee.toNumber();
+    const data = await multiCaller.execute();
+    const results: any = {};
+    for (const address in data) {
+      results[address] = {
+        depositFee: data[address].depositFee.toNumber(),
+        withdrawFee: data[address].withdrawFee.toNumber(),
+        iskilled: data[address].iskilled,
+        totalSupply: ethNum(data[address].totalSupply),
+        symbol: data[address].symbol,
+      };
     }
 
-    return;
+    return results;
   }
 
   private async getPoolsForGauges(poolIds: string[]) {

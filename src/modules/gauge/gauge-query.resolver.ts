@@ -7,7 +7,7 @@ export class GaugeQueryResolver {
 
   @Query()
   async getLiquidityGauges() {
-    return this.gaugeService.getAllGauges();
+    return this.gaugeService.getCoreGauges();
   }
 
   @Query()

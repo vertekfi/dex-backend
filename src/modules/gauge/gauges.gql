@@ -80,10 +80,6 @@ type LiquidityGauge {
 
   factory: GaugeFactory
 
-  fees: GaugeFees!
-}
-
-type GaugeFees {
   depositFee: Int!
 
   withdrawFee: Int!

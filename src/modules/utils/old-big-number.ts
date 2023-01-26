@@ -5,6 +5,10 @@ import { formatFixed } from '@ethersproject/bignumber';
 
 type AmountHumanReadable = string;
 
+export function ethNum(value: BigNumber) {
+  return Number(formatFixed(value));
+}
+
 export function oldBnum(val: string | number | OldBigNumber): OldBigNumber {
   const number = typeof val === 'string' ? val : val ? val.toString() : '0';
   return new OldBigNumber(number);

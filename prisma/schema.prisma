@@ -300,9 +300,9 @@ model PrismaPoolFilterMap {
 }
 
 model PrismaPoolStaking {
-    id                  String              @id
-    poolId              String              @unique
-    pool                PrismaPool          @relation(fields:[poolId], references: [id])
+    id                  String                      @id
+    poolId              String                      @unique
+    pool                PrismaPool                  @relation(fields:[poolId], references: [id])
     type                PrismaPoolStakingType
     address             String
     gauge               PrismaPoolStakingGauge?
@@ -310,17 +310,9 @@ model PrismaPoolStaking {
     userStakedBalances  PrismaUserStakedBalance[]
 }
 
-
 enum PrismaPoolStakingType {
-    MASTER_CHEF
     GAUGE
-    RELIQUARY
-    FRESH_BEETS
 }
-
-
-
-
 
 model PrismaPoolStakingGauge {
     id                  String              @id
@@ -328,12 +320,18 @@ model PrismaPoolStakingGauge {
     staking             PrismaPoolStaking   @relation(fields:[stakingId], references: [id])
     gaugeAddress        String
     rewards             PrismaPoolStakingGaugeReward[]
+
+    depositFee          Int                 @default(0)
+    withdrawFee         Int                 @default(0)
+    totalSupply         Float               @default(0)
+    symbol              String              @default("")
+    isKilled            Boolean             @default(false)
 }
 
 model PrismaPoolStakingGaugeReward{
-    id                  String              @id
+    id                  String                  @id
     gaugeId             String
-    gauge               PrismaPoolStakingGauge @relation(fields:[gaugeId], references: [id])
+    gauge               PrismaPoolStakingGauge  @relation(fields:[gaugeId], references: [id])
     tokenAddress        String
     rewardPerSecond     String
 }

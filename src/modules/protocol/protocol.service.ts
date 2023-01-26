@@ -9,8 +9,6 @@ import { PrismaLastBlockSyncedCategory, PrismaUserBalanceType } from '@prisma/cl
 import axios from 'axios';
 import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
-import { FIVE_MINUTES_SECONDS, THIRTY_MINUTES_SECONDS } from '../utils/time';
-import { CacheDecorator } from '../common/decorators/cache.decorator';
 import { networkConfig } from '../config/network-config';
 
 export const PROTOCOL_METRICS_CACHE_KEY = 'protocol:metrics';
@@ -29,7 +27,6 @@ export class ProtocolService {
     return networkConfig.balancer.votingEscrow.lockablePoolId;
   }
 
-  // @CacheDecorator(PROTOCOL_CONFIG_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getProtocolConfigDataForChain(): Promise<ProtocolConfigData> {
     const url = networkConfig.protocol.poolDataUrl;
     const { data } = await axios.get(url);
@@ -37,7 +34,6 @@ export class ProtocolService {
     return data[String(this.rpc.chainId)];
   }
 
-  // @CacheDecorator(PROTOCOL_TOKENLIST_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getProtocolTokenList() {
     // const url = this.getTokenListUri();
     const { data } = await axios.get(networkConfig.protocol.tokenListUrl);
@@ -50,7 +46,6 @@ export class ProtocolService {
   }
 
   async getProtocolTokenListAllChains() {
-    // const url = this.getTokenListUri();
     const { data } = await axios.get(networkConfig.protocol.tokenListUrl);
 
     const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens;

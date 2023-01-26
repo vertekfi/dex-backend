@@ -1,80 +1,72 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
+import { Multicaller } from '../common/web3/multicaller';
+import { logging } from '../utils/logger';
+import * as LGV5Abi from '../abis/LiquidityGaugeV5.json';
 import { GaugeService } from './gauge.service';
+import { AccountWeb3 } from '../common/types';
+import { RPC } from '../common/web3/rpc.provider';
+import { ProtocolService } from '../protocol/protocol.service';
 
 @Injectable()
 export class GaugeSyncService {
-  constructor(private gaugeService: GaugeService, private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(RPC) private readonly rpc: AccountWeb3,
+    private gaugeService: GaugeService,
+    private readonly prisma: PrismaService,
+    private readonly protocolService: ProtocolService,
+  ) {}
 
   async syncGaugeData(): Promise<void> {
-    const gauges = await this.gaugeService.getCoreGauges();
+    const protoData = await this.protocolService.getProtocolConfigDataForChain();
+    const operations: any[] = [];
+
+    const poolIds = protoData.gauges.map((g) => g.poolId);
 
     const pools = await this.prisma.prismaPool.findMany({
+      where: {
+        id: { in: poolIds },
+      },
       include: {
         staking: { include: { gauge: { include: { rewards: true } } } },
       },
     });
 
-    const operations: any[] = [];
-    const gaugeStakingEntities: any[] = [];
-    const gaugeStakingRewardOperations: any[] = [];
+    // get rewards amd additional info for each proto gauge instance (could also delete any not found in proto list for whatever reason)
+    const gaugeInfos = pools.filter((p) => p.staking).map((p) => p.staking.gauge);
 
-    for (const gauge of gauges) {
-      const pool = pools.find((pool) => pool.id === gauge.poolId);
-      if (!pool) {
-        continue;
-      }
+    const [gaugeChainData, rewardTokens] = await Promise.all([
+      this.gaugeService.getGaugeAdditionalInfo(gaugeInfos),
+      this.gaugeService.getGaugesRewardData(gaugeInfos),
+    ]);
 
+    console.log(gaugeChainData);
+    console.log(rewardTokens);
+
+    pools.forEach((pool, i) => {
       if (!pool.staking) {
+        const gaugeAddress = protoData.gauges[i].address;
         operations.push(
           this.prisma.prismaPoolStaking.create({
             data: {
-              id: gauge.address,
+              id: gaugeAddress,
               poolId: pool.id,
               type: 'GAUGE',
-              address: gauge.address,
+              address: gaugeAddress,
+              gauge: {
+                create: {
+                  id: gaugeAddress,
+                  gaugeAddress,
+                },
+              },
             },
           }),
         );
       }
+    });
 
-      gaugeStakingEntities.push({
-        id: gauge.address,
-        stakingId: gauge.address,
-        gaugeAddress: gauge.address,
-      });
-
-      for (let rewardToken of gauge.rewardTokens) {
-        const id = `${gauge.address}-${rewardToken.address}`;
-
-        gaugeStakingRewardOperations.push(
-          this.prisma.prismaPoolStakingGaugeReward.upsert({
-            create: {
-              id,
-              gaugeId: gauge.address,
-              tokenAddress: rewardToken.address,
-              rewardPerSecond: `${rewardToken.rewardsPerSecond}`,
-            },
-            update: {
-              rewardPerSecond: `${rewardToken.rewardsPerSecond}`,
-            },
-            where: { id },
-          }),
-        );
-      }
-    }
-
-    operations.push(
-      this.prisma.prismaPoolStakingGauge.createMany({
-        data: gaugeStakingEntities,
-        skipDuplicates: true,
-      }),
-    );
-
-    operations.push(...gaugeStakingRewardOperations);
-
-    await prismaBulkExecuteOperations(operations, true, undefined);
+    await prismaBulkExecuteOperations(operations);
   }
 
   async reloadStakingForAllPools(): Promise<void> {
