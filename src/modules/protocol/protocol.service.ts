@@ -125,8 +125,4 @@ export class ProtocolService {
       console.error('getLatestSyncedBlocks: failed');
     }
   }
-
-  private getTokenListUri() {
-    return networkConfig.protocol.tokenListUrl + '?raw=true';
-  }
 }

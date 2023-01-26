@@ -88,8 +88,7 @@ export class GaugeService {
     const gaugeInfos = pools.filter((p) => p.staking).map((p) => p.staking.gauge);
     const stakingInfos = pools.filter((p) => p.staking).map((p) => p.staking);
 
-    const [rewardTokens] = await Promise.all([this.getGaugesRewardData(gaugeInfos)]);
-
+    // const [rewardTokens] = await Promise.all([this.getGaugesRewardData(gaugeInfos)]);
     // const onchainInfo = await this.getGaugeAdditionalInfo(gaugeInfos);
 
     const gauges = [];
@@ -100,6 +99,11 @@ export class GaugeService {
         ...pool,
         poolType: pool.type,
         tokensList: pool.tokens.map((t) => t.address),
+        tokens: pool.tokens.map((token) => {
+          return {
+            ...token.token,
+          };
+        }),
       };
 
       gauges.push({
