@@ -175,7 +175,7 @@ export class ScheduledJobService {
       TWO_MINUTES_IN_MS,
       async () => {
         await this.poolService.updateLiquidityValuesForPools();
-        await this.poolService.updatePoolAprs();
+        //  await this.poolService.updatePoolAprs();
       },
     );
 
