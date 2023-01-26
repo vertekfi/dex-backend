@@ -76,7 +76,7 @@ export interface NetworkConfig {
 
 const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
   '56': {
-    startBlock: 10000000000000,
+    startBlock: 25100959, // vault deploy block
     chain: {
       slug: 'bsc',
       id: 56,
@@ -85,8 +85,8 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     },
     subgraphs: {
       startDate: '2024-01-25',
-      balancer: '',
-      gauges: '',
+      balancer: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-subgraph',
+      gauges: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-gauges-subgraph',
       blocks: '',
       userBalances: '',
     },
@@ -107,25 +107,25 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     rpcUrl: 'https://bsc-dataseed.binance.org',
     beetsPriceProviderRpcUrl: 'https://bsc-dataseed.binance.org',
     beets: {
-      address: '0x5Be975013095AEa033dB098787C56e5867107060',
+      address: '0xeD236c32f695c83Efde232c288701d6f9C23E60E',
     },
     bal: {
       address: '',
     },
     balancer: {
-      vault: '0x2a59fCaa63efBEFe8816A4dF510E8f216D88F6FE',
+      vault: '0x719488F4E859953967eFE963c6Bed059BaAab60c',
       composableStablePoolFactories: [],
-      weightedPoolV2Factories: ['0x65d3835D08BDCd2336E393F0Ed4D6CC99181B8c3'],
+      weightedPoolV2Factories: ['0xDE8993Bf9D6Eb1e0d752fe56ccB85Ef76538ABb6'],
       weightedPoolFactories: [],
       swapProtocolFeePercentage: 0.25,
       yieldProtocolFeePercentage: 0.5,
       votingEscrow: {
-        veAddress: '',
-        gaugeController: '',
-        veBALHelpers: '',
-        tokenAdmin: '',
-        lockablePoolId: '',
-        lockPoolAddress: '',
+        veAddress: '0x98A73443fb00EDC2EFF0520a00C53633226BF9ED',
+        gaugeController: '0x99bFf5953843A211792BF3715b1b3b4CBeE34CE6',
+        veBALHelpers: '0xab31C0E1019a8e08748235a76f94497AF9d8718E',
+        tokenAdmin: '0x8A935a7c86CA749aD1C6fD7dAA0A916A0ACF8bF8',
+        lockablePoolId: '0xdd64e2ec144571b4320f7bfb14a56b2b2cbf37ad000200000000000000000000',
+        lockPoolAddress: '0xDD64E2EC144571b4320f7BFB14a56b2b2cBF37ad',
       },
     },
     multicall: '',
