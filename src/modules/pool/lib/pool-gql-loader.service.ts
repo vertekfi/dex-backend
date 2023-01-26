@@ -29,14 +29,19 @@ export class PoolGqlLoaderService {
   }
 
   async getPools(args: QueryPoolGetPoolsArgs): Promise<any[]> {
-    // TODO: Cache this a bit?
-
     const pools = await this.prisma.prismaPool.findMany({
       ...this.poolUtils.mapQueryArgsToPoolQuery(args),
       include: prismaPoolMinimal.include,
     });
 
-    return pools.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
+    const filtered = [];
+    pools.forEach((p) => {
+      if (!filtered.find((pi) => pi.name === p.name)) {
+        filtered.push(p);
+      }
+    });
+
+    return filtered.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
   }
 
   async getPoolsCount(args: QueryPoolGetPoolsArgs): Promise<number> {

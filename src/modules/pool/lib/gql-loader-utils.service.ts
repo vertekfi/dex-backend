@@ -741,147 +741,147 @@ export class PoolGqlLoaderUtils {
       orderBy,
     };
 
-    if (!args.where && !args.textSearch) {
-      return {
-        ...baseQuery,
-        where: {
-          categories: {
-            none: { category: 'BLACK_LISTED' },
-          },
-          dynamicData: {
-            totalSharesNum: {
-              gt: 0.000000000001,
-            },
-          },
-        },
-      };
-    }
+    // if (!args.where && !args.textSearch) {
+    //   return {
+    //     ...baseQuery,
+    //     where: {
+    //       categories: {
+    //         none: { category: 'BLACK_LISTED' },
+    //       },
+    //       // dynamicData: {
+    //       //   totalSharesNum: {
+    //       //     gt: 0.000000000001,
+    //       //   },
+    //       // },
+    //     },
+    //   };
+    // }
 
-    const where = args.where;
-    const textSearch = args.textSearch
-      ? { contains: args.textSearch, mode: 'insensitive' as const }
-      : undefined;
+    // const where = args.where;
+    // const textSearch = args.textSearch
+    //   ? { contains: args.textSearch, mode: 'insensitive' as const }
+    //   : undefined;
 
-    const allTokensFilter = [];
-    where?.tokensIn?.forEach((token) => {
-      allTokensFilter.push({
-        allTokens: {
-          some: {
-            token: {
-              address: {
-                equals: token,
-                mode: 'insensitive' as const,
-              },
-            },
-          },
-        },
-      });
-    });
+    // const allTokensFilter = [];
+    // where?.tokensIn?.forEach((token) => {
+    //   allTokensFilter.push({
+    //     allTokens: {
+    //       some: {
+    //         token: {
+    //           address: {
+    //             equals: token,
+    //             mode: 'insensitive' as const,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   });
+    // });
 
-    if (where?.tokensNotIn) {
-      allTokensFilter.push({
-        allTokens: {
-          every: {
-            token: {
-              address: {
-                notIn: where.tokensNotIn || undefined,
-                mode: 'insensitive' as const,
-              },
-            },
-          },
-        },
-      });
-    }
+    // if (where?.tokensNotIn) {
+    //   allTokensFilter.push({
+    //     allTokens: {
+    //       every: {
+    //         token: {
+    //           address: {
+    //             notIn: where.tokensNotIn || undefined,
+    //             mode: 'insensitive' as const,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   });
+    // }
 
-    const filterArgs: Prisma.PrismaPoolWhereInput = {
-      dynamicData: {
-        totalSharesNum: {
-          gt: 0.000000000001,
-        },
-      },
-      type: {
-        in: where?.poolTypeIn || undefined,
-        notIn: where?.poolTypeNotIn || undefined,
-      },
-      AND: allTokensFilter,
-      id: {
-        in: where?.idIn || undefined,
-        notIn: where?.idNotIn || undefined,
-        mode: 'insensitive',
-      },
-      categories: {
-        every: {
-          category: {
-            notIn: ['BLACK_LISTED', ...(where?.categoryNotIn || [])],
-          },
-        },
-        ...(where?.categoryIn
-          ? {
-              some: {
-                category: {
-                  in: where.categoryIn,
-                },
-              },
-            }
-          : {}),
-      },
-      filters: {
-        ...(where?.filterNotIn
-          ? {
-              every: {
-                filterId: {
-                  notIn: where.filterNotIn,
-                },
-              },
-            }
-          : {}),
-        ...(where?.filterIn
-          ? {
-              some: {
-                filterId: {
-                  in: where.filterIn,
-                },
-              },
-            }
-          : {}),
-      },
-    };
+    // const filterArgs: Prisma.PrismaPoolWhereInput = {
+    //   dynamicData: {
+    //     // totalSharesNum: {
+    //     //   gt: 0.000000000001,
+    //     // },
+    //   },
+    //   type: {
+    //     in: where?.poolTypeIn || undefined,
+    //     notIn: where?.poolTypeNotIn || undefined,
+    //   },
+    //   AND: allTokensFilter,
+    //   id: {
+    //     in: where?.idIn || undefined,
+    //     notIn: where?.idNotIn || undefined,
+    //     mode: 'insensitive',
+    //   },
+    //   categories: {
+    //     every: {
+    //       category: {
+    //         notIn: ['BLACK_LISTED', ...(where?.categoryNotIn || [])],
+    //       },
+    //     },
+    //     ...(where?.categoryIn
+    //       ? {
+    //           some: {
+    //             category: {
+    //               in: where.categoryIn,
+    //             },
+    //           },
+    //         }
+    //       : {}),
+    //   },
+    //   filters: {
+    //     ...(where?.filterNotIn
+    //       ? {
+    //           every: {
+    //             filterId: {
+    //               notIn: where.filterNotIn,
+    //             },
+    //           },
+    //         }
+    //       : {}),
+    //     ...(where?.filterIn
+    //       ? {
+    //           some: {
+    //             filterId: {
+    //               in: where.filterIn,
+    //             },
+    //           },
+    //         }
+    //       : {}),
+    //   },
+    // };
 
-    if (!textSearch) {
-      return {
-        ...baseQuery,
-        where: filterArgs,
-      };
-    }
+    // if (!textSearch) {
+    //   return {
+    //     ...baseQuery,
+    //     where: filterArgs,
+    //   };
+    // }
 
     return {
       ...baseQuery,
       where: {
-        OR: [
-          { name: textSearch, ...filterArgs },
-          { symbol: textSearch, ...filterArgs },
-          {
-            ...filterArgs,
-            allTokens: {
-              some: {
-                OR: [
-                  {
-                    token: {
-                      name: textSearch,
-                      address: filterArgs.allTokens?.some?.token?.address,
-                    },
-                  },
-                  {
-                    token: {
-                      symbol: textSearch,
-                      address: filterArgs.allTokens?.some?.token?.address,
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        ],
+        // OR: [
+        //   { name: textSearch, ...filterArgs },
+        //   { symbol: textSearch, ...filterArgs },
+        //   {
+        //     ...filterArgs,
+        //     allTokens: {
+        //       some: {
+        //         OR: [
+        //           {
+        //             token: {
+        //               name: textSearch,
+        //               address: filterArgs.allTokens?.some?.token?.address,
+        //             },
+        //           },
+        //           {
+        //             token: {
+        //               symbol: textSearch,
+        //               address: filterArgs.allTokens?.some?.token?.address,
+        //             },
+        //           },
+        //         ],
+        //       },
+        //     },
+        //   },
+        // ],
       },
     };
   }
