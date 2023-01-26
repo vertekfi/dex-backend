@@ -15,11 +15,9 @@ import { VeBalHelpers } from './lib/ve-helpers';
 import { Multicaller } from '../common/web3/multicaller';
 import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
-import { THIRTY_SECONDS_SECONDS } from '../utils/time';
 import { CONTRACT_MAP } from '../data/contracts';
 import { gql } from 'graphql-request';
 import { PrismaService } from 'nestjs-prisma';
-import { CacheDecorator } from '../common/decorators/cache.decorator';
 import * as moment from 'moment-timezone';
 import { scaleDown } from '../utils/old-big-number';
 import { LiquidityGauge } from 'src/graphql';
@@ -48,6 +46,11 @@ export class GaugeService {
   // TODO: Get these from database
   //  @CacheDecorator(SUBGRAPH_GAUGE_CACHE_KEY, THIRTY_SECONDS_SECONDS)
   async getLiquidityGauges() {
+    const data = await this.protocolService.getProtocolConfigDataForChain();
+    console.log(data.gauges);
+
+    const multicaller = new Multicaller(this.rpc, LGV5Abi);
+
     const { liquidityGauges } = await this.gaugeSubgraphService.client.request(gql`
       query {
         liquidityGauges {
@@ -114,7 +117,8 @@ export class GaugeService {
     const gauges = [];
 
     for (const gauge of subgraphGauges) {
-      if (protoData.gauges.includes(gauge.poolId)) {
+      const matched = protoData.gauges.find((g) => g.poolId === gauge.poolId);
+      if (matched) {
         gauges.push({
           id: gauge.id,
           symbol: gauge.symbol,
@@ -175,6 +179,7 @@ export class GaugeService {
     const multiCaller = new Multicaller(this.rpc, LGV5Abi);
 
     gauges.forEach((gauge) => {
+      console.log(gauge);
       multiCaller.call(`${gauge.id}.depositFee`, gauge.id, 'getDepositFee');
       multiCaller.call(`${gauge.id}.withdrawFee`, gauge.id, 'getWithdrawFee');
     });
@@ -185,7 +190,7 @@ export class GaugeService {
       fees[address].withdrawFee = fees[address].withdrawFee.toNumber();
     }
 
-    return fees;
+    return;
   }
 
   private async getPoolsForGauges(poolIds: string[]) {
@@ -216,7 +221,7 @@ export class GaugeService {
   async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {
     const userGauges: LiquidityGauge[] = [];
 
-    throw new Error(`getUserGaugeStakes: Unimplemented`);
+    // throw new Error(`getUserGaugeStakes: Unimplemented`);
 
     return userGauges;
   }

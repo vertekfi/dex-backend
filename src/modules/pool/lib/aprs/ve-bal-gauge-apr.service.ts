@@ -7,6 +7,7 @@ import { GaugeService } from 'src/modules/gauge/gauge.service';
 import { ONE_YEAR_SECONDS } from 'src/modules/utils/time';
 import { TokenPriceService } from 'src/modules/common/token/pricing/token-price.service';
 
+// TODO: This is lacking a lot compared to previous version used. Classes/Services are already ported in
 export class VeGaugeAprService implements PoolAprService {
   constructor(
     private readonly gaugeService: GaugeService,
@@ -15,53 +16,60 @@ export class VeGaugeAprService implements PoolAprService {
   ) {}
 
   public async updateAprForPools(pools: PrismaPoolWithExpandedNesting[]): Promise<void> {
-    const operations: any[] = [];
-    const gauges = await this.gaugeService.getCoreGauges();
-    const tokenPrices = await this.pricingService.getCurrentTokenPrices();
-    for (const pool of pools) {
-      const gauge = gauges.find((g) => g.address === pool.staking?.gauge?.gaugeAddress);
+    try {
+      const operations: any[] = [];
+      const [gauges, tokenPrices] = await Promise.all([
+        this.gaugeService.getCoreGauges(),
+        this.pricingService.getCurrentTokenPrices(),
+      ]);
 
-      if (!gauge || !pool.dynamicData) {
-        continue;
-      }
+      for (const pool of pools) {
+        const gauge = gauges.find((g) => g.address === pool.staking?.gauge?.gaugeAddress);
 
-      const totalShares = parseFloat(pool.dynamicData.totalShares);
-      const gaugeTvl =
-        totalShares > 0
-          ? (parseFloat(gauge.totalSupply) / totalShares) * pool.dynamicData.totalLiquidity
-          : 0;
-      let thirdPartyApr = 0;
-
-      for (let rewardToken of gauge.rewardTokens) {
-        const tokenPrice =
-          this.pricingService.getPriceForToken(tokenPrices, rewardToken.address) || 0.1;
-        const rewardTokenPerYear = rewardToken.rewardsPerSecond * ONE_YEAR_SECONDS;
-        const rewardTokenValuePerYear = tokenPrice * rewardTokenPerYear;
-        const rewardApr = gaugeTvl > 0 ? rewardTokenValuePerYear / gaugeTvl : 0;
-        const isThirdPartyApr = !this.primaryTokens.includes(rewardToken.address);
-
-        if (isThirdPartyApr) {
-          thirdPartyApr += rewardApr;
+        if (!gauge || !pool.dynamicData) {
+          continue;
         }
 
-        const item: PrismaPoolAprItem = {
-          id: `${pool.id}-${rewardToken.symbol}-apr`,
-          poolId: pool.id,
-          title: `${rewardToken.symbol} reward APR`,
-          apr: rewardApr,
-          type: isThirdPartyApr ? 'THIRD_PARTY_REWARD' : 'NATIVE_REWARD',
-          group: null,
-        };
+        const totalShares = parseFloat(pool.dynamicData.totalShares);
+        const gaugeTvl =
+          totalShares > 0
+            ? (parseFloat(gauge.totalSupply) / totalShares) * pool.dynamicData.totalLiquidity
+            : 0;
+        let thirdPartyApr = 0;
 
-        operations.push(
-          prisma.prismaPoolAprItem.upsert({
-            where: { id: item.id },
-            update: item,
-            create: item,
-          }),
-        );
+        for (let rewardToken of gauge.rewardTokens) {
+          const tokenPrice =
+            this.pricingService.getPriceForToken(tokenPrices, rewardToken.address) || 0.1;
+          const rewardTokenPerYear = rewardToken.rewardsPerSecond * ONE_YEAR_SECONDS;
+          const rewardTokenValuePerYear = tokenPrice * rewardTokenPerYear;
+          const rewardApr = gaugeTvl > 0 ? rewardTokenValuePerYear / gaugeTvl : 0;
+          const isThirdPartyApr = !this.primaryTokens.includes(rewardToken.address);
+
+          if (isThirdPartyApr) {
+            thirdPartyApr += rewardApr;
+          }
+
+          const item: PrismaPoolAprItem = {
+            id: `${pool.id}-${rewardToken.symbol}-apr`,
+            poolId: pool.id,
+            title: `${rewardToken.symbol} reward APR`,
+            apr: rewardApr,
+            type: isThirdPartyApr ? 'THIRD_PARTY_REWARD' : 'NATIVE_REWARD',
+            group: null,
+          };
+
+          operations.push(
+            prisma.prismaPoolAprItem.upsert({
+              where: { id: item.id },
+              update: item,
+              create: item,
+            }),
+          );
+        }
       }
+      await prismaBulkExecuteOperations(operations);
+    } catch (error) {
+      return null;
     }
-    await prismaBulkExecuteOperations(operations);
   }
 }

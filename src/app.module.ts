@@ -40,10 +40,10 @@ if (process.env.NODE_ENV === 'production') {
       prismaServiceOptions: {
         // configure your prisma middleware
         middlewares: [
-          loggingMiddleware({
-            logger: new Logger('PrismaMiddleware'),
-            logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'log',
-          }),
+          // loggingMiddleware({
+          //   logger: new Logger('PrismaMiddleware'),
+          //   logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'log',
+          // }),
         ],
       },
     }),

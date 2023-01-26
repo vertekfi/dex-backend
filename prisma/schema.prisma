@@ -383,14 +383,15 @@ model PrismaToken {
     prices                   PrismaTokenPrice[]
     types                    PrismaTokenType[]
 
-    expandedPools       PrismaPoolExpandedTokens[]
-    poolTokens          PrismaPoolToken[]
+    expandedPools           PrismaPoolExpandedTokens[]
+    poolTokens              PrismaPoolToken[]
 
-    walletBalances  PrismaUserWalletBalance[]
-    stakedBalances  PrismaUserStakedBalance[]
+    walletBalances          PrismaUserWalletBalance[]
+    stakedBalances          PrismaUserStakedBalance[]
 
-    useDexscreener      Boolean?            @default(true)
-    dexscreenPairAddress String?
+    useDexscreener          Boolean?          
+    dexscreenPairAddress    String?
+    usePoolPricing          Boolean?   
 }
 
 

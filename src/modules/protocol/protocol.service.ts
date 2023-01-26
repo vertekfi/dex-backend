@@ -34,32 +34,30 @@ export class ProtocolService {
     const url = networkConfig.protocol.poolDataUrl;
     const { data } = await axios.get(url);
 
-    // console.log(data);
-
     return data[String(this.rpc.chainId)];
   }
 
   // @CacheDecorator(PROTOCOL_TOKENLIST_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getProtocolTokenList() {
-    const url = this.getTokenListUri();
-    const { data } = await axios.get(url);
+    // const url = this.getTokenListUri();
+    const { data } = await axios.get(networkConfig.protocol.tokenListUrl);
 
-    const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens.filter(
+    console.log(data);
+
+    const tokens = JSON.parse(data)[networkConfig.protocol.tokenListMappingKey].tokens.filter(
       (tk) => tk.chainId === this.rpc.chainId,
     );
 
-    //console.log(tokens);
+    console.log(tokens);
 
     return tokens;
   }
 
   async getProtocolTokenListAllChains() {
-    const url = this.getTokenListUri();
-    const { data } = await axios.get(url);
+    // const url = this.getTokenListUri();
+    const { data } = await axios.get(networkConfig.protocol.tokenListUrl);
 
     const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens;
-    // console.log(tokens)
-
     return tokens;
   }
 

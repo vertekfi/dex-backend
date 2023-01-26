@@ -41,9 +41,9 @@ export class Multicaller {
     // not print the full exception for now, not polluting the log too much
     try {
       const results = await this.executeMulticall();
-      results.forEach((result, i) =>
-        set(obj, this.paths[i], result.length > 1 ? result : result[0]),
-      );
+      results.forEach((result, i) => {
+        set(obj, this.paths[i], result.length > 1 ? result : result[0]);
+      });
     } catch (err) {
       console.log('multicall error', err);
       throw `Non-stacktrace multicall error`;
@@ -63,10 +63,10 @@ export class Multicaller {
     );
 
     const [, res] = await multi.aggregate(
-      this.calls.map(([address, functionName, params]) => [
-        address,
-        this.interface.encodeFunctionData(functionName, params),
-      ]),
+      this.calls.map(([address, functionName, params]) => {
+        console.log(`${address}-${functionName}`);
+        return [address, this.interface.encodeFunctionData(functionName, params)];
+      }),
       this.options,
     );
 
