@@ -56,6 +56,7 @@ async function bootstrap() {
 
     const PORT = process.env.PORT || 5000;
     await nestApp.listen(PORT, async () => {
+      // All service instances are initialized at this point
       await runInitialSyncMutations(nestApp.get(ScheduledJobService));
       console.log(`DEX Backend running at: ${PORT}`);
     });

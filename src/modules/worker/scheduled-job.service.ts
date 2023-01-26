@@ -226,7 +226,7 @@ export class ScheduledJobService {
 
     // every 5 minutes
     this.scheduleJob('*/5 * * * *', 'syncGaugeData', ONE_MINUTE_IN_MS, async () => {
-      await this.gaugeSyncService.syncGaugeData();
+      await this.gaugeSyncService.reloadStakingForAllPools();
     });
     // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeService.getAllGauges);
 

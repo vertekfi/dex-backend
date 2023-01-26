@@ -146,8 +146,6 @@ export class TokenSyncService {
       );
     });
 
-    console.log(addToWhitelist);
-
     const removeFromWhitelist = whiteListedTokens.filter((dbToken) => {
       return !tokens.some((token) => isSameAddress(dbToken.tokenAddress, token.address));
     });

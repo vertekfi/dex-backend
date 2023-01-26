@@ -48,33 +48,6 @@ export class GaugeService {
     return await this.gaugeSubgraphService.getAllGaugeAddresses();
   }
 
-  async getLiquidityGauges() {
-    const { liquidityGauges } = await this.gaugeSubgraphService.client.request(gql`
-      query {
-        liquidityGauges {
-          id
-          symbol
-          poolId
-          totalSupply
-          factory {
-            id
-          }
-          isKilled
-          tokens {
-            id
-            decimals
-            symbol
-            rate
-            periodFinish
-            totalDeposited
-          }
-        }
-      }
-    `);
-
-    return liquidityGauges;
-  }
-
   async getAllGauges() {
     const gauges = await this.getCoreGauges();
     const { pools, tokens } = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
@@ -115,15 +88,13 @@ export class GaugeService {
     const gaugeInfos = pools.filter((p) => p.staking).map((p) => p.staking.gauge);
     const stakingInfos = pools.filter((p) => p.staking).map((p) => p.staking);
 
-    const [rewardTokens, onchainInfo] = await Promise.all([
-      this.getGaugesRewardData(gaugeInfos),
-      this.getGaugeAdditionalInfo(gaugeInfos),
-    ]);
+    const [rewardTokens] = await Promise.all([this.getGaugesRewardData(gaugeInfos)]);
+
+    // const onchainInfo = await this.getGaugeAdditionalInfo(gaugeInfos);
 
     const gauges = [];
 
     for (const gauge of stakingInfos) {
-      const onchain = onchainInfo[gauge.id];
       const pool = pools.find((p) => p.id === gauge.poolId);
       const gqlPool = {
         ...pool,
@@ -136,14 +107,14 @@ export class GaugeService {
         symbol: pool.staking.gauge.symbol,
         poolId: gauge.poolId,
         address: gauge.id,
-        totalSupply: onchain.totalSupply,
+        totalSupply: pool.staking.gauge.totalSupply,
         factory: {
           id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
         },
-        isKilled: onchain.isKilled,
-        rewardTokens: rewardTokens[gauge.id] || [],
-        depositFee: onchain.depositFee,
-        withdrawFee: onchain.withdrawFee,
+        isKilled: pool.staking.gauge.isKilled,
+        rewardTokens: pool.staking.gauge.rewards,
+        depositFee: pool.staking.gauge.depositFee,
+        withdrawFee: pool.staking.gauge.withdrawFee,
         pool: gqlPool,
       });
     }
@@ -185,8 +156,10 @@ export class GaugeService {
       .filter((g) => g !== undefined);
   }
 
-  async getGaugeAdditionalInfo(gauges: PrismaPoolStakingGauge[]) {
+  async getGaugeAdditionalInfo(gauges: { id: string }[]) {
     const multiCaller = new Multicaller(this.rpc, LGV5Abi);
+
+    console.log(gauges);
 
     gauges.forEach((gauge) => {
       multiCaller.call(`${gauge.id}.depositFee`, gauge.id, 'getDepositFee');
@@ -197,6 +170,8 @@ export class GaugeService {
     });
 
     const data = await multiCaller.execute();
+
+    console.log(data);
     const results: any = {};
     for (const address in data) {
       results[address] = {

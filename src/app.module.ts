@@ -11,10 +11,8 @@ import { UserModule } from './modules/user/user.module';
 import { ProtocolModule } from './modules/protocol/protocol.module';
 import { GaugeModule } from './modules/gauge/gauge.module';
 import { WorkerModule } from './modules/worker/worker.module';
-import { ScheduledJobService } from './modules/worker/scheduled-job.service';
 import { BalancerSdkModule } from './modules/balancer-sdk/balancer-sdk.module';
 import { RewardPoolModule } from './modules/reward-pools/reward-pool.module';
-import { runInitialSyncMutations } from './modules/worker/init-sync';
 
 const gqlConfig: ApolloDriverConfig = {
   driver: ApolloDriver,
@@ -40,10 +38,10 @@ if (process.env.NODE_ENV === 'production') {
       prismaServiceOptions: {
         // configure your prisma middleware
         middlewares: [
-          // loggingMiddleware({
-          //   logger: new Logger('PrismaMiddleware'),
-          //   logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'log',
-          // }),
+          loggingMiddleware({
+            logger: new Logger('PrismaMiddleware'),
+            logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'log',
+          }),
         ],
       },
     }),
@@ -62,9 +60,5 @@ if (process.env.NODE_ENV === 'production') {
   providers: [],
 })
 export class AppModule {
-  constructor(jobs: ScheduledJobService) {
-    // if (process.env.NODE_ENV === 'production') {
-    // jobs.init();
-    // }
-  }
+  constructor() {}
 }
