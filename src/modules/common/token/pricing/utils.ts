@@ -4,6 +4,9 @@ import { sortBy } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { COINGECKO_BASE_URL } from 'src/modules/balancer-sdk/sor/api/constants';
+import { isSameAddress } from 'src/modules/balancer-sdk/sor/impl/utils';
+import { WETH } from 'src/modules/data/tokens';
+import { getChainId } from '../../web3/rpc.provider';
 import { PricingAssetInfo, TokenDefinition } from '../types';
 
 export function isCoinGeckoToken(token: PrismaToken | TokenDefinition): boolean {
@@ -67,4 +70,8 @@ export async function getSimpleTokenPrices(geckoIds: string[]) {
   );
 
   return data;
+}
+
+export function isWETH(token: string) {
+  return isSameAddress(WETH[getChainId()], token);
 }

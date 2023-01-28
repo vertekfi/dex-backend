@@ -11,7 +11,7 @@ import { ContractService } from 'src/modules/common/web3/contract.service';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { CoingeckoService } from '../coingecko.service';
-import { getPoolPricingMap, getPricingAssets } from '../data';
+import { getPoolPricingMap } from '../data';
 import { PoolPricingService } from '../pool-pricing.service';
 
 const WETH = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
@@ -42,6 +42,7 @@ export class PoolPriceHandler implements TokenPriceHandler {
       vault: cs.getVault(),
       rpc: nestApp.get(RPC),
       gecko: nestApp.get(CoingeckoService),
+      prisma: this.prisma,
     });
   }
 
@@ -56,7 +57,6 @@ export class PoolPriceHandler implements TokenPriceHandler {
     const pricesMap = await this.poolPricing.getWeightedTokenPoolPrices(
       tokens.map((t) => t.address),
       getPoolPricingMap(),
-      getPricingAssets(),
     );
 
     const timestamp = timestampRoundedUpToNearestHour();

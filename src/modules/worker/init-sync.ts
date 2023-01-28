@@ -9,14 +9,14 @@ export async function runInitialSyncMutations(scheduledJobs: ScheduledJobService
     //   scheduledJobs.init();
     //   return;
     // }
-    // console.log(`runInitialSyncMutations:`);
-    // client = new GraphQLClient(process.env.CALLBACK_URL, {
-    //   headers: {
-    //     AdminApiKey: process.env.ADMIN_API_KEY,
-    //   },
-    // });
-    // await runMutation('tokenSyncTokenDefinitions');
-    // await runMutation('poolSyncSanityPoolData');
+    console.log(`runInitialSyncMutations:`);
+    client = new GraphQLClient(process.env.CALLBACK_URL, {
+      headers: {
+        AdminApiKey: process.env.ADMIN_API_KEY,
+      },
+    });
+    await runMutation('tokenSyncTokenDefinitions');
+    await runMutation('poolSyncSanityPoolData');
     // await runMutation('poolSyncAllPoolsFromSubgraph');
     // await runMutation('tokenReloadTokenPrices');
     // await runMutation('poolReloadStakingForAllPools');

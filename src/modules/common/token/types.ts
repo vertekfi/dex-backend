@@ -155,14 +155,13 @@ export interface TokenMarketData {
   price_change_percentage_7d_in_currency: number;
 }
 
-export interface CandleStickData {}
+export type PricingAsset = 'BUSD' | 'WBNB' | 'ETH';
 
 export type PoolPricingMap = { [token: string]: { poolId: string; priceAgainst: string } };
-
-export type PricingAsset = 'BUSD' | 'WBNB' | 'ETH';
 
 export interface PricingAssetInfo {
   address: string;
   symbol: string;
   coingeckoId: string; // pricing asset will always be availble through gecko
+  price?: number;
 }

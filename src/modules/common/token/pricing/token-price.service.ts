@@ -11,8 +11,7 @@ import { AccountWeb3 } from '../../types';
 import { PoolPricingService } from './pool-pricing.service';
 import { ContractService } from '../../web3/contract.service';
 import { CoingeckoService } from './coingecko.service';
-import { getPoolPricingMap, getPricingAssets } from './data';
-import { toLowerCase } from 'src/modules/utils/general.utils';
+import { getPoolPricingMap } from './data';
 import { getTokenAddress } from '../utils';
 
 const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
@@ -31,6 +30,7 @@ export class TokenPriceService {
       rpc: this.rpc,
       vault: this.contractService.getVault(),
       gecko: this.gecko,
+      prisma: this.prisma,
     });
   }
 
@@ -39,7 +39,6 @@ export class TokenPriceService {
     const price = await this.poolPricing.getWeightedTokenPoolPrices(
       [tokenAddress],
       getPoolPricingMap(),
-      getPricingAssets(),
     );
 
     return price[tokenAddress].toFixed(2);
