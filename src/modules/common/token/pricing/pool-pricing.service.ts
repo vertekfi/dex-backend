@@ -8,7 +8,6 @@ import { Multicaller } from '../../web3/multicaller';
 import { PoolPricingMap } from '../types';
 import { CoingeckoService } from './coingecko.service';
 import { getPricingAssetPrices } from './data';
-import { isWETH } from './utils';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;

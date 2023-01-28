@@ -26,11 +26,24 @@ const pricingPoolsMap: { [chainId: number]: PoolPricingMap } = {
       poolId: '0xae42be6a9f75a2b53229e262e0488df6ecfeb53a000200000000000000000012',
       priceAgainst: getTokenAddress('ETH'),
     },
+    [getTokenAddress('LION')]: {
+      poolId: '0x8e15953eba7d5f8f99853d8f3cb64fc73b3ba770000200000000000000000003',
+      priceAgainst: getTokenAddress('DAI'),
+    },
+    [getTokenAddress('LION_SHARE')]: {
+      poolId: '0x6e30ec031f2d94c397e469b40f86bff0be014124000200000000000000000006',
+      priceAgainst: getTokenAddress('DAI'),
+    },
   },
 };
 
 const pricingAssets = {
-  56: [getTokenAddress('WBNB'), getTokenAddress('BUSD'), getTokenAddress('ETH')],
+  56: [
+    getTokenAddress('WBNB'),
+    getTokenAddress('BUSD'),
+    getTokenAddress('ETH'),
+    getTokenAddress('DAI'),
+  ],
 };
 
 function createPricingAsset(symbol: string, coingeckoId: string): PricingAssetInfo {
@@ -46,6 +59,7 @@ export const priceAssetsConfig: { [chainId: number]: PricingAssetInfo[] } = {
     createPricingAsset('WBNB', 'wbnb'),
     createPricingAsset('BUSD', 'binance-usd'),
     createPricingAsset('ETH', 'ethereum'),
+    createPricingAsset('DAI', 'dai'),
   ],
 };
 
