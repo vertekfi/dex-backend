@@ -35,7 +35,10 @@ export class PoolGqlLoaderService {
     });
 
     const filtered = [];
-    const remove = ['0xf20e2badc2fcd36708f442aa554fd4494e3042c8000200000000000000000004'];
+    const remove = [
+      '0xf20e2badc2fcd36708f442aa554fd4494e3042c8000200000000000000000004',
+      '0x94cbf85d049ab5a122348324b53dc4a9b751f08400020000000000000000000d',
+    ];
     pools.forEach((p) => {
       if (!remove.find((pi) => pi === p.id)) {
         filtered.push(p);
