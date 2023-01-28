@@ -1,20 +1,17 @@
 // Temp until list
 
-import { BigNumber, Contract } from 'ethers';
+import { Contract } from 'ethers';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { nestApp } from 'src/main';
-import { getPoolAddress } from 'src/modules/common/pool/pool-utils';
 import { TokenPriceHandler } from 'src/modules/common/token/types';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { ContractService } from 'src/modules/common/web3/contract.service';
-import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
-import { calcOutGivenIn } from 'src/modules/utils/math/WeightedMath';
-import { ethNum } from 'src/modules/utils/old-big-number';
 import { timestampRoundedUpToNearestHour } from 'src/modules/utils/time';
 import { CoingeckoService } from '../coingecko.service';
+import { getPoolPricingMap, getPricingAssets } from '../data';
 import { PoolPricingService } from '../pool-pricing.service';
 
 const WETH = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
@@ -22,19 +19,6 @@ const WETH = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
 function isWeth(address: string) {
   return address.toLowerCase() === WETH.toLowerCase();
 }
-
-// Temp solution
-const pricingPoolsMap: { [token: string]: { poolId: string; priceAgainst: string } } = {
-  '0xed236c32f695c83efde232c288701d6f9c23e60e': {
-    poolId: '0xdd64e2ec144571b4320f7bfb14a56b2b2cbf37ad000200000000000000000000',
-    priceAgainst: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c', // Another token in the pool to usd price against
-  },
-};
-
-const pricingAssets = [
-  '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
-  '0xe9e7cea3dedca5984780bafc599bd69add087d56',
-].map((t) => t.toLowerCase());
 
 export class PoolPriceHandler implements TokenPriceHandler {
   public readonly exitIfFails = false;
@@ -70,9 +54,9 @@ export class PoolPriceHandler implements TokenPriceHandler {
     let operations: any[] = [];
 
     const pricesMap = await this.poolPricing.getTokenPoolPrices(
-      tokens,
-      pricingPoolsMap,
-      pricingAssets,
+      tokens.map((t) => t.address),
+      getPoolPricingMap(this.rpc.chainId),
+      getPricingAssets(this.rpc.chainId),
     );
 
     const timestamp = timestampRoundedUpToNearestHour();
