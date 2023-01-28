@@ -13,7 +13,7 @@ export const RpcProvider: Provider = {
 };
 
 export async function getCurrentChainAccount() {
-  return getAccoutForChain(parseInt(process.env.CHAIN_ID));
+  return getAccoutForChain(getChainId());
 }
 
 export async function getAccoutForChain(chainId: number): Promise<AccountWeb3> {
@@ -52,4 +52,8 @@ export async function getAccoutForChain(chainId: number): Promise<AccountWeb3> {
 export async function getProviderOrDefault(chainId?: number): Promise<JsonRpcProvider> {
   const info = chainId ? getAccoutForChain(chainId) : getCurrentChainAccount();
   return (await info).provider;
+}
+
+export function getChainId() {
+  return parseInt(process.env.CHAIN_ID);
 }

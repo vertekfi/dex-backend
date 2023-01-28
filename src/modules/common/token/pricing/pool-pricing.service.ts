@@ -1,5 +1,4 @@
 import { BigNumber, Contract } from 'ethers';
-import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { calcOutGivenIn } from 'src/modules/utils/math/WeightedMath';
 import { ethNum } from 'src/modules/utils/old-big-number';
 import { getPoolAddress } from '../../pool/pool-utils';
@@ -25,7 +24,7 @@ function isWeth(address: string, chainId: number) {
 export class PoolPricingService {
   constructor(readonly config: IPoolPricingConfig) {}
 
-  async getTokenPoolPrices(
+  async getWeightedTokenPoolPrices(
     tokens: string[],
     pricingPoolsMap: PoolPricingMap,
     pricingAssets: string[],
@@ -104,7 +103,7 @@ export class PoolPricingService {
       if (isWeth(tokenOut, this.config.rpc.chainId)) {
         priceUsd = amountOut.mul(nativePrice.usd).toNumber();
       } else {
-        //
+        // need a way to fetch price pricing assets (just get all once at the start)
       }
 
       results[tokenIn] = priceUsd;

@@ -53,10 +53,10 @@ export class PoolPriceHandler implements TokenPriceHandler {
     let tokensUpdated: string[] = [];
     let operations: any[] = [];
 
-    const pricesMap = await this.poolPricing.getTokenPoolPrices(
+    const pricesMap = await this.poolPricing.getWeightedTokenPoolPrices(
       tokens.map((t) => t.address),
-      getPoolPricingMap(this.rpc.chainId),
-      getPricingAssets(this.rpc.chainId),
+      getPoolPricingMap(),
+      getPricingAssets(),
     );
 
     const timestamp = timestampRoundedUpToNearestHour();

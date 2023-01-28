@@ -20,6 +20,7 @@ import { forEach, groupBy, mapKeys } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { networkConfig } from 'src/modules/config/network-config';
+import { COINGECKO_BASE_URL } from 'src/modules/balancer-sdk/sor/api/constants';
 
 /* coingecko has a rate limit of 10-50req/minute
    https://www.coingecko.com/en/api/pricing:
@@ -38,7 +39,7 @@ export class CoingeckoService implements TokenPricingService {
   readonly coinGecko = true;
 
   constructor(private readonly prisma: PrismaService) {
-    this.baseUrl = 'https://api.coingecko.com/api/v3';
+    this.baseUrl = COINGECKO_BASE_URL;
     this.fiatParam = 'usd';
   }
 

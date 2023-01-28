@@ -158,3 +158,11 @@ export interface TokenMarketData {
 export interface CandleStickData {}
 
 export type PoolPricingMap = { [token: string]: { poolId: string; priceAgainst: string } };
+
+export type PricingAsset = 'BUSD' | 'WBNB' | 'ETH';
+
+export interface PricingAssetInfo {
+  address: string;
+  symbol: string;
+  coingeckoId: string; // pricing asset will always be availble through gecko
+}
