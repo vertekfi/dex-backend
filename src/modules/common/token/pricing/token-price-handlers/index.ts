@@ -8,8 +8,8 @@ import { PoolPriceHandler } from './pool-price-handler';
 import { SwapsPriceHandlerService } from './swaps-price-handler.service';
 
 export const PRICE_HANDLERS = [
-  // CoingeckoPriceHandlerService,
-  // DexscreenerPriceHandlerService,
+  CoingeckoPriceHandlerService,
+  DexscreenerPriceHandlerService,
   BptPriceHandlerService,
   LinearWrappedTokenPriceHandlerService,
   SwapsPriceHandlerService,
