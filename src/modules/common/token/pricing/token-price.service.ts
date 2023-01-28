@@ -1,27 +1,51 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaTokenCurrentPrice, PrismaTokenPrice } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { networkConfig } from 'src/modules/config/network-config';
 import * as moment from 'moment-timezone';
-import { TokenPriceItem } from '../types';
+import { PoolPricingMap, TokenPriceItem } from '../types';
 import { GqlTokenChartDataRange } from 'src/gql-addons';
 import { CacheDecorator } from '../../decorators/cache.decorator';
 import { TokenChartDataService } from '../token-chart-data.service';
 import { FIVE_MINUTES_SECONDS } from 'src/modules/utils/time';
+import { RPC } from '../../web3/rpc.provider';
+import { AccountWeb3 } from '../../types';
+import { PoolPricingService } from './pool-pricing.service';
+import { ContractService } from '../../web3/contract.service';
+import { CoingeckoService } from './coingecko.service';
+import { getPoolPricingMap, getPricingAssets } from './data';
+import { toLowerCase } from 'src/modules/utils/general.utils';
 
 const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
 const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
 
+const protocolTokenMap: PoolPricingMap = {};
+
 @Injectable()
 export class TokenPriceService {
+  readonly poolPricing: PoolPricingService;
   constructor(
+    @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
-    private readonly chartDataService: TokenChartDataService,
-  ) {}
+    private readonly contractService: ContractService,
+    private readonly gecko: CoingeckoService,
+  ) {
+    this.poolPricing = new PoolPricingService({
+      rpc: this.rpc,
+      vault: this.contractService.getVault(),
+      gecko: this.gecko,
+    });
+  }
 
-  async getProtocolTokenPrice() {
-    // return getDexPriceFromPair('bsc', '0x7a09ddf458fda6e324a97d1a8e4304856fb3e702000200000000000000000000-0x0dDef12012eD645f12AEb1B845Cb5ad61C7423F5-0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c')
-    return '7';
+  async getProtocolTokenPrice(): Promise<string> {
+    const tokenAddress = toLowerCase(this.contractService.getProtocolToken().address);
+    const price = await this.poolPricing.getTokenPoolPrices(
+      [tokenAddress],
+      getPoolPricingMap(this.rpc.chainId),
+      getPricingAssets(this.rpc.chainId),
+    );
+
+    return String(price[tokenAddress]);
   }
 
   async tryCachePriceForToken(address: string) {

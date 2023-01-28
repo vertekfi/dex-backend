@@ -26,10 +26,11 @@ export class PoolPricingService {
   constructor(readonly config: IPoolPricingConfig) {}
 
   async getTokenPoolPrices(
-    tokens: PrismaTokenWithTypes[],
+    tokens: string[],
     pricingPoolsMap: PoolPricingMap,
     pricingAssets: string[],
-  ) {
+  ): Promise<{ [token: string]: number }> {
+    tokens = tokens.map((t) => t.toLowerCase());
     const balancesMulticall = new Multicaller(this.config.rpc, [
       'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
     ]);
@@ -40,19 +41,16 @@ export class PoolPricingService {
     // Token may have usePoolPricing set but arent included in local mapping
     // Database tokens are always stored lower case
     const mappedAddresses = Object.keys(pricingPoolsMap).map((t) => t.toLowerCase());
-    tokens = tokens.filter((t) => mappedAddresses.includes(t.address));
+    tokens = tokens.filter((t) => mappedAddresses.includes(t));
 
     tokens.forEach((t) => {
-      const poolId = pricingPoolsMap[t.address].poolId;
-      balancesMulticall.call(
-        `${t.address}.poolTokens`,
-        this.config.vault.address,
-        'getPoolTokens',
-        [poolId],
-      );
+      const poolId = pricingPoolsMap[t].poolId;
+      balancesMulticall.call(`${t}.poolTokens`, this.config.vault.address, 'getPoolTokens', [
+        poolId,
+      ]);
 
       const poolAddress = getPoolAddress(poolId);
-      poolMulticall.call(`${t.address}.weights`, poolAddress, 'getNormalizedWeights');
+      poolMulticall.call(`${t}.weights`, poolAddress, 'getNormalizedWeights');
     });
 
     let balancesResult: Record<
