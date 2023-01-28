@@ -1,5 +1,5 @@
 import { BigNumber, Contract } from 'ethers';
-import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+import { PrismaService } from 'nestjs-prisma';
 import { calcOutGivenIn } from 'src/modules/utils/math/WeightedMath';
 import { ethNum } from 'src/modules/utils/old-big-number';
 import { getPoolAddress } from '../../pool/pool-utils';
@@ -7,30 +7,24 @@ import { AccountWeb3 } from '../../types';
 import { Multicaller } from '../../web3/multicaller';
 import { PoolPricingMap } from '../types';
 import { CoingeckoService } from './coingecko.service';
+import { getPricingAssetPrices } from './data';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
   gecko: CoingeckoService;
   vault: Contract;
-}
-
-const WETH = {
-  56: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
-};
-
-function isWeth(address: string, chainId: number) {
-  return address.toLowerCase() === WETH[chainId].toLowerCase();
+  prisma: PrismaService;
 }
 
 export class PoolPricingService {
   constructor(readonly config: IPoolPricingConfig) {}
 
-  async getTokenPoolPrices(
+  async getWeightedTokenPoolPrices(
     tokens: string[],
     pricingPoolsMap: PoolPricingMap,
-    pricingAssets: string[],
   ): Promise<{ [token: string]: number }> {
     tokens = tokens.map((t) => t.toLowerCase());
+
     const balancesMulticall = new Multicaller(this.config.rpc, [
       'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
     ]);
@@ -66,7 +60,7 @@ export class PoolPricingService {
       poolMulticall.execute(),
     ]);
 
-    const nativePrice = await this.config.gecko.getNativeAssetPrice();
+    const pricingAssets = await getPricingAssetPrices(this.config.prisma);
 
     const results: { [token: string]: number } = {};
 
@@ -80,7 +74,7 @@ export class PoolPricingService {
 
       const tokenOut = pricingPoolsMap[tokenIn].priceAgainst;
 
-      if (!pricingAssets.includes(tokenOut)) {
+      if (!pricingAssets[tokenOut]) {
         console.log('Token out not included in pricing assets ifor token in: ' + tokenIn);
         continue;
       }
@@ -100,16 +94,12 @@ export class PoolPricingService {
 
       const amountOut = calcOutGivenIn(balanceIn, weightIn, balanceOut, weightOut, amountIn);
 
-      let priceUsd: number;
-      if (isWeth(tokenOut, this.config.rpc.chainId)) {
-        priceUsd = amountOut.mul(nativePrice.usd).toNumber();
-      } else {
-        //
-      }
+      const priceUsd = amountOut.mul(pricingAssets[tokenOut]).toNumber();
 
       results[tokenIn] = priceUsd;
     }
 
+    console.log(results);
     return results;
   }
 }

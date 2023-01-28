@@ -1,8 +1,13 @@
 import { PrismaToken } from '@prisma/client';
+import axios from 'axios';
 import { sortBy } from 'lodash';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
-import { TokenDefinition } from '../types';
+import { COINGECKO_BASE_URL } from 'src/modules/balancer-sdk/sor/api/constants';
+import { isSameAddress } from 'src/modules/balancer-sdk/sor/impl/utils';
+import { WETH } from 'src/modules/data/tokens';
+import { getChainId } from '../../web3/rpc.provider';
+import { PricingAssetInfo, TokenDefinition } from '../types';
 
 export function isCoinGeckoToken(token: PrismaToken | TokenDefinition): boolean {
   return !!(token && token.coingeckoTokenId && token.coingeckoTokenId);
@@ -57,4 +62,16 @@ export async function getTokensWithTypes(prisma: PrismaService): Promise<PrismaT
   );
 
   return tokensWithTypes;
+}
+
+export async function getSimpleTokenPrices(geckoIds: string[]) {
+  const { data } = await axios.get(
+    COINGECKO_BASE_URL + `/simple/price?ids=${geckoIds}&vs_currencies=usd`,
+  );
+
+  return data;
+}
+
+export function isWETH(token: string) {
+  return isSameAddress(WETH[getChainId()], token);
 }
