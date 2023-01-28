@@ -30,7 +30,6 @@ export class CoingeckoPriceHandlerService implements TokenPriceHandler {
   }
 
   async updatePricesForTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {
-    console.log('GECKOOOO');
     const timestamp = timestampRoundedUpToNearestHour();
     const nativeAsset = tokens.find((token) => token.address === this.weth);
     const tokensUpdated: string[] = [];

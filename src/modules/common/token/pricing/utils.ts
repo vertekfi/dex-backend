@@ -35,6 +35,7 @@ export async function getTokensWithTypes(prisma: PrismaService): Promise<PrismaT
     select: {
       address: true,
       symbol: true,
+      chainId: true,
       useDexscreener: true,
       dexscreenPairAddress: true,
       coingeckoContractAddress: true,
