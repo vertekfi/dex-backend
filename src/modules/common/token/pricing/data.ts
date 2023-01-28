@@ -14,6 +14,10 @@ const pricingPoolsMap: { [chainId: number]: PoolPricingMap } = {
       poolId: '0x248d943b9d59c4be35d41b34f79370dfbf577b2b000200000000000000000002',
       priceAgainst: getTokenAddress('BUSD'),
     },
+    [getTokenAddress('ASHARE')]: {
+      poolId: '0x0db861235c7b90d419a64e1f71b3687db74d4477000200000000000000000001',
+      priceAgainst: getTokenAddress('BUSD'),
+    },
     [getTokenAddress('wAALTO')]: {
       poolId: '0x5deb10ed6a66a1e6188b7925a723b6bdfd97476500020000000000000000000a',
       priceAgainst: getTokenAddress('BUSD'),
