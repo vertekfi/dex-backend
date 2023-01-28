@@ -35,8 +35,6 @@ export class GaugeSyncService {
       ),
     ]);
 
-    console.log(gaugeChainData);
-
     // Holding off on these for now
     // const rewardTokens = await this.gaugeService.getGaugesRewardData(gaugeInfos)
 

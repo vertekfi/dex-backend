@@ -163,8 +163,6 @@ export class GaugeService {
   async getGaugeAdditionalInfo(gauges: { id: string }[]) {
     const multiCaller = new Multicaller(this.rpc, LGV5Abi);
 
-    console.log(gauges);
-
     gauges.forEach((gauge) => {
       multiCaller.call(`${gauge.id}.depositFee`, gauge.id, 'getDepositFee');
       multiCaller.call(`${gauge.id}.withdrawFee`, gauge.id, 'getWithdrawFee');
@@ -175,7 +173,6 @@ export class GaugeService {
 
     const data = await multiCaller.execute();
 
-    console.log(data);
     const results: any = {};
     for (const address in data) {
       results[address] = {

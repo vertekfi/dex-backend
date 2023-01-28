@@ -158,8 +158,10 @@ export class CoingeckoService implements TokenPricingService {
       });
 
       const paginatedResults = await Promise.all(requests);
-      const results = this.parsePaginatedTokens(paginatedResults, mapped);
 
+      const results = paginatedResults[0];
+      // const results = this.parsePaginatedTokens(paginatedResults, mapped);
+      // console.log(results);
       // Inject native asset price if included in requested addresses
       if (
         addresses.includes(networkConfig.eth.address) ||
