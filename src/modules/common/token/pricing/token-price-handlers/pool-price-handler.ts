@@ -3,6 +3,7 @@
 import { BigNumber, Contract } from 'ethers';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
+import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { nestApp } from 'src/main';
 import { getPoolAddress } from 'src/modules/common/pool/pool-utils';
 import { TokenPriceHandler } from 'src/modules/common/token/types';
@@ -74,121 +75,48 @@ export class PoolPriceHandler implements TokenPriceHandler {
       pricingAssets,
     );
 
-    console.log(pricesMap);
+    const timestamp = timestampRoundedUpToNearestHour();
 
-    // const balancesMulticall = new Multicaller(this.rpc, [
-    //   'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
-    // ]);
-    // const poolMulticall = new Multicaller(this.rpc, [
-    //   'function getNormalizedWeights() public view returns (uint256[])',
-    // ]);
+    for (const priceInfo of Object.entries(pricesMap)) {
+      const [tokenIn, priceUsd] = priceInfo;
 
-    // // Token may have usePoolPricing set but arent included in local mapping
-    // // Database tokens are always stored lower case
-    // const mappedAddresses = Object.keys(pricingPoolsMap).map((t) => t.toLowerCase());
-    // tokens = tokens.filter((t) => mappedAddresses.includes(t.address));
+      // create a history record
+      operations.push(
+        this.prisma.prismaTokenPrice.upsert({
+          where: { tokenAddress_timestamp: { tokenAddress: tokenIn, timestamp } },
+          update: { price: priceUsd, close: priceUsd },
+          create: {
+            tokenAddress: tokenIn,
+            timestamp,
+            price: priceUsd,
+            high: priceUsd,
+            low: priceUsd,
+            open: priceUsd,
+            close: priceUsd,
+            coingecko: false,
+          },
+        }),
+      );
 
-    // tokens.forEach((t) => {
-    //   const poolId = pricingPoolsMap[t.address].poolId;
-    //   balancesMulticall.call(`${t.address}.poolTokens`, this.vault.address, 'getPoolTokens', [
-    //     poolId,
-    //   ]);
+      // Update current price record
+      operations.push(
+        this.prisma.prismaTokenCurrentPrice.upsert({
+          where: { tokenAddress: tokenIn },
+          update: { price: priceUsd },
+          create: {
+            tokenAddress: tokenIn,
+            timestamp,
+            price: priceUsd,
+            coingecko: false,
+          },
+        }),
+      );
 
-    //   const poolAddress = getPoolAddress(poolId);
-    //   poolMulticall.call(`${t.address}.weights`, poolAddress, 'getNormalizedWeights');
-    // });
+      tokensUpdated.push(tokenIn);
+    }
 
-    // let balancesResult: Record<
-    //   string,
-    //   {
-    //     poolTokens: { tokens: string[]; balances: BigNumber[] };
-    //   }
-    // >;
+    await prismaBulkExecuteOperations(operations);
 
-    // let poolWeights: Record<string, { weights: BigNumber[] }>;
-
-    // [balancesResult, poolWeights] = await Promise.all([
-    //   balancesMulticall.execute(),
-    //   poolMulticall.execute(),
-    // ]);
-
-    // const nativePrice = await this.gecko.getNativeAssetPrice();
-
-    // for (const tokenInfo of Object.entries(balancesResult)) {
-    //   const [tokenIn, poolInfo] = tokenInfo;
-
-    //   const poolTokens = {
-    //     balances: poolInfo.poolTokens.balances,
-    //     tokens: poolInfo.poolTokens.tokens.map((t) => t.toLowerCase()),
-    //   };
-
-    //   const tokenOut = pricingPoolsMap[tokenIn].priceAgainst;
-
-    //   if (!pricingAssets.includes(tokenOut)) {
-    //     continue;
-    //   }
-
-    //   const tokenInIdx = poolTokens.tokens.indexOf(tokenIn);
-    //   const tokenOutIdx = poolTokens.tokens.indexOf(tokenOut);
-    //   const balanceIn = ethNum(poolTokens.balances[tokenInIdx]);
-    //   const balanceOut = ethNum(poolTokens.balances[tokenOutIdx]);
-    //   const weightIn = ethNum(poolWeights[tokenIn].weights[tokenInIdx]);
-    //   const weightOut = ethNum(poolWeights[tokenIn].weights[tokenOutIdx]);
-    //   const amountIn = 1;
-
-    //   if (tokenInIdx === -1 || tokenOutIdx === -1) {
-    //     console.log('Incorrect token index for pricingPoolsMap: ' + tokenIn);
-    //     return;
-    //   }
-
-    //   const amountOut = calcOutGivenIn(balanceIn, weightIn, balanceOut, weightOut, amountIn);
-
-    //   let priceUsd: number;
-    //   if (isWeth(tokenOut)) {
-    //     priceUsd = amountOut.mul(nativePrice.usd).toNumber();
-    //   }
-
-    //   const timestamp = timestampRoundedUpToNearestHour();
-
-    //   if (priceUsd) {
-    //     console.log(priceUsd);
-
-    //     // create a history record
-    //     operations.push(
-    //       this.prisma.prismaTokenPrice.upsert({
-    //         where: { tokenAddress_timestamp: { tokenAddress: tokenIn, timestamp } },
-    //         update: { price: priceUsd, close: priceUsd },
-    //         create: {
-    //           tokenAddress: tokenIn,
-    //           timestamp,
-    //           price: priceUsd,
-    //           high: priceUsd,
-    //           low: priceUsd,
-    //           open: priceUsd,
-    //           close: priceUsd,
-    //           coingecko: false,
-    //         },
-    //       }),
-    //     );
-
-    //     // Update current price record
-    //     operations.push(
-    //       this.prisma.prismaTokenCurrentPrice.upsert({
-    //         where: { tokenAddress: tokenIn },
-    //         update: { price: priceUsd },
-    //         create: {
-    //           tokenAddress: tokenIn,
-    //           timestamp,
-    //           price: priceUsd,
-    //           coingecko: false,
-    //         },
-    //       }),
-    //     );
-
-    //     tokensUpdated.push(tokenIn);
-    //   }
-    // }
-
-    return [];
+    return tokensUpdated;
   }
 }
