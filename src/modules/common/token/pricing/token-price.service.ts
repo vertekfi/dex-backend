@@ -45,7 +45,7 @@ export class TokenPriceService {
       getPricingAssets(this.rpc.chainId),
     );
 
-    return String(price[tokenAddress]);
+    return price[tokenAddress].toFixed(2);
   }
 
   async tryCachePriceForToken(address: string) {
