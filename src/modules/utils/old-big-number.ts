@@ -1,12 +1,12 @@
 import OldBigNumber from 'bignumber.js';
-import { parseUnits } from 'ethers/lib/utils';
+import { formatEther, parseUnits } from 'ethers/lib/utils';
 import { BigNumber } from 'ethers';
 import { formatFixed } from '@ethersproject/bignumber';
 
 type AmountHumanReadable = string;
 
 export function ethNum(value: BigNumber) {
-  return Number(formatFixed(value));
+  return Number(formatEther(value));
 }
 
 export function oldBnum(val: string | number | OldBigNumber): OldBigNumber {

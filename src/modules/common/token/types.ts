@@ -1,6 +1,9 @@
 import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
+import { Contract } from 'ethers';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
+import { AccountWeb3 } from '../types';
+import { CoingeckoService } from './pricing/coingecko.service';
 
 export interface TokenPriceHandler {
   exitIfFails: boolean;
@@ -153,3 +156,5 @@ export interface TokenMarketData {
 }
 
 export interface CandleStickData {}
+
+export type PoolPricingMap = { [token: string]: { poolId: string; priceAgainst: string } };
