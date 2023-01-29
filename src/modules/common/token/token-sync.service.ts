@@ -28,12 +28,12 @@ export class TokenSyncService {
     const tokensWithIds = await this.prisma.prismaToken.findMany({
       where: {
         OR: [
-          // {
-          //   coingeckoTokenId: { not: null },
-          // },
-          // {
-          //   dexscreenPairAddress: { not: null },
-          // },
+          {
+            coingeckoTokenId: { not: null },
+          },
+          {
+            dexscreenPairAddress: { not: null },
+          },
           {
             usePoolPricing: true,
           },
