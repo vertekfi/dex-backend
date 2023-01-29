@@ -8,7 +8,7 @@ import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { ProtocolService } from 'src/modules/protocol/protocol.service';
 import { PRICE_SERVICES } from './providers/price-services.provider';
 import { getPriceHandlers } from './pricing/token-price-handlers';
-import { getTokensWithTypes } from './pricing/utils';
+import { getTokensWithTypes, isCoinGeckoToken, isDexscreenerToken } from './pricing/utils';
 import { TokenChartDataService } from './token-chart-data.service';
 import { TokenPricingService } from './types';
 import { RPC } from '../web3/rpc.provider';
@@ -59,14 +59,16 @@ export class TokenSyncService {
         for (const item of response) {
           // Each service will set the id as needed
           let token: PrismaToken;
-          const isScreener = item.dexscreenerPair !== null;
-          if (isScreener) {
+          const tokenRef = tokensWithIds.find((t) => t.address === item.tokenAddress);
+          if (isDexscreenerToken(tokenRef)) {
             token = tokensWithIds.find(
               (token) =>
                 token.dexscreenPairAddress.toLowerCase() === item.dexscreenerPair.toLowerCase(),
             );
-          } else {
+          } else if (isCoinGeckoToken(tokenRef)) {
             token = tokensWithIds.find((token) => token.coingeckoTokenId === item.coingeckoId);
+          } else if (tokenRef.usePoolPricing) {
+            token = tokenRef;
           }
 
           if (!token) {

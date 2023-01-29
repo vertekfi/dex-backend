@@ -10,9 +10,9 @@ import { AccountWeb3 } from '../../types';
 import { ContractService } from '../../web3/contract.service';
 import { Multicaller } from '../../web3/multicaller';
 import { RPC } from '../../web3/rpc.provider';
-import { PoolPricingMap, TokenDefinition, TokenPricingService } from '../types';
-import { CoingeckoService } from './coingecko.service';
+import { TokenDefinition, TokenPricingService } from '../types';
 import { getPoolPricingMap, getPricingAssetPrices } from './data';
+import { getTimestampStartOfDaysAgoUTC } from 'src/modules/utils/time';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
@@ -49,34 +49,55 @@ export class PoolPricingService implements TokenPricingService {
 
   async getMarketDataForToken(tokens: PrismaToken[]): Promise<PrismaTokenDynamicData[]> {
     const data: PrismaTokenDynamicData[] = [];
+    tokens = tokens.filter((t) => t.usePoolPricing);
 
-    console.log(tokens);
+    // Get current and >= 24 hour ago records to compute changes
+    const [currentPrices] = await Promise.all([
+      this.getWeightedTokenPoolPrices(tokens.map((t) => t.address)),
+      // this.prisma.prismaTokenPrice.findMany({
+      //   where: {
+      //     tokenAddress: { in: tokens.map((t) => t.address) },
+      //     timestamp: { gte: timestampTwentyFourHoursAgo() },
+      //   },
+      //   orderBy: { timestamp: 'desc' },
+      //   distinct: 'tokenAddress',
+      // }),
+    ]);
 
-    // for (const token of tokens) {
+    for (const currentValue of Object.entries(currentPrices)) {
+      const [address, currentPrice] = currentValue;
+      const token = tokens.find((t) => t.address === address);
 
-    //   for (const item of result.pairs) {
-    //     const marketData: PrismaTokenDynamicData = {
-    //       price: parseFloat(item.priceUsd),
-    //       ath: 0, // db
-    //       atl: 0, // db
-    //       marketCap: 0, // Have to manually call the contract for total supply (then * current price)
-    //       fdv: item.fdv,
-    //       high24h: 0, // db
-    //       low24h: 0, // db
-    //       priceChange24h: item.priceChange.h24,
-    //       priceChangePercent24h: item.priceChange.h24,
-    //       priceChangePercent7d: 0, // db
-    //       priceChangePercent14d: 0, // db
-    //       priceChangePercent30d: 0, // db
-    //       updatedAt: new Date(new Date().toUTCString()), // correct format?
-    //       coingeckoId: null,
-    //       dexscreenerPair: item.pairAddress,
-    //       tokenAddress: chunk.find((t) => t.dexscreenPairAddress === item.pairAddress).address,
-    //     };
+      // const priceDayAgo = oneDayAgoPrices.find((p) => p.tokenAddress === token.address);
+      // const priceChange24h = currentPrice - (priceDayAgo?.price || 0);
+      // const priceChangePercent24h = priceChange24h / (priceDayAgo?.price || 1);
 
-    //     data.push(marketData);
-    //   }
-    // }
+      // console.log('currentPrice: ' + currentPrice);
+      // console.log('priceDayAgo: ' + priceDayAgo?.price);
+      // console.log('priceChange24h: ' + priceChange24h);
+      // console.log('priceChangePercent24h: ' + priceChangePercent24h);
+
+      const marketData: PrismaTokenDynamicData = {
+        price: currentPrice,
+        ath: 0, // db
+        atl: 0, // db
+        marketCap: 0,
+        fdv: 0,
+        high24h: 0, // db
+        low24h: 0, // db
+        priceChange24h: 0,
+        priceChangePercent24h: 0,
+        priceChangePercent7d: 0, // Can these be pull in the same query?
+        priceChangePercent14d: 0, // db
+        priceChangePercent30d: 0, // db
+        updatedAt: new Date(new Date().toUTCString()), // correct format?
+        coingeckoId: null,
+        dexscreenerPair: null,
+        tokenAddress: token.address,
+      };
+
+      data.push(marketData);
+    }
 
     return data;
   }
@@ -161,5 +182,31 @@ export class PoolPricingService implements TokenPricingService {
     }
 
     return results;
+  }
+
+  async getPricesTwentyFourHoursAgo(tokens: string[]) {
+    return this.prisma.prismaTokenPrice.findMany({
+      where: {
+        tokenAddress: { in: tokens },
+        timestamp: { gte: getTimestampStartOfDaysAgoUTC(1) },
+      },
+      orderBy: { timestamp: 'desc' },
+      distinct: 'tokenAddress',
+    });
+  }
+
+  getHighLowPrices(prices: number[]) {
+    //
+  }
+
+  async getPricesOneWeekAgo(tokens: string[]) {
+    return this.prisma.prismaTokenPrice.findMany({
+      where: {
+        tokenAddress: { in: tokens },
+        timestamp: { gte: getTimestampStartOfDaysAgoUTC(7) },
+      },
+      orderBy: { timestamp: 'desc' },
+      distinct: 'tokenAddress',
+    });
   }
 }

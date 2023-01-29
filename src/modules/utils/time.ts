@@ -10,6 +10,10 @@ export const ONE_YEAR_SECONDS = ONE_DAY_SECONDS * 365;
 
 export const ONE_SECOND_MS = 1000;
 
+export function getTimestampStartOfDaysAgoUTC(numDays: number): number {
+  return moment().subtract(numDays, 'day').startOf('day').utc().unix();
+}
+
 export function timestampRoundedUpToNearestHour(m: moment.Moment = moment()): number {
   const roundUp =
     m.second() || m.millisecond() || m.minute()
@@ -43,7 +47,7 @@ export function getDailyTimestampsWithBuffer(numDays: number): number[] {
   while (current.isAfter(endTime)) {
     timestamps = [
       ...timestamps,
-      //we create a buffer of 20 seconds to match on to ensure we get at least one block for this hour
+      // we create a buffer of 20 seconds to match on to ensure we get at least one block for this hour
       current.clone().subtract(10, 'second').unix(),
       current.clone().subtract(9, 'second').unix(),
       current.clone().subtract(8, 'second').unix(),
