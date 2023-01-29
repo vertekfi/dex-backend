@@ -19,20 +19,10 @@ const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
 
 @Injectable()
 export class TokenPriceService {
-  readonly poolPricing: PoolPricingService;
   constructor(
-    @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
-    private readonly contractService: ContractService,
-    private readonly gecko: CoingeckoService,
-  ) {
-    this.poolPricing = new PoolPricingService({
-      rpc: this.rpc,
-      vault: this.contractService.getVault(),
-      gecko: this.gecko,
-      prisma: this.prisma,
-    });
-  }
+    private readonly poolPricing: PoolPricingService,
+  ) {}
 
   async getProtocolTokenPrice(): Promise<string> {
     const tokenAddress = getTokenAddress('VRTK');

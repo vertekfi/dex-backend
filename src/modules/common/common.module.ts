@@ -15,6 +15,7 @@ import { TokenChartDataService } from './token/token-chart-data.service';
 import { TokenService } from './token/token.service';
 import { TokenPriceService } from './token/pricing/token-price.service';
 import { TokenSyncService } from './token/token-sync.service';
+import { PoolPricingService } from './token/pricing/pool-pricing.service';
 
 @Global()
 @Module({
@@ -38,6 +39,7 @@ import { TokenSyncService } from './token/token-sync.service';
     PoolSwapService,
     ContractService,
     PoolOnChainDataService,
+    PoolPricingService,
 
     // Tokens
     TokenPriceService,
@@ -56,6 +58,7 @@ import { TokenSyncService } from './token/token-sync.service';
     PoolSwapService,
     ContractService,
     PoolOnChainDataService,
+    PoolPricingService,
 
     // Tokens
     TokenPriceService,

@@ -240,10 +240,6 @@ export class PoolService {
   }
 
   async syncSwapsForLast48Hours(): Promise<string[]> {
-    const currentBlock = await this.blockService.getBlockNumber();
-    if (currentBlock - networkConfig.startBlock < this.blockService.getBlocksPerDay()) {
-      return;
-    }
     console.time('syncSwapsForLast48Hours');
     const poolIds = await this.poolSwapService.syncSwapsForLast48Hours();
     console.timeEnd('syncSwapsForLast48Hours');
@@ -286,10 +282,6 @@ export class PoolService {
   }
 
   async updateLiquidity24hAgoForAllPools() {
-    const currentBlock = await this.blockService.getBlockNumber();
-    if (currentBlock - networkConfig.startBlock < this.blockService.getBlocksPerDay()) {
-      return;
-    }
     await this.poolUsdDataService.updateLiquidity24hAgoForAllPools();
   }
 

@@ -44,14 +44,18 @@ export class PoolUsdDataService {
     let updates: any[] = [];
 
     for (const pool of pools) {
-      const balanceUSDs = pool.tokens.map((token) => ({
-        id: token.id,
-        balanceUSD:
-          token.address === pool.address
-            ? 0
-            : parseFloat(token.dynamicData?.balance || '0') *
-              this.pricingService.getPriceForToken(tokenPrices, token.address),
-      }));
+      const balanceUSDs = pool.tokens.map((token) => {
+        console.log(token.dynamicData?.balance);
+        return {
+          id: token.id,
+          balanceUSD:
+            token.address === pool.address
+              ? 0
+              : parseFloat(token.dynamicData?.balance || '0') *
+                this.pricingService.getPriceForToken(tokenPrices, token.address),
+        };
+      });
+
       const totalLiquidity = _.sumBy(balanceUSDs, (item) => item.balanceUSD);
 
       for (const item of balanceUSDs) {

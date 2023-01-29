@@ -37,13 +37,7 @@ export class PoolPriceHandler implements TokenPriceHandler {
     this.gecko = nestApp.get(CoingeckoService);
     this.vault = cs.getVault();
     this.prisma = nestApp.get(PrismaService);
-
-    this.poolPricing = new PoolPricingService({
-      vault: cs.getVault(),
-      rpc: nestApp.get(RPC),
-      gecko: nestApp.get(CoingeckoService),
-      prisma: this.prisma,
-    });
+    this.poolPricing = nestApp.get(PoolPricingService);
   }
 
   async getAcceptedTokens(tokens: PrismaTokenWithTypes[]): Promise<string[]> {

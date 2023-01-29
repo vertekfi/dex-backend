@@ -15,7 +15,7 @@ import { isDexscreenerToken, validateDexscreenerToken } from './utils';
 export class DexScreenerService implements TokenPricingService {
   readonly coinGecko = false;
 
-  constructor(@Inject(RPC) private rpc: AccountWeb3, private readonly prisma: PrismaService) {}
+  constructor(@Inject(RPC) private rpc: AccountWeb3) {}
 
   async getMarketDataForToken(tokens: PrismaToken[]): Promise<PrismaTokenDynamicData[]> {
     tokens = tokens.filter(isDexscreenerToken);

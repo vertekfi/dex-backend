@@ -1,23 +1,84 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
 import { BigNumber, Contract } from 'ethers';
 import { PrismaService } from 'nestjs-prisma';
+import { HistoricalPrice } from 'src/modules/token/token-types-old';
 import { calcOutGivenIn } from 'src/modules/utils/math/WeightedMath';
 import { ethNum } from 'src/modules/utils/old-big-number';
 import { getPoolAddress } from '../../pool/pool-utils';
 import { AccountWeb3 } from '../../types';
+import { ContractService } from '../../web3/contract.service';
 import { Multicaller } from '../../web3/multicaller';
-import { PoolPricingMap } from '../types';
+import { RPC } from '../../web3/rpc.provider';
+import { PoolPricingMap, TokenDefinition, TokenPricingService } from '../types';
 import { CoingeckoService } from './coingecko.service';
 import { getPricingAssetPrices } from './data';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
-  gecko: CoingeckoService;
   vault: Contract;
   prisma: PrismaService;
 }
 
-export class PoolPricingService {
-  constructor(readonly config: IPoolPricingConfig) {}
+@Injectable()
+export class PoolPricingService implements TokenPricingService {
+  coinGecko = false;
+
+  constructor(
+    @Inject(RPC) private readonly rpc: AccountWeb3,
+    private readonly prisma: PrismaService,
+    private readonly contractService: ContractService,
+  ) {}
+
+  async getTokenPrice(token: TokenDefinition): Promise<number> {
+    return 0;
+  }
+
+  async updateCoinCandlestickData(token: PrismaToken): Promise<void> {
+    //
+  }
+
+  async getTokenHistoricalPrices(
+    address: string,
+    days: number,
+    tokenDefinitions: TokenDefinition[],
+  ): Promise<HistoricalPrice[]> {
+    return [];
+  }
+
+  async getMarketDataForToken(tokens: PrismaToken[]): Promise<PrismaTokenDynamicData[]> {
+    const data: PrismaTokenDynamicData[] = [];
+
+    console.log(tokens);
+
+    // for (const token of tokens) {
+
+    //   for (const item of result.pairs) {
+    //     const marketData: PrismaTokenDynamicData = {
+    //       price: parseFloat(item.priceUsd),
+    //       ath: 0, // db
+    //       atl: 0, // db
+    //       marketCap: 0, // Have to manually call the contract for total supply (then * current price)
+    //       fdv: item.fdv,
+    //       high24h: 0, // db
+    //       low24h: 0, // db
+    //       priceChange24h: item.priceChange.h24,
+    //       priceChangePercent24h: item.priceChange.h24,
+    //       priceChangePercent7d: 0, // db
+    //       priceChangePercent14d: 0, // db
+    //       priceChangePercent30d: 0, // db
+    //       updatedAt: new Date(new Date().toUTCString()), // correct format?
+    //       coingeckoId: null,
+    //       dexscreenerPair: item.pairAddress,
+    //       tokenAddress: chunk.find((t) => t.dexscreenPairAddress === item.pairAddress).address,
+    //     };
+
+    //     data.push(marketData);
+    //   }
+    // }
+
+    return data;
+  }
 
   async getWeightedTokenPoolPrices(
     tokens: string[],
@@ -25,10 +86,10 @@ export class PoolPricingService {
   ): Promise<{ [token: string]: number }> {
     tokens = tokens.map((t) => t.toLowerCase());
 
-    const balancesMulticall = new Multicaller(this.config.rpc, [
+    const balancesMulticall = new Multicaller(this.rpc, [
       'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
     ]);
-    const poolMulticall = new Multicaller(this.config.rpc, [
+    const poolMulticall = new Multicaller(this.rpc, [
       'function getNormalizedWeights() public view returns (uint256[])',
     ]);
 
@@ -37,11 +98,11 @@ export class PoolPricingService {
     const mappedAddresses = Object.keys(pricingPoolsMap).map((t) => t.toLowerCase());
     tokens = tokens.filter((t) => mappedAddresses.includes(t));
 
+    const vault = this.contractService.getVault();
+
     tokens.forEach((t) => {
       const poolId = pricingPoolsMap[t].poolId;
-      balancesMulticall.call(`${t}.poolTokens`, this.config.vault.address, 'getPoolTokens', [
-        poolId,
-      ]);
+      balancesMulticall.call(`${t}.poolTokens`, vault.address, 'getPoolTokens', [poolId]);
 
       const poolAddress = getPoolAddress(poolId);
       poolMulticall.call(`${t}.weights`, poolAddress, 'getNormalizedWeights');
@@ -60,7 +121,7 @@ export class PoolPricingService {
       poolMulticall.execute(),
     ]);
 
-    const pricingAssets = await getPricingAssetPrices(this.config.prisma);
+    const pricingAssets = await getPricingAssetPrices(this.prisma);
 
     const results: { [token: string]: number } = {};
 

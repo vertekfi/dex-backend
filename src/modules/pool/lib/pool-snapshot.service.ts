@@ -19,9 +19,10 @@ import { TokenHistoricalPrices } from 'src/modules/token/token-types-old';
 import { CoingeckoService } from 'src/modules/common/token/pricing/coingecko.service';
 import { TokenService } from 'src/modules/common/token/token.service';
 import { TokenPricingService } from 'src/modules/common/token/types';
-import { isCoinGeckoToken } from 'src/modules/common/token/pricing/utils';
+import { isCoinGeckoToken, isDexscreenerToken } from 'src/modules/common/token/pricing/utils';
 import { DexScreenerService } from 'src/modules/common/token/pricing/dex-screener.service';
 import { networkConfig } from 'src/modules/config/network-config';
+import { PoolPricingService } from 'src/modules/common/token/pricing/pool-pricing.service';
 
 @Injectable()
 export class PoolSnapshotService {
@@ -32,6 +33,7 @@ export class PoolSnapshotService {
     private readonly coingeckoService: CoingeckoService,
     private readonly dexscreenerService: DexScreenerService,
     private readonly tokenService: TokenService,
+    private readonly poolPricing: PoolPricingService,
   ) {}
 
   async getSnapshotsForPool(poolId: string, range: GqlPoolSnapshotDataRange) {
@@ -203,9 +205,16 @@ export class PoolSnapshotService {
         }));
       } else {
         try {
-          const pricingService: TokenPricingService = isCoinGeckoToken(token.token)
-            ? this.coingeckoService
-            : this.dexscreenerService;
+          let pricingService: TokenPricingService;
+          if (isCoinGeckoToken(token.token)) {
+            pricingService = this.coingeckoService;
+          } else if (isDexscreenerToken(token.token)) {
+            pricingService = this.dexscreenerService;
+          } else if (token.token.usePoolPricing) {
+            pricingService = this.poolPricing;
+          }
+
+          console.log(token.token);
 
           tokenPriceMap[token.address] = await pricingService.getTokenHistoricalPrices(
             token.address,
