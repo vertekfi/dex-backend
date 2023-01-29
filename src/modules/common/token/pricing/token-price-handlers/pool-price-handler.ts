@@ -50,7 +50,6 @@ export class PoolPriceHandler implements TokenPriceHandler {
 
     const pricesMap = await this.poolPricing.getWeightedTokenPoolPrices(
       tokens.map((t) => t.address),
-      getPoolPricingMap(),
     );
 
     const timestamp = timestampRoundedUpToNearestHour();

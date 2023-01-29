@@ -26,6 +26,7 @@ import { SOR } from './impl/wrapper';
 import { PrismaService } from 'nestjs-prisma';
 import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
 import { TokenDefinition } from 'src/modules/common/token/types';
+import { PoolPricingService } from 'src/modules/common/token/pricing/pool-pricing.service';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
@@ -42,6 +43,7 @@ export class BalancerSorService {
     private readonly sorPriceService: SorPriceService,
     private readonly prisma: PrismaService,
     private readonly poolService: PoolService,
+    private readonly poolPricing: PoolPricingService,
   ) {
     this.sor = new SOR(
       this.rpc.provider,
@@ -316,35 +318,32 @@ export class BalancerSorService {
       throw new Error('Unknown token: ' + address);
     }
 
-    // TODO: testing
-    const isProtoToken = getAddress(address) === getAddress(networkConfig.beets.address);
-    if (isProtoToken) {
-      return {
-        ...token,
-        price: '7',
-      };
-    }
-
+    const result = {
+      ...token,
+    };
+    let price: string;
     if (token.useDexscreener) {
       if (!token.dexscreenPairAddress) {
         throw new Error(`Missing dexscreenPairAddress for token ${token.address}`);
       }
       const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
-      return {
-        ...token,
-        price: String(info.priceNum),
-      };
+      price = String(info.priceNum);
     } else if (token.coingeckoTokenId) {
       if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
         throw new Error(`Missing coingecko data for token ${token.address}`);
       }
-      return {
-        ...token,
-        price: await this.sorPriceService.getTokenPrice(token as unknown as TokenDefinition),
-      };
+
+      price = await this.sorPriceService.getTokenPrice(token as unknown as TokenDefinition);
+    } else if (token.usePoolPricing) {
+      price = String(await this.poolPricing.getTokenPrice(token as unknown as TokenDefinition));
     } else {
       console.error(`Token ${token.address} is not dexscreener or gecko...?`);
     }
+
+    return {
+      ...result,
+      price,
+    };
   }
 
   private batchSwaps(

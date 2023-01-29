@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaTokenCurrentPrice, PrismaTokenPrice } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { networkConfig } from 'src/modules/config/network-config';
@@ -6,12 +6,7 @@ import * as moment from 'moment-timezone';
 import { TokenPriceItem } from '../types';
 import { GqlTokenChartDataRange } from 'src/gql-addons';
 import { CacheDecorator } from '../../decorators/cache.decorator';
-import { RPC } from '../../web3/rpc.provider';
-import { AccountWeb3 } from '../../types';
 import { PoolPricingService } from './pool-pricing.service';
-import { ContractService } from '../../web3/contract.service';
-import { CoingeckoService } from './coingecko.service';
-import { getPoolPricingMap } from './data';
 import { getTokenAddress } from '../utils';
 
 const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
@@ -26,10 +21,7 @@ export class TokenPriceService {
 
   async getProtocolTokenPrice(): Promise<string> {
     const tokenAddress = getTokenAddress('VRTK');
-    const price = await this.poolPricing.getWeightedTokenPoolPrices(
-      [tokenAddress],
-      getPoolPricingMap(),
-    );
+    const price = await this.poolPricing.getWeightedTokenPoolPrices([tokenAddress]);
 
     return price[tokenAddress].toFixed(2);
   }

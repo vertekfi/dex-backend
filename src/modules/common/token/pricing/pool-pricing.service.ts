@@ -12,7 +12,7 @@ import { Multicaller } from '../../web3/multicaller';
 import { RPC } from '../../web3/rpc.provider';
 import { PoolPricingMap, TokenDefinition, TokenPricingService } from '../types';
 import { CoingeckoService } from './coingecko.service';
-import { getPricingAssetPrices } from './data';
+import { getPoolPricingMap, getPricingAssetPrices } from './data';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
@@ -31,7 +31,8 @@ export class PoolPricingService implements TokenPricingService {
   ) {}
 
   async getTokenPrice(token: TokenDefinition): Promise<number> {
-    return 0;
+    const data = await this.getWeightedTokenPoolPrices([token.address]);
+    return data[token.address];
   }
 
   async updateCoinCandlestickData(token: PrismaToken): Promise<void> {
@@ -80,11 +81,10 @@ export class PoolPricingService implements TokenPricingService {
     return data;
   }
 
-  async getWeightedTokenPoolPrices(
-    tokens: string[],
-    pricingPoolsMap: PoolPricingMap,
-  ): Promise<{ [token: string]: number }> {
+  async getWeightedTokenPoolPrices(tokens: string[]): Promise<{ [token: string]: number }> {
     tokens = tokens.map((t) => t.toLowerCase());
+
+    const pricingPoolsMap = getPoolPricingMap();
 
     const balancesMulticall = new Multicaller(this.rpc, [
       'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
@@ -160,7 +160,6 @@ export class PoolPricingService implements TokenPricingService {
       results[tokenIn] = priceUsd;
     }
 
-    console.log(results);
     return results;
   }
 }
