@@ -1,16 +1,26 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaPoolStaking, PrismaPoolStakingType } from '@prisma/client';
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaPoolStaking } from '@prisma/client';
+import { formatUnits } from 'ethers/lib/utils';
 import { PrismaService } from 'nestjs-prisma';
 import { GqlPoolJoinExit, GqlPoolSwap } from 'src/gql-addons';
 import { PoolSwapService } from '../common/pool/pool-swap.service';
+import { Multicaller } from '../common/web3/multicaller';
 import { UserBalanceService } from './lib/user-balance.service';
 import { UserSyncGaugeBalanceService } from './lib/user-sync-gauge-balance.service';
 import { UserSyncWalletBalanceService } from './lib/user-sync-wallet-balance.service';
+import { VeBalLockInfo, VeBalLockInfoResult } from './types';
 import { UserPoolBalance } from './user-types';
+import * as votingEscrowAbi from '../abis/VotingEscrow.json';
+import { RPC } from '../common/web3/rpc.provider';
+import { AccountWeb3 } from '../common/types';
+import { toJsTimestamp } from '../utils/time';
+import { networkConfig } from '../config/network-config';
+import { GqlUserVoteEscrowInfo } from 'src/graphql';
 
 @Injectable()
 export class UserService {
   constructor(
+    @Inject(RPC) private rpc: AccountWeb3,
     private readonly prisma: PrismaService,
     private readonly walletSyncService: UserSyncWalletBalanceService,
     private readonly userBalanceService: UserBalanceService,
@@ -98,5 +108,47 @@ export class UserService {
     for (const userPoolBalance of allBalances) {
       this.syncUserBalance(userAddress, userPoolBalance.poolId);
     }
+  }
+
+  async getUserVeLockInfo(account?: string) {
+    if (!account) {
+      return null;
+    }
+
+    const veBalMulticaller = new Multicaller(this.rpc, votingEscrowAbi);
+
+    const address = networkConfig.balancer.votingEscrow.veAddress;
+    veBalMulticaller.call('locked', address, 'locked', [account]);
+    veBalMulticaller.call('epoch', address, 'epoch');
+    veBalMulticaller.call('totalSupply', address, 'totalSupply');
+    veBalMulticaller.call('balanceOf', address, 'balanceOf', [account]);
+
+    const result = await veBalMulticaller.execute<VeBalLockInfoResult>();
+
+    return this.formatLockInfo(result);
+  }
+
+  private formatLockInfo(lockInfo: VeBalLockInfoResult) {
+    const [lockedAmount, lockedEndDate] = lockInfo.locked;
+
+    const hasExistingLock = lockedAmount.gt(0);
+    const lockedEndDateNormalised = toJsTimestamp(lockedEndDate.toNumber());
+    const isExpired = hasExistingLock && Date.now() > lockedEndDateNormalised;
+
+    const numerator = Number(formatUnits(lockInfo.balanceOf));
+    const denominator = Number(formatUnits(lockInfo.totalSupply));
+
+    const data = {
+      lockEndDate: String(lockedEndDateNormalised),
+      lockedAmount: formatUnits(lockedAmount, 18),
+      totalSupply: formatUnits(lockInfo.totalSupply, 18),
+      epoch: lockInfo.epoch.toString(),
+      hasExistingLock,
+      isExpired,
+      currentBalance: formatUnits(lockInfo.balanceOf, 18),
+      percentOwned: ((numerator / denominator) * 100).toFixed(4),
+    };
+
+    return data;
   }
 }

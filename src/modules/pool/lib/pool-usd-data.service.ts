@@ -24,22 +24,24 @@ export class PoolUsdDataService {
     minShares: number = 0.00000000001,
     maxShares: number = Number.MAX_SAFE_INTEGER,
   ) {
-    const tokenPrices = await this.pricingService.getCurrentTokenPrices();
-    const pools = await this.prisma.prismaPool.findMany({
-      include: { dynamicData: true, tokens: { include: { dynamicData: true } } },
-      where: {
-        dynamicData: {
-          AND: [
-            {
-              totalSharesNum: { lte: maxShares },
-            },
-            {
-              totalSharesNum: { gt: minShares },
-            },
-          ],
+    const [tokenPrices, pools] = await Promise.all([
+      this.pricingService.getCurrentTokenPrices(),
+      this.prisma.prismaPool.findMany({
+        include: { dynamicData: true, tokens: { include: { dynamicData: true } } },
+        where: {
+          dynamicData: {
+            AND: [
+              {
+                totalSharesNum: { lte: maxShares },
+              },
+              {
+                totalSharesNum: { gt: minShares },
+              },
+            ],
+          },
         },
-      },
-    });
+      }),
+    ]);
 
     let updates: any[] = [];
 

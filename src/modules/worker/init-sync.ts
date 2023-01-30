@@ -6,7 +6,6 @@ let client: GraphQLClient;
 export async function runInitialSyncMutations(scheduledJobs: ScheduledJobService) {
   try {
     // if (process.env.NODE_ENV !== 'production') {
-    //   scheduledJobs.init();
     //   return;
     // }
     console.log(`runInitialSyncMutations:`);

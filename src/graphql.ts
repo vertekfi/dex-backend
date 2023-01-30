@@ -201,6 +201,8 @@ export interface IQuery {
     blocksGetBlocksPerDay(): number | Promise<number>;
     blocksGetAverageBlockTime(): number | Promise<number>;
     contentGetNewsItems(): Nullable<GqlContentNewsItem>[] | Promise<Nullable<GqlContentNewsItem>[]>;
+    getProtocolTokenList(): Nullable<Nullable<string>[]> | Promise<Nullable<Nullable<string>[]>>;
+    getProtocolPoolData(): Nullable<string>[] | Promise<Nullable<string>[]>;
     getRewardPools(user?: Nullable<string>): Nullable<RewardPool>[] | Promise<Nullable<RewardPool>[]>;
     tokenGetTokens(): GqlToken[] | Promise<GqlToken[]>;
     tokenGetCurrentPrices(): GqlTokenPrice[] | Promise<GqlTokenPrice[]>;
@@ -218,6 +220,7 @@ export interface IQuery {
     userGetPoolJoinExits(first: number, skip: number, poolId: string): GqlPoolJoinExit[] | Promise<GqlPoolJoinExit[]>;
     userGetSwaps(first: number, skip: number, poolId: string): GqlPoolSwap[] | Promise<GqlPoolSwap[]>;
     userGetPortfolioSnapshots(days: number): GqlUserPortfolioSnapshot[] | Promise<GqlUserPortfolioSnapshot[]>;
+    userGetVeLockInfo(): GqlUserVoteEscrowInfo | Promise<GqlUserVoteEscrowInfo>;
 }
 
 export interface GqlSorGetSwapsResponse {
@@ -241,6 +244,7 @@ export interface GqlSorGetSwapsResponse {
     effectivePrice: AmountHumanReadable;
     effectivePriceReversed: AmountHumanReadable;
     priceImpact: AmountHumanReadable;
+    isV1BetterTrade: boolean;
 }
 
 export interface GqlSorSwap {
@@ -282,6 +286,7 @@ export interface GqlSorGetBatchSwapForTokensInResponse {
 export interface IMutation {
     __typename?: 'IMutation';
     syncGaugeData(): boolean | Promise<boolean>;
+    poolReloadStakingForAllPools(): string | Promise<string>;
     poolSyncAllPoolsFromSubgraph(): string[] | Promise<string[]>;
     poolSyncNewPoolsFromSubgraph(): string[] | Promise<string[]>;
     poolLoadOnChainDataForAllPools(): string | Promise<string>;
@@ -294,8 +299,6 @@ export interface IMutation {
     poolSyncPoolAllTokensRelationship(): string | Promise<string>;
     poolReloadAllPoolAprs(): string | Promise<string>;
     poolSyncTotalShares(): string | Promise<string>;
-    poolReloadStakingForAllPools(stakingTypes: GqlPoolStakingType[]): string | Promise<string>;
-    poolSyncStakingForPools(): string | Promise<string>;
     poolUpdateLiquidity24hAgoForAllPools(): string | Promise<string>;
     poolLoadSnapshotsForAllPools(): string | Promise<string>;
     poolSyncLatestSnapshotsForAllPools(daysToSync?: Nullable<number>): string | Promise<string>;
@@ -365,6 +368,8 @@ export interface LiquidityGauge {
     shares?: Nullable<GaugeShare[]>;
     rewardTokens: Nullable<RewardToken>[];
     factory?: Nullable<GaugeFactory>;
+    depositFee: number;
+    withdrawFee: number;
 }
 
 export interface GaugeShare {
@@ -1104,6 +1109,7 @@ export interface GqlToken {
     logoURI?: Nullable<string>;
     priority: number;
     tradable: boolean;
+    coingeckoTokenId?: Nullable<string>;
 }
 
 export interface GqlTokenDynamicData {
@@ -1151,6 +1157,18 @@ export interface GqlTokenData {
     discordUrl?: Nullable<string>;
     telegramUrl?: Nullable<string>;
     twitterUsername?: Nullable<string>;
+}
+
+export interface GqlUserVoteEscrowInfo {
+    __typename?: 'GqlUserVoteEscrowInfo';
+    lockedAmount: string;
+    lockEndDate: number;
+    totalSupply: string;
+    currentBalance: string;
+    epoch: string;
+    hasExistingLock: boolean;
+    isExpired: boolean;
+    percentOwned: string;
 }
 
 export interface GqlUserPoolBalance {

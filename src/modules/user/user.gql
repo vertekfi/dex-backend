@@ -5,6 +5,7 @@ extend type Query {
   userGetPoolJoinExits(first: Int!, skip: Int!, poolId: String!): [GqlPoolJoinExit!]!
   userGetSwaps(first: Int!, skip: Int!, poolId: String!): [GqlPoolSwap!]!
   userGetPortfolioSnapshots(days: Int!): [GqlUserPortfolioSnapshot!]!
+  userGetVeLockInfo: GqlUserVoteEscrowInfo!
   # userGetPoolSnapshots(poolId: String!, range: GqlUserSnapshotDataRange!): [GqlUserPoolSnapshot!]!
 }
 
@@ -18,6 +19,17 @@ extend type Mutation {
 
   userInitStakedBalances(stakingTypes: [GqlPoolStakingType!]!): String!
   userSyncChangedStakedBalances: String!
+}
+
+type GqlUserVoteEscrowInfo {
+  lockedAmount: String!
+  lockEndDate: String!
+  totalSupply: String!
+  currentBalance: String!
+  epoch: String!
+  hasExistingLock: Boolean!
+  isExpired: Boolean!
+  percentOwned: String!
 }
 
 type GqlUserPoolBalance {

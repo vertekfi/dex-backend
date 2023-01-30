@@ -80,3 +80,7 @@ export function getDailyTimestampsWithBuffer(numDays: number): number[] {
 export function toUnixTimestamp(jsTimestamp: number): number {
   return Math.round(jsTimestamp / ONE_SECOND_MS);
 }
+
+export function toJsTimestamp(unixTimestamp: number): number {
+  return unixTimestamp * 1000;
+}

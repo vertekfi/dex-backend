@@ -48,4 +48,10 @@ export class UserQueryResolver {
     const accountAddress = getRequiredAccountAddress(context);
     return this.userService.getUserStaking(accountAddress);
   }
+
+  @Query()
+  async userGetVeLockInfo(@Context() context) {
+    const accountAddress = getRequiredAccountAddress(context);
+    return this.userService.getUserVeLockInfo(accountAddress);
+  }
 }
