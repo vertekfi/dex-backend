@@ -188,7 +188,7 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
               balanceNum: parseFloat(update.amount),
               userAddress: update.userAddress,
               poolId: pool?.id,
-              tokenAddress: pool!.address,
+              tokenAddress: pool?.address,
               stakingId: update.gaugeAddress,
             },
           });

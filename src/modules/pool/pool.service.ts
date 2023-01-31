@@ -265,7 +265,6 @@ export class PoolService {
     console.log('startBlock: ' + startBlock);
     console.log('endBlock: ' + endBlock);
     console.log('latestBlock: ' + latestBlock);
-    console.log('ERROR: FINISH PoolService.syncChangedPools() BITCH');
 
     const poolIds = await this.poolSyncService.getChangedPoolIds(startBlock, endBlock);
     if (poolIds.length !== 0) {
