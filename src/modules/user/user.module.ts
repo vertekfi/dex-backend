@@ -18,6 +18,12 @@ import { UserService } from './user.service';
     UserMutationResolver,
     UserSyncGaugeBalanceService,
   ],
-  exports: [UserService, UserQueryResolver, UserMutationResolver],
+  exports: [
+    UserService,
+    UserQueryResolver,
+    UserMutationResolver,
+    UserSyncWalletBalanceService,
+    UserSyncGaugeBalanceService,
+  ],
 })
 export class UserModule {}

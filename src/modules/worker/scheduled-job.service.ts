@@ -9,6 +9,9 @@ import { ProtocolService } from '../protocol/protocol.service';
 import { GaugeSyncService } from '../gauge/gauge-sync.service';
 import { PoolDataLoaderService } from '../pool/lib/pool-data-loader.service';
 import { TokenSyncService } from '../common/token/token-sync.service';
+import { runWithMinimumInterval } from './scheduling';
+import { UserSyncWalletBalanceService } from '../user/lib/user-sync-wallet-balance.service';
+import { UserSyncGaugeBalanceService } from '../user/lib/user-sync-gauge-balance.service';
 
 const ONE_MINUTE_IN_MS = 60000;
 const TWO_MINUTES_IN_MS = 120000;
@@ -43,6 +46,8 @@ export class ScheduledJobService {
     private readonly protocolService: ProtocolService,
     private readonly gaugeSyncService: GaugeSyncService,
     private readonly poolDataLoader: PoolDataLoaderService,
+    private readonly userSyncService: UserSyncWalletBalanceService,
+    private readonly userGaugeSyncService: UserSyncGaugeBalanceService,
   ) {}
 
   init() {
@@ -142,6 +147,18 @@ export class ScheduledJobService {
           console.log(`${taskName} already running, skipping call...`);
           return;
         }
+
+        running = true;
+        console.log(`Start ${taskName}...`);
+        console.time(taskName);
+        asyncCallWithTimeout(listener, timeout)
+          .catch((error) => {
+            console.log(`Error ${taskName}`, error);
+          })
+          .finally(() => {
+            running = false;
+            console.timeEnd(taskName);
+          });
       }, 1),
     );
   }
@@ -250,6 +267,23 @@ export class ScheduledJobService {
       },
     );
 
+    runWithMinimumInterval(5000, async () => {
+      await this.poolService.syncChangedPools();
+    }).catch((error) => console.log('Error starting syncChangedPools...', error));
+
+    this.addRpcListener(
+      'userSyncWalletBalancesForAllPools',
+      'block',
+      ONE_MINUTE_IN_MS,
+      async () => {
+        await this.userSyncService.syncChangedBalancesForAllPools();
+      },
+    );
+
+    this.addRpcListener('userSyncStakedBalances', 'block', ONE_MINUTE_IN_MS, async () => {
+      await this.userGaugeSyncService.syncChangedStakedBalances();
+    });
+
     /*
       //every five minutes
       this.scheduleJob(
@@ -324,22 +358,5 @@ export class ScheduledJobService {
     console.log('scheduled cron jobs');
 
     // console.log('start pool sync');
-
-    // runWithMinimumInterval(5000, async () => {
-    //   await this.poolService.syncChangedPools();
-    // }).catch((error) => console.log('Error starting syncChangedPools...', error));
-
-    // this.addRpcListener(
-    //   'userSyncWalletBalancesForAllPools',
-    //   'block',
-    //   ONE_MINUTE_IN_MS,
-    //   async () => {
-    //     await this.userService.syncChangedWalletBalancesForAllPools();
-    //   },
-    // );
-
-    // this.addRpcListener('userSyncStakedBalances', 'block', ONE_MINUTE_IN_MS, async () => {
-    //   await this.userService.syncChangedStakedBalances();
-    // });
   }
 }
