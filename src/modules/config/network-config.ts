@@ -85,7 +85,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       wrappedNativeAssetAddress: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
     },
     subgraphs: {
-      startDate: '2024-01-25',
+      startDate: '2024-01-28',
       balancer: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-subgraph',
       gauges: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-gauges-subgraph',
       blocks: 'https://api.thegraph.com/subgraphs/name/vertekfi/bsc-blocks',

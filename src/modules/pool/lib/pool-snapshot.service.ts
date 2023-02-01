@@ -127,6 +127,8 @@ export class PoolSnapshotService {
     for (const poolId of poolIds) {
       const snapshots = allSnapshots.filter((snapshot) => snapshot.pool.id === poolId);
 
+      console.log(snapshots);
+
       const latestSyncedSnapshot = latestSyncedSnapshots.find(
         (snapshot) => snapshot.poolId === poolId,
       );
@@ -177,7 +179,8 @@ export class PoolSnapshotService {
       include: prismaPoolWithExpandedNesting.include,
     });
 
-    const startTimestamp = timestampToSyncFrom > 0 ? timestampToSyncFrom : pool.createTime;
+    // const startTimestamp = timestampToSyncFrom > 0 ? timestampToSyncFrom : pool.createTime;
+    const startTimestamp = pool.createTime;
 
     if (pool.type === 'LINEAR') {
       throw new Error('Unsupported pool type');
@@ -187,7 +190,8 @@ export class PoolSnapshotService {
       where: { poolId },
       startTimestamp,
     });
-    const numDays = moment().endOf('day').diff(moment.unix(startTimestamp), 'days');
+    // const numDays = moment().endOf('day').diff(moment.unix(startTimestamp), 'days');
+    const numDays = 6; // TODO:
 
     const tokenPriceMap: TokenHistoricalPrices = {};
 
@@ -276,7 +280,6 @@ export class PoolSnapshotService {
         (token) => parseFloat(token.balance) * (tokenPrices[token.address] || 0),
       );
 
-      console.log(totalLiquidity);
       const totalShares = parseFloat(poolAtBlock.totalShares);
 
       const id = `${poolId}-${startTimestamp}`;

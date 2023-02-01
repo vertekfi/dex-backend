@@ -152,8 +152,6 @@ export class BlocksSubgraphService {
   }
 
   async getDailyBlocks(numDays: number): Promise<BlockFragment[]> {
-    console.log(numDays);
-
     const today = moment.tz('GMT').format('YYYY-MM-DD');
     const maxDays = moment
       .tz('GMT')
