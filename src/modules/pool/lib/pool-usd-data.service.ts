@@ -57,7 +57,6 @@ export class PoolUsdDataService {
         };
       });
 
-      console.log(balanceUSDs);
       const totalLiquidity = _.sumBy(balanceUSDs, (item) => item.balanceUSD);
 
       for (const item of balanceUSDs) {

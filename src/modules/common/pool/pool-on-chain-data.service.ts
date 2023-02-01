@@ -103,39 +103,43 @@ export class PoolOnChainDataService {
         multiPool.call(`${pool.id}.wrappedTokenRate`, pool.address, 'getWrappedTokenRate');
       }
 
-      if (pool.type === 'LIQUIDITY_BOOTSTRAPPING' || pool.type === 'INVESTMENT') {
-        multiPool.call(`${pool.id}.swapEnabled`, pool.address, 'getSwapEnabled');
-      }
+      // if (pool.type === 'LIQUIDITY_BOOTSTRAPPING' || pool.type === 'INVESTMENT') {
+      //   multiPool.call(`${pool.id}.swapEnabled`, pool.address, 'getSwapEnabled');
+      // }
 
-      if (pool.type === 'META_STABLE') {
-        const tokenAddresses = pool.tokens.map((token) => token.address);
+      // if (pool.type === 'META_STABLE') {
+      //   const tokenAddresses = pool.tokens.map((token) => token.address);
 
-        tokenAddresses.forEach((token, i) => {
-          multiPool.call(`${pool.id}.metaPriceRateCache[${i}]`, pool.address, 'getPriceRateCache', [
-            token,
-          ]);
-        });
+      //   tokenAddresses.forEach((token, i) => {
+      //     multiPool.call(`${pool.id}.metaPriceRateCache[${i}]`, pool.address, 'getPriceRateCache', [
+      //       token,
+      //     ]);
+      //   });
+      // }
+
+      if (isWeightedPoolV2(pool)) {
+        console.log(pool.id);
       }
 
       if (isComposableStablePool(pool) || isWeightedPoolV2(pool)) {
         // the new ComposableStablePool and WeightedPool mint bpts for protocol fees which are included in the getActualSupply call
-        multiPool.call(`${pool.id}.totalSupply`, pool.address, 'getActualSupply');
+        //  multiPool.call(`${pool.id}.totalSupply`, pool.address, 'getActualSupply');
       } else if (pool.type === 'LINEAR' || pool.type === 'PHANTOM_STABLE') {
         // the old phantom stable and linear pool does not have this and expose the actual supply as virtualSupply
         multiPool.call(`${pool.id}.totalSupply`, pool.address, 'getVirtualSupply');
       } else {
-        //default to totalSupply for any other pool type
-        multiPool.call(`${pool.id}.totalSupply`, pool.address, 'totalSupply');
+        // default to totalSupply for any other pool type
+        //  multiPool.call(`${pool.id}.totalSupply`, pool.address, 'totalSupply');
       }
 
-      if (pool.type === 'PHANTOM_STABLE') {
-        //we retrieve token rates for phantom stable and composable stable pools
-        const tokenAddresses = pool.tokens.map((token) => token.address);
+      // if (pool.type === 'PHANTOM_STABLE') {
+      //   //we retrieve token rates for phantom stable and composable stable pools
+      //   const tokenAddresses = pool.tokens.map((token) => token.address);
 
-        tokenAddresses.forEach((token, i) => {
-          multiPool.call(`${pool.id}.tokenRates[${i}]`, pool.address, 'getTokenRate', [token]);
-        });
-      }
+      //   tokenAddresses.forEach((token, i) => {
+      //     multiPool.call(`${pool.id}.tokenRates[${i}]`, pool.address, 'getTokenRate', [token]);
+      //   });
+      // }
     });
 
     let poolsOnChainData = {} as Record<string, MulticallExecuteResult>;
@@ -150,8 +154,11 @@ export class PoolOnChainDataService {
     const poolsOnChainDataArray = Object.entries(poolsOnChainData);
     const dataPools = [];
 
+    console.log(poolsOnChainDataArray.length);
+
     for (let index = 0; index < poolsOnChainDataArray.length; index++) {
       const [poolId, onchainData] = poolsOnChainDataArray[index];
+      console.log(onchainData);
       const pool = pools.find((pool) => pool.id === poolId)!;
       const { poolTokens } = onchainData;
 
@@ -228,7 +235,7 @@ export class PoolOnChainDataService {
         }
 
         const swapFee = formatFixed(onchainData.swapFee, 18);
-        const totalShares = formatFixed(onchainData.totalSupply, 18);
+        const totalShares = formatFixed(onchainData.totalSupply || '0', 18);
         const swapEnabled =
           typeof onchainData.swapEnabled !== 'undefined'
             ? onchainData.swapEnabled
