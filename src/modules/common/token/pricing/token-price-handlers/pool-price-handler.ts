@@ -16,10 +16,6 @@ import { PoolPricingService } from '../pool-pricing.service';
 
 const WETH = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
 
-function isWeth(address: string) {
-  return address.toLowerCase() === WETH.toLowerCase();
-}
-
 export class PoolPriceHandler implements TokenPriceHandler {
   public readonly exitIfFails = false;
   public readonly id = 'PoolPriceHandler';

@@ -15,6 +15,9 @@ import { getPoolPricingMap, getPricingAssetPrices } from './data';
 import { getTimestampStartOfDaysAgoUTC } from 'src/modules/utils/time';
 import { getVault, getVaultAbi } from '../../web3/contract';
 import { objectToLowerCaseArr, toLowerCaseArr } from 'src/modules/utils/general.utils';
+import { ZERO_ADDRESS } from '../../web3/utils';
+import { SwapKind } from '../../types/vault.types';
+import { parseUnits } from 'ethers/lib/utils';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
@@ -112,11 +115,10 @@ export class PoolPricingService implements TokenPricingService {
 
     const balancesMulticall = new Multicaller(this.rpc, [
       'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
-      'function queryBatchSwap(uint256, ) ',
     ]);
-    const poolMulticall = new Multicaller(this.rpc, [
-      'function getNormalizedWeights() public view returns (uint256[])',
-    ]);
+    // const poolMulticall = new Multicaller(this.rpc, [
+    //   'function getNormalizedWeights() public view returns (uint256[])',
+    // ]);
 
     // Token may have usePoolPricing set but arent included in local mapping
     // Database tokens are always stored lower case
@@ -127,8 +129,8 @@ export class PoolPricingService implements TokenPricingService {
       const poolId = pricingPoolsMap[t].poolId;
       balancesMulticall.call(`${t}.poolTokens`, vault.address, 'getPoolTokens', [poolId]);
 
-      const poolAddress = getPoolAddress(poolId);
-      poolMulticall.call(`${t}.weights`, poolAddress, 'getNormalizedWeights');
+      //  const poolAddress = getPoolAddress(poolId);
+      // poolMulticall.call(`${t}.weights`, poolAddress, 'getNormalizedWeights');
     });
 
     let balancesResult: Record<
@@ -137,11 +139,12 @@ export class PoolPricingService implements TokenPricingService {
         poolTokens: { tokens: string[]; balances: BigNumber[] };
       }
     >;
-    let poolWeights: Record<string, { weights: BigNumber[] }>;
 
-    [balancesResult, poolWeights] = await Promise.all([
+    // let poolWeights: Record<string, { weights: BigNumber[] }>;
+
+    [balancesResult] = await Promise.all([
       balancesMulticall.execute(),
-      poolMulticall.execute(),
+      // poolMulticall.execute(),
     ]);
 
     const pricingAssets = await getPricingAssetPrices(this.prisma);
@@ -165,25 +168,68 @@ export class PoolPricingService implements TokenPricingService {
 
       const tokenInIdx = poolTokens.tokens.indexOf(tokenIn);
       const tokenOutIdx = poolTokens.tokens.indexOf(tokenOut);
-      const balanceIn = ethNum(poolTokens.balances[tokenInIdx]);
-      const balanceOut = ethNum(poolTokens.balances[tokenOutIdx]);
-      const weightIn = ethNum(poolWeights[tokenIn].weights[tokenInIdx]);
-      const weightOut = ethNum(poolWeights[tokenIn].weights[tokenOutIdx]);
-      const amountIn = 1;
 
       if (tokenInIdx === -1 || tokenOutIdx === -1) {
         console.log('Skipping incorrect token index for pricingPoolsMap: ' + tokenIn);
         continue;
       }
 
-      const amountOut = calcOutGivenIn(balanceIn, weightIn, balanceOut, weightOut, amountIn);
+      const poolId = pricingPoolsMap[tokenIn].poolId;
+      const amountOut = await this.getTradeDeltas(
+        tokenIn,
+        [tokenIn, tokenOut],
+        poolId,
+        parseUnits('1'),
+      );
 
-      const priceUsd = amountOut.mul(pricingAssets[tokenOut]).toNumber();
+      const priceUsd = amountOut * pricingAssets[tokenOut];
+
+      // console.log(priceUsd);
 
       results[tokenIn] = priceUsd;
     }
 
     return results;
+  }
+
+  async getTradeDeltas(mainToken: string, tokens: string[], poolId: string, amountIn: BigNumber) {
+    try {
+      const vault = await getVault();
+      const assetInIndex = tokens[0] == mainToken ? 0 : 1;
+      const assetOutIndex = assetInIndex === 0 ? 1 : 0;
+
+      const me = ZERO_ADDRESS;
+      const batchStep = [
+        {
+          poolId,
+          assetInIndex,
+          assetOutIndex,
+          amount: amountIn,
+          userData: '0x',
+        },
+      ];
+
+      const fundManagement = {
+        sender: me,
+        fromInternalBalance: false,
+        recipient: me,
+        toInternalBalance: false,
+      };
+
+      const deltas = await vault.callStatic.queryBatchSwap(
+        SwapKind.GIVEN_IN,
+        batchStep,
+        tokens,
+        fundManagement,
+      );
+
+      // console.log(deltas.map((d) => ethNum(d)));
+
+      return ethNum(deltas[assetOutIndex]);
+    } catch (error) {
+      console.error(`Error get price deltas for pool id ${poolId}. Returning zero.`);
+      return 0;
+    }
   }
 
   async getPricesTwentyFourHoursAgo(tokens: string[]) {

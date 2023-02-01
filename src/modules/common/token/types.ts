@@ -1,4 +1,5 @@
 import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
+import BigNumber from 'bignumber.js';
 import { Contract } from 'ethers';
 import { PrismaTokenWithTypes } from 'prisma/prisma-types';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
@@ -157,7 +158,9 @@ export interface TokenMarketData {
 
 export type PricingAsset = 'BUSD' | 'WBNB' | 'ETH';
 
-export type PoolPricingMap = { [token: string]: { poolId: string; priceAgainst: string } };
+export type PoolPricingMap = {
+  [token: string]: { poolId: string; priceAgainst: string; inputAmount?: BigNumber };
+};
 
 export interface PricingAssetInfo {
   address: string;
