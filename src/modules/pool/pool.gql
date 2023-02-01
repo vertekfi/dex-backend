@@ -668,6 +668,8 @@ type GqlPoolStakingGauge {
   id: ID!
   gaugeAddress: String!
   rewards: [GqlPoolStakingGaugeReward!]!
+  depositFee: Int!
+  withdrawFee: Int!
 }
 
 type GqlPoolStakingGaugeReward {
