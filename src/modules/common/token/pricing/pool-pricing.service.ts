@@ -13,6 +13,8 @@ import { RPC } from '../../web3/rpc.provider';
 import { TokenDefinition, TokenPricingService } from '../types';
 import { getPoolPricingMap, getPricingAssetPrices } from './data';
 import { getTimestampStartOfDaysAgoUTC } from 'src/modules/utils/time';
+import { getVault, getVaultAbi } from '../../web3/contract';
+import { objectToLowerCaseArr, toLowerCaseArr } from 'src/modules/utils/general.utils';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
@@ -106,20 +108,18 @@ export class PoolPricingService implements TokenPricingService {
     tokens = tokens.map((t) => t.toLowerCase());
 
     const pricingPoolsMap = getPoolPricingMap();
+    const vault = await getVault();
 
     const balancesMulticall = new Multicaller(this.rpc, [
       'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
+      'function queryBatchSwap(uint256, ) ',
     ]);
-    const poolMulticall = new Multicaller(this.rpc, [
-      'function getNormalizedWeights() public view returns (uint256[])',
-    ]);
+    const poolMulticall = new Multicaller(this.rpc, getVaultAbi());
 
     // Token may have usePoolPricing set but arent included in local mapping
     // Database tokens are always stored lower case
-    const mappedAddresses = Object.keys(pricingPoolsMap).map((t) => t.toLowerCase());
+    const mappedAddresses = objectToLowerCaseArr(pricingPoolsMap);
     tokens = tokens.filter((t) => mappedAddresses.includes(t));
-
-    const vault = this.contractService.getVault();
 
     tokens.forEach((t) => {
       const poolId = pricingPoolsMap[t].poolId;

@@ -1,7 +1,9 @@
 import { getAddress } from 'ethers/lib/utils';
 import { Contract, ethers } from 'ethers';
 import { networkConfig } from 'src/modules/config/network-config';
-import { getProviderOrDefault } from './rpc.provider';
+import { getChainId, getCurrentRpcProvider, getProviderOrDefault } from './rpc.provider';
+import * as vaultAbi from '../../abis/Vault.json';
+import { CONTRACT_MAP } from 'src/modules/data/contracts';
 
 export function returnChecksum() {
   return function (target: any, key: string, descriptor: PropertyDescriptor) {
@@ -22,4 +24,22 @@ export function getContractAt<T extends Contract>(address: string, abi: any): T 
 
 export async function getGaugeController(chainId?: number) {
   return new Contract('', [], await getProviderOrDefault(chainId));
+}
+
+export async function getVault() {
+  return new Contract(getContractAddress('Vault'), vaultAbi, await getCurrentRpcProvider());
+}
+
+export function getVaultAbi() {
+  return vaultAbi;
+}
+
+/**
+ * Will throw if wrong lookup key is provided
+ * @param mappingKey
+ */
+export function getContractAddress(mappingKey: string) {
+  const address = CONTRACT_MAP[mappingKey][getChainId()];
+  if (!address) throw new Error(`Address for key "${mappingKey}" not found`);
+  return address;
 }

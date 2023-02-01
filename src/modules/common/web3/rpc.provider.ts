@@ -57,3 +57,7 @@ export async function getProviderOrDefault(chainId?: number): Promise<JsonRpcPro
 export function getChainId() {
   return parseInt(process.env.CHAIN_ID);
 }
+
+export async function getCurrentRpcProvider() {
+  return (await getCurrentChainAccount()).provider;
+}
