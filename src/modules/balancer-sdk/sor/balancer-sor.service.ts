@@ -86,21 +86,6 @@ export class BalancerSorService {
       throw new Error('SOR: invalid swap amount input');
     }
 
-    /*const swapInfo = await balancerSdk.sor.getSwaps(
-        tokenIn,
-        tokenOut,
-        swapType === 'EXACT_IN' ? SwapTypes.SwapExactIn : SwapTypes.SwapExactOut,
-        swapAmountScaled,
-        {
-            timestamp: swapOptions.timestamp || Math.floor(Date.now() / 1000),
-            //TODO: move this to env
-            maxPools: swapOptions.maxPools || 8,
-            forceRefresh: swapOptions.forceRefresh || false,
-            boostedPools,
-            //TODO: support gas price and swap gas
-        },
-    );*/
-
     const [tokenInfoIn, tokenInfoOut] = await Promise.all([
       this.getToken(tokenIn),
       this.getToken(tokenOut),
@@ -113,7 +98,7 @@ export class BalancerSorService {
     const priceOfNativeAssetInSellToken = Number(
       formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoOut.price, 36)), 36),
     );
-    // TODO: This right?...
+
     await Promise.all([
       this.sor.swapCostCalculator.setNativeAssetPriceInToken(
         tokenIn,

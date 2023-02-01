@@ -114,7 +114,9 @@ export class PoolPricingService implements TokenPricingService {
       'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
       'function queryBatchSwap(uint256, ) ',
     ]);
-    const poolMulticall = new Multicaller(this.rpc, getVaultAbi());
+    const poolMulticall = new Multicaller(this.rpc, [
+      'function getNormalizedWeights() public view returns (uint256[])',
+    ]);
 
     // Token may have usePoolPricing set but arent included in local mapping
     // Database tokens are always stored lower case

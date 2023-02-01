@@ -27,7 +27,7 @@ export async function getGaugeController(chainId?: number) {
 }
 
 export async function getVault() {
-  return new Contract(getContractAddress('Vault'), vaultAbi, await getCurrentRpcProvider());
+  return new Contract(getContractAddress('VAULT'), vaultAbi, await getCurrentRpcProvider());
 }
 
 export function getVaultAbi() {

@@ -271,18 +271,18 @@ export class ScheduledJobService {
       await this.poolService.syncChangedPools();
     }).catch((error) => console.log('Error starting syncChangedPools...', error));
 
-    this.addRpcListener(
-      'userSyncWalletBalancesForAllPools',
-      'block',
-      ONE_MINUTE_IN_MS,
-      async () => {
-        await this.userSyncService.syncChangedBalancesForAllPools();
-      },
-    );
+    // this.addRpcListener(
+    //   'userSyncWalletBalancesForAllPools',
+    //   'block',
+    //   ONE_MINUTE_IN_MS,
+    //   async () => {
+    //     await this.userSyncService.syncChangedBalancesForAllPools();
+    //   },
+    // );
 
-    this.addRpcListener('userSyncStakedBalances', 'block', ONE_MINUTE_IN_MS, async () => {
-      await this.userGaugeSyncService.syncChangedStakedBalances();
-    });
+    // this.addRpcListener('userSyncStakedBalances', 'block', ONE_MINUTE_IN_MS, async () => {
+    //   await this.userGaugeSyncService.syncChangedStakedBalances();
+    // });
 
     /*
       //every five minutes

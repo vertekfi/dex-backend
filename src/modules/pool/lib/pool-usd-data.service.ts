@@ -47,7 +47,6 @@ export class PoolUsdDataService {
 
     for (const pool of pools) {
       const balanceUSDs = pool.tokens.map((token) => {
-        console.log(token.dynamicData?.balance);
         return {
           id: token.id,
           balanceUSD:
@@ -58,6 +57,7 @@ export class PoolUsdDataService {
         };
       });
 
+      console.log(balanceUSDs);
       const totalLiquidity = _.sumBy(balanceUSDs, (item) => item.balanceUSD);
 
       for (const item of balanceUSDs) {
