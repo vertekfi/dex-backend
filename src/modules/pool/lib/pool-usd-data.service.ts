@@ -97,14 +97,17 @@ export class PoolUsdDataService {
     let updates: any[] = [];
 
     for (const pool of subgraphPools) {
-      const balanceUSDs = (pool.tokens || []).map((token) => ({
-        id: token.id,
-        balanceUSD:
-          token.address === pool.address
-            ? 0
-            : parseFloat(token.balance || '0') *
-              this.pricingService.getPriceForToken(tokenPrices24hAgo, token.address),
-      }));
+      const balanceUSDs = (pool.tokens || []).map((token) => {
+        console.log(token);
+        return {
+          id: token.id,
+          balanceUSD:
+            token.address === pool.address
+              ? 0
+              : parseFloat(token.balance || '0') *
+                this.pricingService.getPriceForToken(tokenPrices24hAgo, token.address),
+        };
+      });
       const totalLiquidity = Math.max(
         _.sumBy(balanceUSDs, (item) => item.balanceUSD),
         0,

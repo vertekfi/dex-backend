@@ -11,16 +11,6 @@ export class ProtocolResolver {
   }
 
   @Query()
-  async blocksGetBlocksPerDay() {
-    return 28800;
-  }
-
-  @Query()
-  async blocksGetAverageBlockTime() {
-    return 3;
-  }
-
-  @Query()
   async contentGetNewsItems() {
     return [];
   }

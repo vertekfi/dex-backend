@@ -23,6 +23,7 @@ import { isCoinGeckoToken, isDexscreenerToken } from 'src/modules/common/token/p
 import { DexScreenerService } from 'src/modules/common/token/pricing/dex-screener.service';
 import { networkConfig } from 'src/modules/config/network-config';
 import { PoolPricingService } from 'src/modules/common/token/pricing/pool-pricing.service';
+import { BlocksSubgraphService } from 'src/modules/subgraphs/blocks-subgraph/blocks-subgraph.service';
 
 @Injectable()
 export class PoolSnapshotService {
@@ -34,6 +35,7 @@ export class PoolSnapshotService {
     private readonly dexscreenerService: DexScreenerService,
     private readonly tokenService: TokenService,
     private readonly poolPricing: PoolPricingService,
+    private readonly blockSubgrphService: BlocksSubgraphService,
   ) {}
 
   async getSnapshotsForPool(poolId: string, range: GqlPoolSnapshotDataRange) {
@@ -214,13 +216,12 @@ export class PoolSnapshotService {
             pricingService = this.poolPricing;
           }
 
-          console.log(token.token);
-
           tokenPriceMap[token.address] = await pricingService.getTokenHistoricalPrices(
             token.address,
             numDays,
             await this.tokenService.getTokenDefinitions(),
           );
+
           await sleep(5000);
         } catch (error: any) {
           console.error(
@@ -234,7 +235,7 @@ export class PoolSnapshotService {
       }
     }
 
-    const dailyBlocks = await this.blockService.getDailyBlocks(numDays);
+    const dailyBlocks = await this.blockSubgrphService.getDailyBlocks(numDays);
 
     for (const block of dailyBlocks) {
       const startTimestamp = parseInt(block.timestamp);
@@ -274,6 +275,8 @@ export class PoolSnapshotService {
         poolAtBlock.tokens || [],
         (token) => parseFloat(token.balance) * (tokenPrices[token.address] || 0),
       );
+
+      console.log(totalLiquidity);
       const totalShares = parseFloat(poolAtBlock.totalShares);
 
       const id = `${poolId}-${startTimestamp}`;

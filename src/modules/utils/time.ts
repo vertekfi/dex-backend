@@ -7,8 +7,11 @@ export const THIRTY_MINUTES_SECONDS = ONE_MINUTE_SECONDS * 30;
 
 export const ONE_DAY_SECONDS = 86400;
 export const ONE_YEAR_SECONDS = ONE_DAY_SECONDS * 365;
-
+export const ONE_DAY_MINUTES = 60 * 24;
 export const ONE_SECOND_MS = 1000;
+
+export const SECONDS_PER_DAY = 86400;
+export const SECONDS_PER_YEAR = SECONDS_PER_DAY * 365;
 
 export function getTimestampStartOfDaysAgoUTC(numDays: number): number {
   return moment().subtract(numDays, 'day').startOf('day').utc().unix();

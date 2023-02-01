@@ -12,6 +12,7 @@ import { TokenSyncService } from '../common/token/token-sync.service';
 import { runWithMinimumInterval } from './scheduling';
 import { UserSyncWalletBalanceService } from '../user/lib/user-sync-wallet-balance.service';
 import { UserSyncGaugeBalanceService } from '../user/lib/user-sync-gauge-balance.service';
+import { BlocksSubgraphService } from '../subgraphs/blocks-subgraph/blocks-subgraph.service';
 
 const ONE_MINUTE_IN_MS = 60000;
 const TWO_MINUTES_IN_MS = 120000;
@@ -48,6 +49,7 @@ export class ScheduledJobService {
     private readonly poolDataLoader: PoolDataLoaderService,
     private readonly userSyncService: UserSyncWalletBalanceService,
     private readonly userGaugeSyncService: UserSyncGaugeBalanceService,
+    private readonly blocksSubgraphService: BlocksSubgraphService,
   ) {}
 
   init() {
@@ -235,6 +237,16 @@ export class ScheduledJobService {
     // this.scheduleJob('* * * * *', 'sor-reload-graph', TWO_MINUTES_IN_MS, async () => {
     //       await balancerSdk.sor.reloadGraph();
     //   });
+
+    this.scheduleJob(
+      '*/5 * * * *',
+      'cacheAverageBlockTime',
+      TEN_MINUTES_IN_MS,
+      async () => {
+        await this.blocksSubgraphService.cacheAverageBlockTime();
+      },
+      true,
+    );
 
     // every minute
     this.scheduleJob('*/1 * * * *', 'syncTokenDynamicData', TEN_MINUTES_IN_MS, async () => {

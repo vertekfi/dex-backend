@@ -2,8 +2,6 @@ extend type Query {
   beetsGetBeetsPrice: String!
   protocolMetrics: GqlProtocolMetrics!
   latestSyncedBlocks: GqlLatestSyncedBlocks!
-  blocksGetBlocksPerDay: Int!
-  blocksGetAverageBlockTime: Int!
   contentGetNewsItems: [GqlContentNewsItem]!
   getProtocolTokenList: [String]
   getProtocolPoolData: [String]!

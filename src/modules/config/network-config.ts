@@ -44,6 +44,7 @@ export interface NetworkConfig {
     weightedPoolV2Factories: string[];
     weightedPoolFactories: string[];
     composableStablePoolFactories: string[];
+    poolsInRecoveryMode: string[];
     yieldProtocolFeePercentage: number;
     swapProtocolFeePercentage: number;
     votingEscrow: {
@@ -87,7 +88,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       startDate: '2024-01-25',
       balancer: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-subgraph',
       gauges: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-gauges-subgraph',
-      blocks: '',
+      blocks: 'https://api.thegraph.com/subgraphs/name/vertekfi/bsc-blocks',
       userBalances: '',
     },
     eth: {
@@ -119,6 +120,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       weightedPoolFactories: [],
       swapProtocolFeePercentage: 0.25,
       yieldProtocolFeePercentage: 0.5,
+      poolsInRecoveryMode: [],
       votingEscrow: {
         veAddress: '0x98A73443fb00EDC2EFF0520a00C53633226BF9ED',
         gaugeController: '0x99bFf5953843A211792BF3715b1b3b4CBeE34CE6',
@@ -188,6 +190,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       weightedPoolFactories: [],
       swapProtocolFeePercentage: 0.25,
       yieldProtocolFeePercentage: 0.5,
+      poolsInRecoveryMode: [],
       votingEscrow: {
         veAddress: '0x76B64524071b3e56EE8EFBc125a53BBbF04D41aB',
         gaugeController: '0x7bC6C2bF0c730E03285f673806586C60AC0B3205',
