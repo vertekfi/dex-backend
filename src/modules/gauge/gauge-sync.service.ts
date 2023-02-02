@@ -14,7 +14,6 @@ export class GaugeSyncService {
 
   async syncGaugeData(): Promise<void> {
     const protoData = await this.protocolService.getProtocolConfigDataForChain();
-
     const pools = await this.prisma.prismaPool.findMany({
       where: {
         id: { in: protoData.gauges.map((g) => g.poolId) },
@@ -37,13 +36,11 @@ export class GaugeSyncService {
 
     // Holding off on these for now
     // const rewardTokens = await this.gaugeService.getGaugesRewardData(gaugeInfos)
-
     const operations: any[] = [];
-
     pools.forEach((pool, i) => {
-      const gaugeAddress = protoData.gauges[i].address;
+      const gaugeInfo = protoData.gauges.find((g) => g.poolId === pool.id);
+      const gaugeAddress = gaugeInfo.address;
       const onchain = gaugeChainData[gaugeAddress];
-
       operations.push(
         this.prisma.prismaPoolStaking.create({
           data: {
@@ -67,7 +64,6 @@ export class GaugeSyncService {
         }),
       );
     });
-
     await prismaBulkExecuteOperations(operations);
   }
 

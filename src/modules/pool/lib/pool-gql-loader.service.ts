@@ -40,6 +40,7 @@ export class PoolGqlLoaderService {
       '0x94cbf85d049ab5a122348324b53dc4a9b751f08400020000000000000000000d',
       '0xeb49e7e8ebdd44651c53eca40a844866d8825ab3000200000000000000000005',
       '0x8a925563418ae30f2c83bbdb6b107a152e84d405000200000000000000000010',
+      '0x6f1a24488736d0a45d5cb9079bc3ce328b9c8254000200000000000000000009',
     ];
     pools.forEach((p) => {
       if (!remove.find((pi) => pi === p.id)) {
@@ -47,7 +48,14 @@ export class PoolGqlLoaderService {
       }
     });
 
-    return filtered.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
+    const data = filtered.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
+
+    const fml = data.find(
+      (p) => p.id == '0x6e30ec031f2d94c397e469b40f86bff0be014124000200000000000000000006',
+    );
+    console.log(fml);
+
+    return data;
   }
 
   async getPoolsCount(args: QueryPoolGetPoolsArgs): Promise<number> {
