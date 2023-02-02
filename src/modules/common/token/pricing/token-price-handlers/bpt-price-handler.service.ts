@@ -34,7 +34,8 @@ export class BptPriceHandlerService implements TokenPriceHandler {
       const pool = pools.find((pool) => pool.address === token.address);
 
       if (pool?.dynamicData && pool.dynamicData.totalLiquidity !== 0) {
-        const price = pool.dynamicData.totalLiquidity / parseFloat(pool.dynamicData.totalShares);
+        const price =
+          pool.dynamicData.totalLiquidity24hAgo / parseFloat(pool.dynamicData.totalShares24hAgo);
         updated.push(token.address);
 
         operations.push(
