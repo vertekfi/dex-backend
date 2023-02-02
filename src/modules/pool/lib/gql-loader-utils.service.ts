@@ -748,11 +748,11 @@ export class PoolGqlLoaderUtils {
           categories: {
             none: { category: 'BLACK_LISTED' },
           },
-          dynamicData: {
-            totalSharesNum: {
-              gt: 0.000000000001,
-            },
-          },
+          // dynamicData: {
+          //   totalSharesNum: {
+          //     gt: 0.000000000001,
+          //   },
+          // },
         },
       };
     }
@@ -795,9 +795,9 @@ export class PoolGqlLoaderUtils {
 
     const filterArgs: Prisma.PrismaPoolWhereInput = {
       dynamicData: {
-        totalSharesNum: {
-          gt: 0.000000000001,
-        },
+        // totalSharesNum: {
+        //   gt: 0.000000000001,
+        // },
       },
       type: {
         in: where?.poolTypeIn || undefined,
