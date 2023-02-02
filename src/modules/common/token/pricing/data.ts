@@ -54,6 +54,9 @@ const pricingAssets = {
     getTokenAddress('BUSD'),
     getTokenAddress('ETH'),
     getTokenAddress('DAI'),
+    getTokenAddress('WBTC'),
+    getTokenAddress('USDC'),
+    getTokenAddress('USDT'),
   ],
 };
 
