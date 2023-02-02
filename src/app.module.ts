@@ -36,12 +36,12 @@ if (process.env.NODE_ENV === 'production') {
     PrismaModule.forRoot({
       isGlobal: true,
       prismaServiceOptions: {
-        middlewares: [
-          loggingMiddleware({
-            logger: new Logger('PrismaMiddleware'),
-            logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'log',
-          }),
-        ],
+        // middlewares: [
+        //   loggingMiddleware({
+        //     logger: new Logger('PrismaMiddleware'),
+        //     logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'log',
+        //   }),
+        // ],
       },
     }),
 
