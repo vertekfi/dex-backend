@@ -26,6 +26,7 @@ import { BigNumber } from 'ethers';
 import { PrismaPoolStakingGauge } from '@prisma/client';
 import { ZERO_ADDRESS } from '../common/web3/utils';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
+import { ProtocolGaugeInfo } from '../protocol/types';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const SUBGRAPH_GAUGE_CACHE_KEY = 'SUBGRAPH_GAUGE_CACHE_KEY';
@@ -44,8 +45,9 @@ export class GaugeService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async getAllGaugeAddresses(): Promise<string[]> {
-    return await this.gaugeSubgraphService.getAllGaugeAddresses();
+  async getAllGaugeAddresses(): Promise<ProtocolGaugeInfo[]> {
+    const data = await this.protocolService.getProtocolConfigDataForChain();
+    return data.gauges;
   }
 
   async getAllGauges() {

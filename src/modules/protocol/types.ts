@@ -21,14 +21,16 @@ export interface PoolFilter {
   pools: string[];
 }
 
+export interface ProtocolGaugeInfo {
+  address: string;
+  poolId: string;
+}
+
 export interface ProtocolConfigData {
   featuredPools: string[];
   incentivizedPools: string[];
   blacklistedPools: string[];
   poolFilters: PoolFilter[];
   rewardPools: RewardPool[];
-  gauges: {
-    address: string;
-    poolId: string;
-  }[];
+  gauges: ProtocolGaugeInfo[];
 }
