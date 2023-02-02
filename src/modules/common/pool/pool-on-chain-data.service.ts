@@ -125,7 +125,7 @@ export class PoolOnChainDataService {
         multiPool.call(`${pool.id}.totalSupply`, pool.address, 'getVirtualSupply');
       } else {
         // default to totalSupply for any other pool type
-        //  multiPool.call(`${pool.id}.totalSupply`, pool.address, 'totalSupply');
+        multiPool.call(`${pool.id}.totalSupply`, pool.address, 'totalSupply');
       }
 
       if (pool.type === 'PHANTOM_STABLE') {
