@@ -261,12 +261,8 @@ export class PoolService {
 
   async syncChangedPools() {
     const { startBlock, endBlock, latestBlock } = await this.poolSyncService.syncChangedPools();
-
-    console.log('startBlock: ' + startBlock);
-    console.log('endBlock: ' + endBlock);
-    console.log('latestBlock: ' + latestBlock);
-
     const poolIds = await this.poolSyncService.getChangedPoolIds(startBlock, endBlock);
+
     if (poolIds.length !== 0) {
       console.log(`Syncing ${poolIds.length} pools`);
       await this.updateOnChainDataForPools(poolIds, latestBlock);

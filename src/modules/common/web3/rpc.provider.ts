@@ -32,7 +32,6 @@ export async function getAccoutForChain(chainId: number): Promise<AccountWeb3> {
 
   const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
   await provider.ready;
-  console.log('Using RPC: ' + rpcUrl);
 
   let wallet: ethers.Wallet = null;
 

@@ -127,8 +127,6 @@ export class PoolSnapshotService {
     for (const poolId of poolIds) {
       const snapshots = allSnapshots.filter((snapshot) => snapshot.pool.id === poolId);
 
-      console.log(snapshots);
-
       const latestSyncedSnapshot = latestSyncedSnapshots.find(
         (snapshot) => snapshot.poolId === poolId,
       );

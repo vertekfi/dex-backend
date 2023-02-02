@@ -18,6 +18,7 @@ import { objectToLowerCaseArr, toLowerCaseArr } from 'src/modules/utils/general.
 import { ZERO_ADDRESS } from '../../web3/utils';
 import { SwapKind } from '../../types/vault.types';
 import { formatEther, parseUnits } from 'ethers/lib/utils';
+import { formatFixed } from '@ethersproject/bignumber';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
@@ -108,96 +109,110 @@ export class PoolPricingService implements TokenPricingService {
   }
 
   async getWeightedTokenPoolPrices(tokens: string[]): Promise<{ [token: string]: number }> {
-    tokens = tokens.map((t) => t.toLowerCase());
+    try {
+      tokens = tokens.map((t) => t.toLowerCase());
 
-    const pricingPoolsMap = getPoolPricingMap();
-    const vault = await getVault();
+      const pricingPoolsMap = getPoolPricingMap();
+      const pricingAssets = await getPricingAssetPrices(this.prisma);
+      const vault = await getVault();
 
-    const balancesMulticall = new Multicaller(this.rpc, [
-      'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
-    ]);
-    // const poolMulticall = new Multicaller(this.rpc, [
-    //   'function getNormalizedWeights() public view returns (uint256[])',
-    // ]);
+      const balancesMulticall = new Multicaller(this.rpc, [
+        'function getPoolTokens(bytes32) public view returns (address[] tokens, uint256[] balances, uint256 lastChangeBlock)',
+        'function getNormalizedWeights() public view returns (uint256[])',
+        'function getSwapFeePercentage() public view returns (uint256)',
+      ]);
 
-    // Token may have usePoolPricing set but arent included in local mapping
-    // Database tokens are always stored lower case
-    const mappedAddresses = objectToLowerCaseArr(pricingPoolsMap);
-    tokens = tokens.filter((t) => mappedAddresses.includes(t));
+      // Token may have usePoolPricing set but arent included in local mapping
+      // Database tokens are always stored lower case
+      const mappedAddresses = objectToLowerCaseArr(pricingPoolsMap);
+      tokens = tokens.filter((t) => mappedAddresses.includes(t));
 
-    tokens.forEach((t) => {
-      const poolId = pricingPoolsMap[t].poolId;
-      balancesMulticall.call(`${t}.poolTokens`, vault.address, 'getPoolTokens', [poolId]);
+      tokens.forEach((t) => {
+        const poolId = pricingPoolsMap[t].poolId;
+        const poolAddress = getPoolAddress(poolId);
+        balancesMulticall.call(`${t}.poolTokens`, vault.address, 'getPoolTokens', [poolId]);
+        balancesMulticall.call(`${t}.weights`, poolAddress, 'getNormalizedWeights');
+        balancesMulticall.call(`${t}.swapFee`, poolAddress, 'getSwapFeePercentage');
+      });
 
-      //  const poolAddress = getPoolAddress(poolId);
-      // poolMulticall.call(`${t}.weights`, poolAddress, 'getNormalizedWeights');
-    });
+      const multicallResult: Record<
+        string,
+        {
+          poolTokens: { tokens: string[]; balances: BigNumber[] };
+          weights: BigNumber[];
+          swapFee: BigNumber;
+        }
+      > = await balancesMulticall.execute();
 
-    let balancesResult: Record<
-      string,
-      {
-        poolTokens: { tokens: string[]; balances: BigNumber[] };
+      const results: { [token: string]: number } = {};
+
+      for (const tokenInfo of Object.entries(multicallResult)) {
+        const [tokenIn, poolInfo] = tokenInfo;
+
+        const poolTokens = {
+          balances: poolInfo.poolTokens.balances,
+          tokens: poolInfo.poolTokens.tokens.map((t) => t.toLowerCase()),
+        };
+
+        const tokenOut = pricingPoolsMap[tokenIn].priceAgainst;
+
+        if (!pricingAssets[tokenOut]) {
+          console.log('Token out not included in pricing assets ifor token in: ' + tokenIn);
+          continue;
+        }
+
+        const tokenInIdx = poolTokens.tokens.indexOf(tokenIn);
+        const tokenOutIdx = poolTokens.tokens.indexOf(tokenOut);
+
+        if (tokenInIdx === -1 || tokenOutIdx === -1) {
+          console.log('Skipping incorrect token index for pricingPoolsMap: ' + tokenIn);
+          continue;
+        }
+
+        const pricingTokenPrice = pricingAssets[tokenOut];
+
+        const balanceIn = ethNum(poolTokens.balances[tokenInIdx]);
+        const weightIn = ethNum(poolInfo.weights[tokenInIdx]);
+        const balanceOut = ethNum(poolTokens.balances[tokenOutIdx]);
+        const weightOut = ethNum(poolInfo.weights[tokenOutIdx]);
+
+        // Use pricing token as numerator so we can use the pricing provider's USD price for it
+        // to determine the equivalent USD price for token in.
+        const numerator = balanceOut / weightOut;
+        const denominator = balanceIn / weightIn;
+
+        const spotPrice = (numerator / denominator) * pricingTokenPrice;
+
+        const swapFee = ethNum(poolInfo.swapFee);
+
+        const swapFeeCut = spotPrice * swapFee;
+        const finalPrice = spotPrice - swapFeeCut;
+
+        const poolTokenInUSD = balanceIn * spotPrice;
+        const poolTokenOutUSD = balanceOut * pricingTokenPrice;
+        const totalValue = poolTokenInUSD + poolTokenOutUSD;
+
+        // console.log(`
+        // `);
+        // console.log('token: ' + tokenIn);
+        // console.log('spotPrice: ' + spotPrice);
+        // console.log('swapFee: ' + swapFee);
+        // console.log('spotPrice after fee: ' + finalPrice);
+        // console.log('balanceIn: ' + balanceIn);
+        // console.log('balanceOut: ' + balanceOut);
+        // console.log('Total liquidity(2 tokens): ' + totalValue);
+
+        results[tokenIn] = finalPrice;
       }
-    >;
 
-    // let poolWeights: Record<string, { weights: BigNumber[] }>;
-
-    [balancesResult] = await Promise.all([
-      balancesMulticall.execute(),
-      // poolMulticall.execute(),
-    ]);
-
-    const pricingAssets = await getPricingAssetPrices(this.prisma);
-
-    const results: { [token: string]: number } = {};
-
-    for (const tokenInfo of Object.entries(balancesResult)) {
-      const [tokenIn, poolInfo] = tokenInfo;
-
-      const poolTokens = {
-        balances: poolInfo.poolTokens.balances,
-        tokens: poolInfo.poolTokens.tokens.map((t) => t.toLowerCase()),
-      };
-
-      const tokenOut = pricingPoolsMap[tokenIn].priceAgainst;
-
-      if (!pricingAssets[tokenOut]) {
-        console.log('Token out not included in pricing assets ifor token in: ' + tokenIn);
-        continue;
-      }
-
-      const tokenInIdx = poolTokens.tokens.indexOf(tokenIn);
-      const tokenOutIdx = poolTokens.tokens.indexOf(tokenOut);
-
-      if (tokenInIdx === -1 || tokenOutIdx === -1) {
-        console.log('Skipping incorrect token index for pricingPoolsMap: ' + tokenIn);
-        continue;
-      }
-
-      const poolId = pricingPoolsMap[tokenIn].poolId;
-      const amountIn: BigNumber = pricingPoolsMap[tokenIn].inputAmount;
-
-      const amountOut = await this.getTradeDeltas(tokenIn, [tokenIn, tokenOut], poolId, amountIn);
-
-      let priceUsd;
-      const diff = parseUnits('1').sub(amountIn);
-      if (diff.isZero()) {
-        priceUsd = amountOut * pricingAssets[tokenOut];
-      } else {
-        const multiplier = ethNum(diff);
-        console.log(formatEther(diff));
-        console.log(multiplier);
-        priceUsd = amountOut * multiplier * pricingAssets[tokenOut];
-      }
-
-      // console.log(priceUsd);
-
-      results[tokenIn] = priceUsd;
+      return results;
+    } catch (error) {
+      console.error(error);
+      console.log('Weighted pool price simulation failed');
     }
-
-    return results;
   }
 
+  // Simulates a swap on the vault and gets the, would be, changes in pools balances
   async getTradeDeltas(mainToken: string, tokens: string[], poolId: string, amountIn: BigNumber) {
     try {
       const vault = await getVault();
@@ -228,8 +243,6 @@ export class PoolPricingService implements TokenPricingService {
         tokens,
         fundManagement,
       );
-
-      // console.log(deltas.map((d) => ethNum(d)));
 
       return Math.abs(ethNum(deltas[assetOutIndex]));
     } catch (error) {
