@@ -189,7 +189,7 @@ export class PoolSnapshotService {
       startTimestamp,
     });
     // const numDays = moment().endOf('day').diff(moment.unix(startTimestamp), 'days');
-    const numDays = 6; // TODO:
+    const numDays = 3; // TODO:
 
     const tokenPriceMap: TokenHistoricalPrices = {};
 

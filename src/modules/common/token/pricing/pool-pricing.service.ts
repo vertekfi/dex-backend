@@ -45,6 +45,10 @@ export class PoolPricingService implements TokenPricingService {
     days: number,
     tokenDefinitions: TokenDefinition[],
   ): Promise<HistoricalPrice[]> {
+    // TODO: Could use the same pool math here but get pool data from at a certain time/block
+    // Our RPC's have archive querying by default
+
+    // current block/ts -> days / blocks per day -> query that ~block and continue forward from there up until now
     return [];
   }
 
