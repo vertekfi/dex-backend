@@ -71,6 +71,8 @@ export class PoolPriceHandler implements TokenPriceHandler {
         }),
       );
 
+      console.log(priceUsd);
+
       // Update current price record
       operations.push(
         this.prisma.prismaTokenCurrentPrice.upsert({

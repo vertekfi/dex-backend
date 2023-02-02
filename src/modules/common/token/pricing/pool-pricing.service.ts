@@ -17,7 +17,7 @@ import { getVault, getVaultAbi } from '../../web3/contract';
 import { objectToLowerCaseArr, toLowerCaseArr } from 'src/modules/utils/general.utils';
 import { ZERO_ADDRESS } from '../../web3/utils';
 import { SwapKind } from '../../types/vault.types';
-import { parseUnits } from 'ethers/lib/utils';
+import { formatEther, parseUnits } from 'ethers/lib/utils';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
@@ -175,14 +175,20 @@ export class PoolPricingService implements TokenPricingService {
       }
 
       const poolId = pricingPoolsMap[tokenIn].poolId;
-      const amountOut = await this.getTradeDeltas(
-        tokenIn,
-        [tokenIn, tokenOut],
-        poolId,
-        parseUnits('1'),
-      );
+      const amountIn: BigNumber = pricingPoolsMap[tokenIn].inputAmount;
 
-      const priceUsd = amountOut * pricingAssets[tokenOut];
+      const amountOut = await this.getTradeDeltas(tokenIn, [tokenIn, tokenOut], poolId, amountIn);
+
+      let priceUsd;
+      const diff = parseUnits('1').sub(amountIn);
+      if (diff.isZero()) {
+        priceUsd = amountOut * pricingAssets[tokenOut];
+      } else {
+        const multiplier = ethNum(diff);
+        console.log(formatEther(diff));
+        console.log(multiplier);
+        priceUsd = amountOut * multiplier * pricingAssets[tokenOut];
+      }
 
       // console.log(priceUsd);
 
@@ -225,7 +231,7 @@ export class PoolPricingService implements TokenPricingService {
 
       // console.log(deltas.map((d) => ethNum(d)));
 
-      return ethNum(deltas[assetOutIndex]);
+      return Math.abs(ethNum(deltas[assetOutIndex]));
     } catch (error) {
       console.error(`Error get price deltas for pool id ${poolId}. Returning zero.`);
       return 0;
