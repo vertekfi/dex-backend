@@ -3,11 +3,14 @@ import { PrismaTokenCurrentPrice, PrismaTokenPrice } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { networkConfig } from 'src/modules/config/network-config';
 import * as moment from 'moment-timezone';
-import { TokenPriceItem } from '../types';
+import { TokenDefinition, TokenPriceItem } from '../types';
 import { GqlTokenChartDataRange } from 'src/gql-addons';
 import { CacheDecorator } from '../../decorators/cache.decorator';
 import { PoolPricingService } from './pool-pricing.service';
 import { getTokenAddress } from '../utils';
+import { getDexPriceFromPair } from './dexscreener';
+import { CoingeckoService } from './coingecko.service';
+import { isCoinGeckoToken, isDexscreenerToken } from './utils';
 
 const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
 const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
@@ -17,7 +20,32 @@ export class TokenPriceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly poolPricing: PoolPricingService,
+    private readonly coingecko: CoingeckoService,
   ) {}
+
+  async getPriceFromProviderForToken(tokenAddress: string): Promise<number> {
+    const token = await this.prisma.prismaToken.findUniqueOrThrow({
+      where: {
+        address: tokenAddress,
+      },
+    });
+
+    if (!token) {
+      throw new Error('Unknown token: ' + tokenAddress);
+    }
+
+    if (isDexscreenerToken(token)) {
+      const { priceNum } = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
+      return priceNum;
+    } else if (token.usePoolPricing) {
+      const priceInfo = await this.poolPricing.getWeightedTokenPoolPrices([token.address]);
+      return priceInfo[token.address];
+    } else if (isCoinGeckoToken(token)) {
+      return await this.coingecko.getTokenPrice(token as unknown as TokenDefinition);
+    }
+
+    throw new Error(`No price provider for token ${token.address}`);
+  }
 
   async getProtocolTokenPrice(): Promise<string> {
     const tokenAddress = getTokenAddress('VRTK');

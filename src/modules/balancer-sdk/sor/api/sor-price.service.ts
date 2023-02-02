@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { parseUnits } from 'ethers/lib/utils';
 import { PrismaService } from 'nestjs-prisma';
-import { CoingeckoService } from 'src/modules/common/token/pricing/coingecko.service';
 import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { TokenDefinition } from 'src/modules/common/token/types';
-import { TokenPriceService } from '../types';
+import { SorTokenPriceService } from '../types';
+import { TokenPriceService } from 'src/modules/common/token/pricing/token-price.service';
 
 const priceCache: {
   [address: string]: {
@@ -18,7 +18,7 @@ const priceCache: {
 const ttl = 1000 * 30;
 
 @Injectable()
-export class SorPriceService implements TokenPriceService {
+export class SorPriceService implements SorTokenPriceService {
   private get platformId(): string {
     switch (this.rpc.chainId) {
       case 5:
@@ -37,16 +37,16 @@ export class SorPriceService implements TokenPriceService {
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
-    private readonly coingecko: CoingeckoService,
+    private readonly tokenPriceService: TokenPriceService,
   ) {}
 
-  async getTokenPrice(token: TokenDefinition): Promise<string> {
-    const address = token.address.toLowerCase();
+  async getTokenPrice(token: string): Promise<string> {
+    const address = token.toLowerCase();
     const cached = priceCache[address];
 
     const now = Date.now();
     if (!cached || now - cached.lastTimestamp > ttl) {
-      const price = await this.coingecko.getTokenPrice(token as unknown as TokenDefinition);
+      const price = await this.tokenPriceService.getPriceFromProviderForToken(token);
 
       priceCache[address] = {
         lastTimestamp: Date.now(),
@@ -61,22 +61,15 @@ export class SorPriceService implements TokenPriceService {
 
   async getNativeAssetPriceInToken(tokenAddress: string): Promise<string> {
     try {
-      const token = await this.prisma.prismaToken.findUniqueOrThrow({
-        where: {
-          address: tokenAddress,
-        },
-      });
+      // TODO: Hard coded BSC dexscreener for now. Clean up. Lazy ass
+      const wbnbPair = '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16';
+      const nativeInfo = await getDexPriceFromPair('bsc', wbnbPair);
 
-      if (token.useDexscreener) {
-        const wbnbPair = '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16';
-        const nativeInfo = await getDexPriceFromPair('bsc', wbnbPair);
-        console.log(nativeInfo);
-        const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
-        console.log(info);
-        return parseUnits(String(nativeInfo.priceNum / info.priceNum)).toString();
-      }
+      const assetPrice = await this.tokenPriceService.getPriceFromProviderForToken(tokenAddress);
+
+      return parseUnits(String(nativeInfo.priceNum / assetPrice)).toString();
     } catch (error) {
-      console.log('Error getting price from coingecko');
+      console.log('Error getting price from dexscreener');
     }
   }
 

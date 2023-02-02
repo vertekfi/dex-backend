@@ -2,20 +2,14 @@ import { PrismaToken } from '@prisma/client';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { BigNumber as OldBigNumber } from './utils/bignumber';
 import { GqlSorSwapType, GqlSorSwapOptionsInput } from 'src/gql-addons';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { SwapType } from '@balancer-labs/sdk';
 
-export interface TokenPriceService {
+export interface SorTokenPriceService {
   /**
    * This should return the price of the native asset (ETH) in the token defined by tokenAddress.
    * Example: BAL = $20 USD, ETH = $4,000 USD, then 1 ETH = 200 BAL. This function would return 200.
    * @param tokenAddress
    */
   getNativeAssetPriceInToken(tokenAddress: string): Promise<string>;
-}
-
-export interface PoolDataService {
-  getPools(): Promise<SubgraphPoolBase[]>;
 }
 
 export interface GetSwapsInput {
@@ -278,15 +272,11 @@ export interface WeightedPool extends PoolBase {
   totalWeight: string;
 }
 
-export interface TokenPriceService {
+export interface SorTokenPriceService {
   /**
    * This should return the price of the native asset (ETH) in the token defined by tokenAddress.
    * Example: BAL = $20 USD, ETH = $4,000 USD, then 1 ETH = 200 BAL. This function would return 200.
    * @param tokenAddress
    */
   getNativeAssetPriceInToken(tokenAddress: string): Promise<string>;
-}
-
-export interface PoolDataService {
-  getPools(): Promise<SubgraphPoolBase[]>;
 }

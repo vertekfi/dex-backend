@@ -29,6 +29,7 @@ export interface NetworkConfig {
   subgraphs: {
     startDate: string;
     balancer: string;
+    balancerV1: string;
     blocks: string;
     gauges: string;
     userBalances: string;
@@ -41,6 +42,7 @@ export interface NetworkConfig {
   };
   balancer: {
     vault: string;
+    vaultV1: string;
     weightedPoolV2Factories: string[];
     weightedPoolFactories: string[];
     composableStablePoolFactories: string[];
@@ -87,6 +89,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     subgraphs: {
       startDate: '2024-01-28',
       balancer: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-subgraph',
+      balancerV1: 'https://api.thegraph.com/subgraphs/name/0xbriz/aequinox-bsc',
       gauges: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-gauges-subgraph',
       blocks: 'https://api.thegraph.com/subgraphs/name/vertekfi/bsc-blocks',
       userBalances: '',
@@ -115,6 +118,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     },
     balancer: {
       vault: '0x719488F4E859953967eFE963c6Bed059BaAab60c',
+      vaultV1: '0xEE1c8DbfBf958484c6a4571F5FB7b99B74A54AA7',
       composableStablePoolFactories: [],
       weightedPoolV2Factories: ['0xDE8993Bf9D6Eb1e0d752fe56ccB85Ef76538ABb6'],
       weightedPoolFactories: [],
@@ -157,6 +161,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     subgraphs: {
       startDate: '2024-01-24',
       balancer: 'https://api.thegraph.com/subgraphs/name/vertekfi/vertek-v2-goerli',
+      balancerV1: '',
       blocks: '',
       userBalances: '',
       gauges: 'https://api.thegraph.com/subgraphs/name/vertekfi/goerli-gauges-v2',
@@ -185,6 +190,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     },
     balancer: {
       vault: '0xBA5CE8dFcB1E077B4537aCaD17400D843842c520',
+      vaultV1: '',
       composableStablePoolFactories: [],
       weightedPoolV2Factories: ['0x94b67Ee1359A26E0527BFafD9C37aD84D9ABda77'],
       weightedPoolFactories: [],

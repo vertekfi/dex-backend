@@ -1,56 +1,13 @@
 import * as fetch from 'isomorphic-fetch';
-import { PoolDataService, SubgraphPoolBase } from '../types';
+import { SubgraphPoolBase } from '../types';
 import { getOnChainBalances } from './onchainData';
-import { Inject, Injectable } from '@nestjs/common';
-import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
-import { gql } from 'graphql-request';
-import { networkConfig } from 'src/modules/config/network-config';
+import { Query } from './constants/queries';
+import { PoolDataService } from '../impl/types';
 
-const queryWithLinear = gql`
-  {
-    pools(
-      where: { swapEnabled: true, totalShares_gt: "0.000000000001" }
-      orderBy: totalLiquidity
-      orderDirection: desc
-    ) {
-      id
-      address
-      poolType
-      swapFee
-      totalShares
-      tokens {
-        address
-        balance
-        decimals
-        weight
-        priceRate
-      }
-      tokensList
-      totalWeight
-      amp
-      expiryTime
-      unitSeconds
-      principalToken
-      baseToken
-      swapEnabled
-      wrappedIndex
-      mainIndex
-      lowerTarget
-      upperTarget
-    }
-  }
-`;
-
-export const Query: { [chainId: number]: string } = {
-  5: queryWithLinear,
-  56: queryWithLinear,
-};
-
-@Injectable()
 export class SubgraphPoolDataService implements PoolDataService {
-  constructor(@Inject(RPC) private readonly rpc: AccountWeb3) {}
+  constructor(private readonly rpc: AccountWeb3, private readonly subgraphURL: string) {}
 
   async getPools(): Promise<SubgraphPoolBase[]> {
     // const blockNumber = await this.rpc.provider.getBlockNumber();
@@ -59,7 +16,7 @@ export class SubgraphPoolDataService implements PoolDataService {
     // });
 
     try {
-      const response = await fetch(networkConfig.subgraphs.balancer, {
+      const response = await fetch(this.subgraphURL, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -98,7 +55,6 @@ export class SubgraphPoolDataService implements PoolDataService {
       // if (config.onchain) {
       return getOnChainBalances(
         subgraphPools ?? [],
-        CONTRACT_MAP.MULTICALL[this.rpc.chainId],
         CONTRACT_MAP.VAULT[this.rpc.chainId],
         this.rpc,
       );

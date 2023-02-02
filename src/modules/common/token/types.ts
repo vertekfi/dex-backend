@@ -53,6 +53,7 @@ export interface TokenDefinition {
   coingeckoTokenId?: string | null;
   tradable: boolean;
   useDexscreener?: boolean;
+  usePoolPricing?: boolean;
   dexscreenPairAddress?: string;
 }
 

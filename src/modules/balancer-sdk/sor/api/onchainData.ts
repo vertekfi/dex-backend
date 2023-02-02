@@ -1,6 +1,4 @@
-import { JsonRpcProvider } from '@ethersproject/providers';
 import { formatFixed } from '@ethersproject/bignumber';
-import { Provider } from '@ethersproject/providers';
 
 // TODO: decide whether we want to trim these ABIs down to the relevant functions
 import * as VaultAbi from '../../../abis/Vault.json';
@@ -16,13 +14,12 @@ import * as LinearPoolAbi from '../../../abis/LinearPool.json';
 import * as LiquidityBootstrappingPoolAbi from '../../../abis/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
-import { PoolDataService, PoolFilter, SubgraphPoolBase } from '../types';
+import { PoolFilter, SubgraphPoolBase } from '../types';
 import { isSameAddress } from '@balancer-labs/sdk';
 import { AccountWeb3 } from 'src/modules/common/types';
 
 export async function getOnChainBalances(
   subgraphPoolsOriginal: SubgraphPoolBase[],
-  multiAddress: string,
   vaultAddress: string,
   rpc: AccountWeb3,
 ): Promise<SubgraphPoolBase[]> {

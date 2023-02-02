@@ -3,22 +3,18 @@ import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
 import { BigNumber, Contract } from 'ethers';
 import { PrismaService } from 'nestjs-prisma';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
-import { calcOutGivenIn } from 'src/modules/utils/math/WeightedMath';
 import { ethNum } from 'src/modules/utils/old-big-number';
 import { getPoolAddress } from '../../pool/pool-utils';
 import { AccountWeb3 } from '../../types';
-import { ContractService } from '../../web3/contract.service';
 import { Multicaller } from '../../web3/multicaller';
 import { RPC } from '../../web3/rpc.provider';
 import { TokenDefinition, TokenPricingService } from '../types';
 import { getPoolPricingMap, getPricingAssetPrices } from './data';
 import { getTimestampStartOfDaysAgoUTC } from 'src/modules/utils/time';
-import { getVault, getVaultAbi } from '../../web3/contract';
+import { getVault } from '../../web3/contract';
 import { objectToLowerCaseArr, toLowerCaseArr } from 'src/modules/utils/general.utils';
 import { ZERO_ADDRESS } from '../../web3/utils';
 import { SwapKind } from '../../types/vault.types';
-import { formatEther, parseUnits } from 'ethers/lib/utils';
-import { formatFixed } from '@ethersproject/bignumber';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
@@ -33,7 +29,6 @@ export class PoolPricingService implements TokenPricingService {
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
-    private readonly contractService: ContractService,
   ) {}
 
   async getTokenPrice(token: TokenDefinition): Promise<number> {
@@ -110,7 +105,7 @@ export class PoolPricingService implements TokenPricingService {
 
   async getWeightedTokenPoolPrices(tokens: string[]): Promise<{ [token: string]: number }> {
     try {
-      tokens = tokens.map((t) => t.toLowerCase());
+      tokens = toLowerCaseArr(tokens);
 
       const pricingPoolsMap = getPoolPricingMap();
       const pricingAssets = await getPricingAssetPrices(this.prisma);
