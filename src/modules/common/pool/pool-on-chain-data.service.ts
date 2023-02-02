@@ -103,22 +103,18 @@ export class PoolOnChainDataService {
         multiPool.call(`${pool.id}.wrappedTokenRate`, pool.address, 'getWrappedTokenRate');
       }
 
-      // if (pool.type === 'LIQUIDITY_BOOTSTRAPPING' || pool.type === 'INVESTMENT') {
-      //   multiPool.call(`${pool.id}.swapEnabled`, pool.address, 'getSwapEnabled');
-      // }
+      if (pool.type === 'LIQUIDITY_BOOTSTRAPPING' || pool.type === 'INVESTMENT') {
+        multiPool.call(`${pool.id}.swapEnabled`, pool.address, 'getSwapEnabled');
+      }
 
-      // if (pool.type === 'META_STABLE') {
-      //   const tokenAddresses = pool.tokens.map((token) => token.address);
+      if (pool.type === 'META_STABLE') {
+        const tokenAddresses = pool.tokens.map((token) => token.address);
 
-      //   tokenAddresses.forEach((token, i) => {
-      //     multiPool.call(`${pool.id}.metaPriceRateCache[${i}]`, pool.address, 'getPriceRateCache', [
-      //       token,
-      //     ]);
-      //   });
-      // }
-
-      if (isWeightedPoolV2(pool)) {
-        console.log(pool.id);
+        tokenAddresses.forEach((token, i) => {
+          multiPool.call(`${pool.id}.metaPriceRateCache[${i}]`, pool.address, 'getPriceRateCache', [
+            token,
+          ]);
+        });
       }
 
       if (isComposableStablePool(pool) || isWeightedPoolV2(pool)) {
@@ -132,14 +128,14 @@ export class PoolOnChainDataService {
         //  multiPool.call(`${pool.id}.totalSupply`, pool.address, 'totalSupply');
       }
 
-      // if (pool.type === 'PHANTOM_STABLE') {
-      //   //we retrieve token rates for phantom stable and composable stable pools
-      //   const tokenAddresses = pool.tokens.map((token) => token.address);
+      if (pool.type === 'PHANTOM_STABLE') {
+        //we retrieve token rates for phantom stable and composable stable pools
+        const tokenAddresses = pool.tokens.map((token) => token.address);
 
-      //   tokenAddresses.forEach((token, i) => {
-      //     multiPool.call(`${pool.id}.tokenRates[${i}]`, pool.address, 'getTokenRate', [token]);
-      //   });
-      // }
+        tokenAddresses.forEach((token, i) => {
+          multiPool.call(`${pool.id}.tokenRates[${i}]`, pool.address, 'getTokenRate', [token]);
+        });
+      }
     });
 
     let poolsOnChainData = {} as Record<string, MulticallExecuteResult>;
@@ -154,11 +150,8 @@ export class PoolOnChainDataService {
     const poolsOnChainDataArray = Object.entries(poolsOnChainData);
     const dataPools = [];
 
-    console.log(poolsOnChainDataArray.length);
-
     for (let index = 0; index < poolsOnChainDataArray.length; index++) {
       const [poolId, onchainData] = poolsOnChainDataArray[index];
-      console.log(onchainData);
       const pool = pools.find((pool) => pool.id === poolId)!;
       const { poolTokens } = onchainData;
 
@@ -174,11 +167,9 @@ export class PoolOnChainDataService {
             console.error(`Stable Pool Missing Amp: ${poolId}`);
             continue;
           }
-
           // Need to scale amp by precision to match expected Subgraph scale
           // amp is stored with 3 decimals of precision
           const amp = formatFixed(onchainData.amp[0], 3);
-
           // only update if amp has changed
           if (!pool.stableDynamicData || pool.stableDynamicData.amp !== amp) {
             await this.prisma.prismaPoolStableDynamicData.upsert({
@@ -188,7 +179,6 @@ export class PoolOnChainDataService {
             });
           }
         }
-
         if (pool.type === 'LINEAR') {
           if (!onchainData.targets) {
             console.error(`Linear Pool Missing Targets: ${poolId}`);
@@ -196,7 +186,6 @@ export class PoolOnChainDataService {
           } else {
             const lowerTarget = formatFixed(onchainData.targets[0], 18);
             const upperTarget = formatFixed(onchainData.targets[1], 18);
-
             if (
               !pool.linearDynamicData ||
               pool.linearDynamicData.lowerTarget !== lowerTarget ||
@@ -209,67 +198,72 @@ export class PoolOnChainDataService {
               });
             }
           }
-
           const wrappedIndex = pool.linearData?.wrappedIndex;
           if (typeof wrappedIndex !== 'number' || onchainData.wrappedTokenRate === undefined) {
             console.error(`Linear Pool Missing WrappedIndex or PriceRate: ${poolId}`);
             continue;
           }
-
           //TODO: need to make sure its safe to index the tokens like this.
-
           onchainData.tokenRates = [];
           //main rate is always 1
           onchainData.tokenRates[pool.linearData?.mainIndex || 0] = WeiPerEther;
-
           // Update priceRate of wrappedToken
           if (pool.tokens[wrappedIndex]) {
             onchainData.tokenRates[wrappedIndex] = onchainData.wrappedTokenRate;
           }
-
           const phantomIdx = pool.tokens.findIndex((token) => token.address === pool.address);
-
           if (phantomIdx !== -1 && onchainData.rate) {
             onchainData.tokenRates[phantomIdx] = onchainData.rate;
           }
         }
-
         const swapFee = formatFixed(onchainData.swapFee, 18);
+
         const totalShares = formatFixed(onchainData.totalSupply || '0', 18);
         const swapEnabled =
           typeof onchainData.swapEnabled !== 'undefined'
             ? onchainData.swapEnabled
             : pool.dynamicData?.swapEnabled;
 
-        if (
-          pool.dynamicData &&
-          (pool.dynamicData.swapFee !== swapFee ||
-            pool.dynamicData.totalShares !== totalShares ||
-            pool.dynamicData.swapEnabled !== swapEnabled)
-        ) {
-          await this.prisma.prismaPoolDynamicData.update({
-            where: { id: pool.id },
-            data: {
-              swapFee,
-              totalShares,
-              totalSharesNum: parseFloat(totalShares),
-              swapEnabled: typeof swapEnabled !== 'undefined' ? swapEnabled : true,
-              blockNumber,
-            },
-          });
-        }
+        // if (
+        //   pool.dynamicData &&
+        //   (pool.dynamicData.swapFee !== swapFee ||
+        //     pool.dynamicData.totalShares !== totalShares ||
+        //     pool.dynamicData.swapEnabled !== swapEnabled)
+        // ) {
+        //   console.log('UPDATING: ' + pool.id);
+        //   console.log(pool.id);
+        //   console.log(swapFee);
+        //   await this.prisma.prismaPoolDynamicData.update({
+        //     where: { id: pool.id },
+        //     data: {
+        //       swapFee,
+        //       totalShares,
+        //       totalSharesNum: parseFloat(totalShares),
+        //       swapEnabled: typeof swapEnabled !== 'undefined' ? swapEnabled : true,
+        //       blockNumber,
+        //     },
+        //   });
+        // }
+
+        await this.prisma.prismaPoolDynamicData.update({
+          where: { id: pool.id },
+          data: {
+            swapFee,
+            totalShares,
+            totalSharesNum: parseFloat(totalShares),
+            swapEnabled: typeof swapEnabled !== 'undefined' ? swapEnabled : true,
+            blockNumber,
+          },
+        });
 
         for (let i = 0; i < poolTokens.tokens.length; i++) {
           const tokenAddress = poolTokens.tokens[i];
           const poolToken = pool.tokens.find((token) => isSameAddress(token.address, tokenAddress));
-
           if (!poolToken) {
             throw `Pool Missing Expected Token: ${poolId} ${tokenAddress}`;
           }
-
           const balance = formatFixed(poolTokens.balances[i], poolToken.token.decimals);
           const weight = onchainData.weights ? formatFixed(onchainData.weights[i], 18) : null;
-
           let priceRate = onchainData.tokenRates
             ? formatFixed(onchainData.tokenRates[i], 18)
             : '1.0';
@@ -278,46 +272,74 @@ export class PoolOnChainDataService {
             priceRate = formatFixed(onchainData.metaPriceRateCache[i][0], 18);
           }
 
-          if (
-            !poolToken.dynamicData ||
-            poolToken.dynamicData.balance !== balance ||
-            poolToken.dynamicData.priceRate !== priceRate ||
-            poolToken.dynamicData.weight !== weight
-          ) {
-            await this.prisma.prismaPoolTokenDynamicData.upsert({
-              where: { id: poolToken.id },
-              create: {
-                id: poolToken.id,
-                poolTokenId: poolToken.id,
-                blockNumber,
-                priceRate,
-                weight,
-                balance,
-                balanceUSD:
-                  poolToken.address === pool.address
-                    ? 0
-                    : this.pricingService.getPriceForToken(tokenPrices, poolToken.address) *
-                      parseFloat(balance),
-              },
-              update: {
-                blockNumber,
-                priceRate,
-                weight,
-                balance,
-                balanceUSD:
-                  poolToken.address === pool.address
-                    ? 0
-                    : this.pricingService.getPriceForToken(tokenPrices, poolToken.address) *
-                      parseFloat(balance),
-              },
-            });
-          }
-        }
+          await this.prisma.prismaPoolTokenDynamicData.upsert({
+            where: { id: poolToken.id },
+            create: {
+              id: poolToken.id,
+              poolTokenId: poolToken.id,
+              blockNumber,
+              priceRate,
+              weight,
+              balance,
+              balanceUSD:
+                poolToken.address === pool.address
+                  ? 0
+                  : this.pricingService.getPriceForToken(tokenPrices, poolToken.address) *
+                    parseFloat(balance),
+            },
+            update: {
+              blockNumber,
+              priceRate,
+              weight,
+              balance,
+              balanceUSD:
+                poolToken.address === pool.address
+                  ? 0
+                  : this.pricingService.getPriceForToken(tokenPrices, poolToken.address) *
+                    parseFloat(balance),
+            },
+          });
 
-        return dataPools;
+          //   if (
+          //     !poolToken.dynamicData ||
+          //     poolToken.dynamicData.balance !== balance ||
+          //     poolToken.dynamicData.priceRate !== priceRate ||
+          //     poolToken.dynamicData.weight !== weight
+          //   ) {
+          //     await this.prisma.prismaPoolTokenDynamicData.upsert({
+          //       where: { id: poolToken.id },
+          //       create: {
+          //         id: poolToken.id,
+          //         poolTokenId: poolToken.id,
+          //         blockNumber,
+          //         priceRate,
+          //         weight,
+          //         balance,
+          //         balanceUSD:
+          //           poolToken.address === pool.address
+          //             ? 0
+          //             : this.pricingService.getPriceForToken(tokenPrices, poolToken.address) *
+          //               parseFloat(balance),
+          //       },
+          //       update: {
+          //         blockNumber,
+          //         priceRate,
+          //         weight,
+          //         balance,
+          //         balanceUSD:
+          //           poolToken.address === pool.address
+          //             ? 0
+          //             : this.pricingService.getPriceForToken(tokenPrices, poolToken.address) *
+          //               parseFloat(balance),
+          //       },
+          //     });
+          //   }
+        }
       } catch (e) {
         console.log('error syncing on chain data', e);
       }
     }
+
+    return dataPools;
   }
 }
