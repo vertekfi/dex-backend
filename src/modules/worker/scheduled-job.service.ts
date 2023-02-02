@@ -288,12 +288,20 @@ export class ScheduledJobService {
       'block',
       ONE_MINUTE_IN_MS,
       async () => {
-        await this.userSyncService.syncChangedBalancesForAllPools();
+        try {
+          await this.userSyncService.syncChangedBalancesForAllPools();
+        } catch (error) {
+          console.error('userSyncWalletBalancesForAllPools failed');
+        }
       },
     );
 
     this.addRpcListener('userSyncStakedBalances', 'block', ONE_MINUTE_IN_MS, async () => {
-      await this.userGaugeSyncService.syncChangedStakedBalances();
+      try {
+        await this.userGaugeSyncService.syncChangedStakedBalances();
+      } catch (error) {
+        console.error('userSyncStakedBalances failed');
+      }
     });
 
     /*
