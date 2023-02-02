@@ -36,7 +36,6 @@ if (process.env.NODE_ENV === 'production') {
     PrismaModule.forRoot({
       isGlobal: true,
       prismaServiceOptions: {
-        // configure your prisma middleware
         middlewares: [
           loggingMiddleware({
             logger: new Logger('PrismaMiddleware'),

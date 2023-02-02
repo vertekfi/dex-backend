@@ -119,7 +119,7 @@ export class PoolOnChainDataService {
 
       if (isComposableStablePool(pool) || isWeightedPoolV2(pool)) {
         // the new ComposableStablePool and WeightedPool mint bpts for protocol fees which are included in the getActualSupply call
-        //  multiPool.call(`${pool.id}.totalSupply`, pool.address, 'getActualSupply');
+        multiPool.call(`${pool.id}.totalSupply`, pool.address, 'getActualSupply');
       } else if (pool.type === 'LINEAR' || pool.type === 'PHANTOM_STABLE') {
         // the old phantom stable and linear pool does not have this and expose the actual supply as virtualSupply
         multiPool.call(`${pool.id}.totalSupply`, pool.address, 'getVirtualSupply');
@@ -186,6 +186,7 @@ export class PoolOnChainDataService {
           } else {
             const lowerTarget = formatFixed(onchainData.targets[0], 18);
             const upperTarget = formatFixed(onchainData.targets[1], 18);
+
             if (
               !pool.linearDynamicData ||
               pool.linearDynamicData.lowerTarget !== lowerTarget ||
@@ -198,6 +199,7 @@ export class PoolOnChainDataService {
               });
             }
           }
+
           const wrappedIndex = pool.linearData?.wrappedIndex;
           if (typeof wrappedIndex !== 'number' || onchainData.wrappedTokenRate === undefined) {
             console.error(`Linear Pool Missing WrappedIndex or PriceRate: ${poolId}`);
@@ -216,9 +218,10 @@ export class PoolOnChainDataService {
             onchainData.tokenRates[phantomIdx] = onchainData.rate;
           }
         }
-        const swapFee = formatFixed(onchainData.swapFee, 18);
 
+        const swapFee = formatFixed(onchainData.swapFee, 18);
         const totalShares = formatFixed(onchainData.totalSupply || '0', 18);
+
         const swapEnabled =
           typeof onchainData.swapEnabled !== 'undefined'
             ? onchainData.swapEnabled
@@ -230,9 +233,6 @@ export class PoolOnChainDataService {
         //     pool.dynamicData.totalShares !== totalShares ||
         //     pool.dynamicData.swapEnabled !== swapEnabled)
         // ) {
-        //   console.log('UPDATING: ' + pool.id);
-        //   console.log(pool.id);
-        //   console.log(swapFee);
         //   await this.prisma.prismaPoolDynamicData.update({
         //     where: { id: pool.id },
         //     data: {
