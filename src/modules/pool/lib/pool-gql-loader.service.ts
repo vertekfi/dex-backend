@@ -48,14 +48,7 @@ export class PoolGqlLoaderService {
       }
     });
 
-    const data = filtered.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
-
-    const fml = data.find(
-      (p) => p.id == '0x6e30ec031f2d94c397e469b40f86bff0be014124000200000000000000000006',
-    );
-    console.log(fml);
-
-    return data;
+    return filtered.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
   }
 
   async getPoolsCount(args: QueryPoolGetPoolsArgs): Promise<number> {
