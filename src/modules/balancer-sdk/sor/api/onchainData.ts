@@ -1,23 +1,24 @@
 import { formatFixed } from '@ethersproject/bignumber';
 
-// TODO: decide whether we want to trim these ABIs down to the relevant functions
 import * as VaultAbi from '../../../abis/Vault.json';
 import * as aTokenRateProvider from '../../../abis/StaticATokenRateProvider.json';
-import * as WeightedPoolAbi from '../../../abis/WeightedPool.json';
 import * as StablePoolAbi from '../../../abis/StablePool.json';
 import * as MetaStablePoolAbi from '../../../abis/MetaStablePool.json';
-// import ElementPoolAbi from '../../abis/ConvergentCurvePool.json';
 import * as LinearPoolAbi from '../../../abis/LinearPool.json';
 // import StablePhantomPoolAbi from '../../abis/StablePhantomPool.json';
 // import ComposableStablePoolAbi from '../../abis/ComposableStablePool.json';
-// import WeightedPoolV2Abi from '../abi/WeightedPoolV2.json';
+import * as WeightedPoolV2Abi from '../../../abis/WeightedPoolV2.json';
 import * as LiquidityBootstrappingPoolAbi from '../../../abis/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
 import { PoolFilter, SubgraphPoolBase } from '../types';
 import { isSameAddress } from '@balancer-labs/sdk';
 import { AccountWeb3 } from 'src/modules/common/types';
+// import { isComposableStablePool, isWeightedPoolV2 } from 'src/modules/pool/lib/pool-utils';
 
+/**
+ * Uses WeightedV2 ABI
+ */
 export async function getOnChainBalances(
   subgraphPoolsOriginal: SubgraphPoolBase[],
   vaultAddress: string,
@@ -31,9 +32,8 @@ export async function getOnChainBalances(
       [
         ...VaultAbi,
         ...aTokenRateProvider,
-        ...WeightedPoolAbi,
+        ...WeightedPoolV2Abi,
         ...StablePoolAbi,
-        // ...ElementPoolAbi,
         ...LinearPoolAbi,
         ...MetaStablePoolAbi,
         ...LiquidityBootstrappingPoolAbi,
@@ -52,16 +52,27 @@ export async function getOnChainBalances(
     }
 
     subgraphPools.push(pool);
-
     multiPool.call(`${pool.id}.poolTokens`, vaultAddress, 'getPoolTokens', [pool.id]);
+
+    // if (
+    //   isComposableStablePool({
+    //     factory: pool.factory,
+    //     type: pool.poolType,
+    //   }) ||
+    //   isWeightedPoolV2({
+    //     factory: pool.factory,
+    //     type: pool.poolType,
+    //   })
+    // ) {
+    //   // the new ComposableStablePool and WeightedPool mint bpts for protocol fees which are included in the getActualSupply call
+    //   multiPool.call(`${pool.id}.totalSupply`, pool.address, 'getActualSupply');
+    // } else {
+    //   multiPool.call(`${pool.id}.totalSupply`, pool.address, 'totalSupply');
+    // }
+
     multiPool.call(`${pool.id}.totalSupply`, pool.address, 'totalSupply');
 
-    // TO DO - Make this part of class to make more flexible?
-    if (
-      pool.poolType === 'Weighted' ||
-      pool.poolType === 'LiquidityBootstrapping' ||
-      pool.poolType === 'Investment'
-    ) {
+    if (pool.poolType === 'Weighted' || pool.poolType === 'LiquidityBootstrapping') {
       multiPool.call(`${pool.id}.weights`, pool.address, 'getNormalizedWeights');
       multiPool.call(`${pool.id}.swapFee`, pool.address, 'getSwapFeePercentage');
     } else if (

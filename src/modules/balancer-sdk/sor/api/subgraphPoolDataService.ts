@@ -10,11 +10,6 @@ export class SubgraphPoolDataService implements PoolDataService {
   constructor(private readonly rpc: AccountWeb3, private readonly subgraphURL: string) {}
 
   async getPools(): Promise<SubgraphPoolBase[]> {
-    // const blockNumber = await this.rpc.provider.getBlockNumber();
-    // const pools = await this.balancerSubgraphService.getAllPools({
-    //   block: { number: blockNumber },
-    // });
-
     try {
       const response = await fetch(this.subgraphURL, {
         method: 'POST',
@@ -52,15 +47,12 @@ export class SubgraphPoolDataService implements PoolDataService {
         };
       });
 
-      // if (config.onchain) {
+      // Uses WeightedV2 ABI
       return getOnChainBalances(
         subgraphPools ?? [],
         CONTRACT_MAP.VAULT[this.rpc.chainId],
         this.rpc,
       );
-      //}
-
-      // return subgraphPools ?? [];
     } catch (error) {
       console.log('Error getting subgraph pools');
       return [];

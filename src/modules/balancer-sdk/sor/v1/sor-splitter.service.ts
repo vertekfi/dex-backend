@@ -24,6 +24,7 @@ export class SorSplitterService {
 
   async getBatchSwapForTokensIn(swapInput) {
     const tokens = await this.tokenService.getTokens();
+    // return this.balancerSorV2.getBatchSwapForTokensIn({ ...swapInput, tokens });
     const [v1Result, v2Result] = await Promise.all([
       this.balancerSorV1.getBatchSwapForTokensIn({ ...swapInput, tokens }),
       this.balancerSorV2.getBatchSwapForTokensIn({ ...swapInput, tokens }),

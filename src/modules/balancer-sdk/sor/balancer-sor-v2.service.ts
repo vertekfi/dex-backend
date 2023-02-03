@@ -123,7 +123,7 @@ export class BalancerSorV2Service {
 
     const checkV1 = V1_STABLES.includes(tokenIn) && V1_STABLES.includes(tokenOut);
     if (checkV1) {
-      const [swapInfoV1, swapInfoV2] = await Promise.all([
+      const [swapV1, swapV2] = await Promise.all([
         this.sorV1.getSwaps({
           tokenIn,
           tokenOut,
@@ -134,6 +134,9 @@ export class BalancerSorV2Service {
         }),
         this.sor.getSwaps(tokenIn, tokenOut, sorSwapType, swapAmountScaled, options),
       ]);
+
+      swapInfoV1 = swapV1;
+      swapInfoV2 = swapV2;
     } else {
       swapInfoV2 = await this.sor.getSwaps(
         tokenIn,

@@ -11,7 +11,8 @@ export function isStablePool(poolType: PrismaPoolType) {
   return poolType === 'STABLE' || poolType === 'META_STABLE' || poolType === 'PHANTOM_STABLE';
 }
 
-export function isWeightedPoolV2(pool: PoolWithTypeAndFactory) {
+export function isWeightedPoolV2(pool: { type: string; factory: string }) {
+  pool.type = pool.type.toUpperCase();
   return (
     pool.type === 'WEIGHTED' &&
     networkConfig.balancer.weightedPoolV2Factories.find((factory) =>
@@ -20,7 +21,8 @@ export function isWeightedPoolV2(pool: PoolWithTypeAndFactory) {
   );
 }
 
-export function isWeightedPool(pool: PoolWithTypeAndFactory) {
+export function isWeightedPool(pool: { type: string; factory: string }) {
+  pool.type = pool.type.toUpperCase();
   return (
     pool.type === 'WEIGHTED' &&
     networkConfig.balancer.weightedPoolFactories.find((factory) =>
@@ -29,7 +31,8 @@ export function isWeightedPool(pool: PoolWithTypeAndFactory) {
   );
 }
 
-export function isComposableStablePool(pool: PoolWithTypeAndFactory) {
+export function isComposableStablePool(pool: { type: string; factory: string }) {
+  pool.type = pool.type.toUpperCase();
   return (
     pool.type === 'PHANTOM_STABLE' &&
     networkConfig.balancer.composableStablePoolFactories.find((factory) =>

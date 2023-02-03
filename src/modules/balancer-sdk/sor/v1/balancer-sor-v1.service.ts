@@ -20,8 +20,9 @@ import { oldBnum } from '../../../utils/old-big-number';
 import { GetSwapsInput, PoolFilter, SwapTypes, SwapV2 } from '../types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { SorPriceService } from '../api/sor-price.service';
-import { SubgraphPoolDataService } from '../api/subgraphPoolDataService';
 import { SOR } from '../impl/wrapper';
+import { SubgraphPoolV1DataService } from './subgraph-pool-v1.service';
+import { SorV1PriceService } from './sor-v1-price.service';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000'; // TODO: Verify these for BSC
@@ -33,13 +34,14 @@ const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000'; // TODO: Verify t
 @Injectable()
 export class BalancerSorV1Service {
   private readonly sor: SOR;
+  private readonly sorPriceService;
 
   constructor(
     private readonly contractService: ContractService,
     @Inject(RPC) private rpc: AccountWeb3,
-    private readonly sorPriceService: SorPriceService,
     private readonly poolService: PoolService,
   ) {
+    this.sorPriceService = new SorV1PriceService();
     this.sor = new SOR(
       this.rpc.provider,
       {
@@ -47,16 +49,22 @@ export class BalancerSorV1Service {
         vault: networkConfig.balancer.vaultV1,
         weth: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
       },
-      new SubgraphPoolDataService(rpc, networkConfig.subgraphs.balancerV1),
+      new SubgraphPoolV1DataService(rpc, networkConfig.subgraphs.balancerV1),
       this.sorPriceService,
     );
   }
 
-  async getSwaps({ tokenIn, tokenOut, swapType, swapOptions, swapAmount, tokens }: GetSwapsInput) {
-    tokenIn = replaceEthWithZeroAddress(tokenIn);
-    tokenOut = replaceEthWithZeroAddress(tokenOut);
+  async getSwaps(swapInput: GetSwapsInput) {
+    // tokenIn = replaceEthWithZeroAddress(tokenIn);
+    // tokenOut = replaceEthWithZeroAddress(tokenOut);
 
-    const isExactInSwap = swapType === 'EXACT_IN';
+    const isExactInSwap = swapInput.swapType === 'EXACT_IN';
+
+    const tokenIn = swapInput.tokenIn;
+    const tokenOut = swapInput.tokenOut;
+    const swapAmount = swapInput.swapAmount;
+    const tokens = swapInput.tokens;
+    const swapType = swapInput.swapType;
 
     const tokenDecimals = this.getTokenDecimals(isExactInSwap ? tokenIn : tokenOut, tokens);
 
@@ -65,9 +73,9 @@ export class BalancerSorV1Service {
       swapAmountScaled = parseFixed(swapAmount, tokenDecimals);
     } catch (e) {
       console.log(
-        `Invalid input: Could not parse swapAmount ${swapAmount} with decimals ${tokenDecimals}`,
+        `SORV1: Invalid input: Could not parse swapAmount ${swapAmount} with decimals ${tokenDecimals}`,
       );
-      throw new Error('SOR: invalid swap amount input');
+      throw new Error('SORV1: invalid swap amount input');
     }
 
     const [tokenInPrice, tokenOutPrice] = await Promise.all([
@@ -99,9 +107,9 @@ export class BalancerSorV1Service {
     const gasPrice = BigNumber.from(GAS_PRICE);
     const swapGas = BigNumber.from(SWAP_COST);
 
-    console.time('[Sor] fetchPools');
+    console.time('[SorV1] fetchPools');
     await this.sor.fetchPools();
-    console.timeEnd(`[Sor] fetchPools`);
+    console.timeEnd(`[SorV1] fetchPools`);
 
     const options = {
       forceRefresh: true,
@@ -120,7 +128,7 @@ export class BalancerSorV1Service {
       options,
     );
 
-    console.log('SorService: swapInfo result =');
+    console.log('SorV1Service: swapInfo result =');
     console.log(swapInfo);
 
     const returnAmount = formatFixed(
@@ -169,8 +177,6 @@ export class BalancerSorV1Service {
 
       hops.push(hop);
     });
-
-    // TODO: Probably already a method on the sor to extract the routing/hop info for a given swap
 
     const routes = swapInfo.swaps.map((path): GqlSorSwapRoute => {
       return {
@@ -261,7 +267,7 @@ export class BalancerSorV1Service {
       );
       tokenOutAmountScaled = deltas[batchedSwaps.assets.indexOf(tokenOut.toLowerCase())] ?? '0';
     } catch (err) {
-      console.log(`queryBatchSwapTokensIn error: `, err);
+      console.log(`SORV1: queryBatchSwapTokensIn error: `, err);
     }
 
     const tokenOutAmount = formatFixed(
@@ -320,7 +326,7 @@ export class BalancerSorV1Service {
     const match = tokens.find((token) => getAddress(token.address) === getAddress(tokenAddress));
 
     if (!match) {
-      throw new Error('Unknown token: ' + tokenAddress);
+      throw new Error('SORV1: Unknown token: ' + tokenAddress);
     }
 
     return match.decimals;
@@ -333,7 +339,7 @@ export class BalancerSorV1Service {
       case 'EXACT_OUT':
         return SwapTypes.SwapExactOut;
       default:
-        throw new Error(`invalid order kind ${orderKind}`);
+        throw new Error(`SORV1: invalid order kind ${orderKind}`);
     }
   }
 }

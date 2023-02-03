@@ -11,14 +11,12 @@ import { PrismaService } from 'nestjs-prisma';
 import { WeiPerEther } from '@ethersproject/constants';
 
 import * as VaultAbi from '../../abis/Vault.json';
-import * as aTokenRateProvider from '../../abis/StaticATokenRateProvider.json';
-// import * as WeightedPoolAbi from '../../abis/WeightedPool.json';
+// import * as aTokenRateProvider from '../../abis/StaticATokenRateProvider.json';
 import * as StablePoolAbi from '../../abis/StablePool.json';
 import * as MetaStablePool from '../../abis/MetaStablePool.json';
-// import  * as ElementPoolAbi from '../../abis/ConvergentCurvePool.json';
 import * as LinearPoolAbi from '../../abis/LinearPool.json';
 import * as StablePhantomPoolAbi from '../../abis/StablePhantomPool.json';
-//import ComposableStablePoolAbi from '../../abis/ComposableStablePool.json';
+// import ComposableStablePoolAbi from '../../abis/ComposableStablePool.json';
 import * as WeightedPoolV2Abi from '../../abis/WeightedPoolV2.json';
 import * as LiquidityBootstrappingPoolAbi from '../../abis/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
@@ -53,10 +51,8 @@ export class PoolOnChainDataService {
       Object.fromEntries(
         [
           ...VaultAbi,
-          ...aTokenRateProvider,
-          //...WeightedPoolAbi,
+          // ...aTokenRateProvider,
           ...StablePoolAbi,
-          // ...ElementPoolAbi,
           ...LinearPoolAbi,
           ...LiquidityBootstrappingPoolAbi,
           ...StablePhantomPoolAbi,
@@ -82,11 +78,7 @@ export class PoolOnChainDataService {
       );
 
       // TO DO - Make this part of class to make more flexible?
-      if (
-        pool.type === 'WEIGHTED' ||
-        pool.type === 'LIQUIDITY_BOOTSTRAPPING' ||
-        pool.type === 'INVESTMENT'
-      ) {
+      if (pool.type === 'WEIGHTED' || pool.type === 'LIQUIDITY_BOOTSTRAPPING') {
         multiPool.call(`${pool.id}.weights`, pool.address, 'getNormalizedWeights');
         multiPool.call(`${pool.id}.swapFee`, pool.address, 'getSwapFeePercentage');
       } else if (isStablePool(pool.type)) {

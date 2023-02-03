@@ -4,7 +4,6 @@ import { PrismaService } from 'nestjs-prisma';
 import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
-import { TokenDefinition } from 'src/modules/common/token/types';
 import { SorTokenPriceService } from '../types';
 import { TokenPriceService } from 'src/modules/common/token/pricing/token-price.service';
 
