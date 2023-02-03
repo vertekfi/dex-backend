@@ -64,8 +64,12 @@ export class GaugeService {
           name: p.name,
           tokensList: p.tokens.map((t) => t.address),
           tokens: p.tokens.map((t) => {
+            const token = tokens.find((tk) => tk.address === t.address);
+            const poolToken = p.tokens.find((tk) => tk.address === t.address);
+            console.log(poolToken);
             return {
-              weight: t.dynamicData.weight,
+              weight: poolToken.dynamicData.weight,
+              symbol: token.symbol,
               address: t.address,
               logoURI: tokens.find((t2) => t2.address == t.address)?.logoURI,
             };
