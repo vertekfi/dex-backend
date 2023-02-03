@@ -1,4 +1,4 @@
-import { FundManagement } from '@balancer-labs/sdk';
+import { FundManagement, SwapInfo } from '@balancer-labs/sdk';
 import { parseFixed, formatFixed } from '@ethersproject/bignumber';
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken } from '@prisma/client';
@@ -23,9 +23,17 @@ import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { SorPriceService } from './api/sor-price.service';
 import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
 import { SOR } from './impl/wrapper';
+import { toLowerCaseArr } from 'src/modules/utils/general.utils';
+import { BalancerSorV1Service } from './v1/balancer-sor-v1.service';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
+
+const V1_STABLES = toLowerCaseArr([
+  '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
+  '0x55d398326f99059fF775485246999027B3197955',
+  '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+]);
 
 @Injectable()
 export class BalancerSorV2Service {
@@ -36,6 +44,7 @@ export class BalancerSorV2Service {
     @Inject(RPC) private rpc: AccountWeb3,
     private readonly sorPriceService: SorPriceService,
     private readonly poolService: PoolService,
+    private readonly sorV1: BalancerSorV1Service,
   ) {
     this.sor = new SOR(
       this.rpc.provider,
@@ -109,19 +118,44 @@ export class BalancerSorV2Service {
       timestamp: Math.floor(Date.now() / 1000),
     };
 
-    const swapInfo = await this.sor.getSwaps(
-      tokenIn,
-      tokenOut,
-      sorSwapType,
-      swapAmountScaled,
-      options,
-    );
+    let swapInfoV1: SwapInfo;
+    let swapInfoV2: SwapInfo;
+
+    const checkV1 = V1_STABLES.includes(tokenIn) && V1_STABLES.includes(tokenOut);
+    if (checkV1) {
+      const [swapInfoV1, swapInfoV2] = await Promise.all([
+        this.sorV1.getSwaps({
+          tokenIn,
+          tokenOut,
+          swapType,
+          swapAmount,
+          swapOptions,
+          tokens,
+        }),
+        this.sor.getSwaps(tokenIn, tokenOut, sorSwapType, swapAmountScaled, options),
+      ]);
+    } else {
+      swapInfoV2 = await this.sor.getSwaps(
+        tokenIn,
+        tokenOut,
+        sorSwapType,
+        swapAmountScaled,
+        options,
+      );
+    }
+    // const swapInfoV2 = await this.sor.getSwaps(
+    //   tokenIn,
+    //   tokenOut,
+    //   sorSwapType,
+    //   swapAmountScaled,
+    //   options,
+    // );
 
     console.log('SorService: swapInfo result =');
-    console.log(swapInfo);
+    console.log(swapInfoV2);
 
     const returnAmount = formatFixed(
-      swapInfo.returnAmount,
+      swapInfoV2.returnAmount,
       this.getTokenDecimals(isExactInSwap ? tokenOut : tokenIn, tokens),
     );
 
@@ -130,13 +164,13 @@ export class BalancerSorV2Service {
 
     const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
     const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
-    const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
+    const priceImpact = effectivePrice.div(swapInfoV2.marketSp).minus(1);
 
     // Will be cached at this point
     // const pools = await this.sor.getPools();
     const hops: GqlSorSwapRouteHop[] = [];
 
-    const poolIds = swapInfo.swaps.map((path) => path.poolId);
+    const poolIds = swapInfoV2.swaps.map((path) => path.poolId);
 
     const gqlPoolsProms = poolIds.map((id) => this.poolService.getGqlPool(id));
     const gqlPools = await Promise.all(gqlPoolsProms);
@@ -167,7 +201,7 @@ export class BalancerSorV2Service {
       hops.push(hop);
     });
 
-    const routes = swapInfo.swaps.map((path): GqlSorSwapRoute => {
+    const routes = swapInfoV2.swaps.map((path): GqlSorSwapRoute => {
       return {
         tokenIn,
         tokenOut,
@@ -179,22 +213,24 @@ export class BalancerSorV2Service {
     });
 
     return {
-      ...swapInfo,
-      tokenIn: replaceZeroAddressWithEth(swapInfo.tokenIn),
-      tokenOut: replaceZeroAddressWithEth(swapInfo.tokenOut),
+      ...swapInfoV2,
+      tokenIn: replaceZeroAddressWithEth(swapInfoV2.tokenIn),
+      tokenOut: replaceZeroAddressWithEth(swapInfoV2.tokenOut),
       swapType,
       tokenInAmount,
       tokenOutAmount,
       swapAmount,
-      swapAmountScaled: BigNumber.from(swapInfo.swapAmount).toString(),
-      swapAmountForSwaps: swapInfo.swapAmountForSwaps
-        ? BigNumber.from(swapInfo.swapAmountForSwaps).toString()
+      swapAmountScaled: BigNumber.from(swapInfoV2.swapAmount).toString(),
+      swapAmountForSwaps: swapInfoV2.swapAmountForSwaps
+        ? BigNumber.from(swapInfoV2.swapAmountForSwaps).toString()
         : undefined,
       returnAmount,
-      returnAmountScaled: BigNumber.from(swapInfo.returnAmount).toString(),
-      returnAmountConsideringFees: BigNumber.from(swapInfo.returnAmountConsideringFees).toString(),
-      returnAmountFromSwaps: swapInfo.returnAmountFromSwaps
-        ? BigNumber.from(swapInfo.returnAmountFromSwaps).toString()
+      returnAmountScaled: BigNumber.from(swapInfoV2.returnAmount).toString(),
+      returnAmountConsideringFees: BigNumber.from(
+        swapInfoV2.returnAmountConsideringFees,
+      ).toString(),
+      returnAmountFromSwaps: swapInfoV2.returnAmountFromSwaps
+        ? BigNumber.from(swapInfoV2.returnAmountFromSwaps).toString()
         : undefined,
       // routes: swapInfo.routes.map((route) => ({
       //   ...route,
