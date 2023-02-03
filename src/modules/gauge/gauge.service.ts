@@ -107,6 +107,7 @@ export class GaugeService {
         tokensList: pool.tokens.map((t) => t.address),
         tokens: pool.tokens.map((token) => {
           return {
+            ...token,
             ...token.token,
           };
         }),
