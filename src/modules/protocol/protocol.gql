@@ -5,10 +5,18 @@ extend type Query {
   contentGetNewsItems: [GqlContentNewsItem]!
   getProtocolTokenList: [String]
   getProtocolPoolData: [String]!
+  getAllGaugePendingProtocolFees: [GqlProtocolPendingGaugeFee!]!
 }
 
 extend type Mutation {
   protocolCacheMetrics: String!
+}
+
+type GqlProtocolPendingGaugeFee {
+  poolId: String!
+  poolName: String!
+  gaugeAddress: String!
+  pendingPoolTokensFee: Float!
 }
 
 type GqlProtocolMetrics {

@@ -72,6 +72,7 @@ export class TokenSyncService {
           }
 
           if (!token) {
+            console.error(`syncTokenDynamicData: Token ${item.tokenAddress} not found`);
             continue;
           }
 

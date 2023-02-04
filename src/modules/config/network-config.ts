@@ -81,7 +81,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     chain: {
       slug: 'bsc',
       id: 56,
-      nativeAssetAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+      nativeAssetAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
       wrappedNativeAssetAddress: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
     },
     subgraphs: {
@@ -98,7 +98,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       name: 'BNB',
     },
     weth: {
-      address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+      address: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
       addressFormatted: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
     },
     coingecko: {
