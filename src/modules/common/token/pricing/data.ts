@@ -45,6 +45,11 @@ const pricingPoolsMap = {
       priceAgainst: getTokenAddress('DAI'),
       inputAmount: parseUnits('1'),
     },
+    [getTokenAddress('MAGIK')]: {
+      poolId: '0xa237bd3b190f12661ed838033b7228e7dc9c78d8000100000000000000000014',
+      priceAgainst: getTokenAddress('WBNB'),
+      inputAmount: parseUnits('1'),
+    },
   },
 };
 
