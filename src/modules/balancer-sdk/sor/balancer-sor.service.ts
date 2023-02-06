@@ -296,6 +296,9 @@ export class BalancerSorService {
       where: {
         address,
       },
+      include: {
+        currentPrice: true,
+      },
     });
 
     if (!token) {
@@ -304,30 +307,28 @@ export class BalancerSorService {
 
     const result = {
       ...token,
+      price: String(token.currentPrice.price),
     };
-    let price: string;
-    if (token.useDexscreener) {
-      if (!token.dexscreenPairAddress) {
-        throw new Error(`Missing dexscreenPairAddress for token ${token.address}`);
-      }
-      const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
-      price = String(info.priceNum);
-    } else if (token.coingeckoTokenId) {
-      if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
-        throw new Error(`Missing coingecko data for token ${token.address}`);
-      }
+    // let price: string;
+    // if (token.useDexscreener) {
+    //   if (!token.dexscreenPairAddress) {
+    //     throw new Error(`Missing dexscreenPairAddress for token ${token.address}`);
+    //   }
+    //   const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
+    //   price = String(info.priceNum);
+    // } else if (token.coingeckoTokenId) {
+    //   if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
+    //     throw new Error(`Missing coingecko data for token ${token.address}`);
+    //   }
 
-      price = await this.sorPriceService.getTokenPrice(token as unknown as TokenDefinition);
-    } else if (token.usePoolPricing) {
-      price = String(await this.poolPricing.getTokenPrice(token as unknown as TokenDefinition));
-    } else {
-      throw new Error(`Token ${token.address} has no price provider...?`);
-    }
+    //   price = await this.sorPriceService.getTokenPrice(token as unknown as TokenDefinition);
+    // } else if (token.usePoolPricing) {
+    //   price = String(await this.poolPricing.getTokenPrice(token as unknown as TokenDefinition));
+    // } else {
+    //   throw new Error(`Token ${token.address} has no price provider...?`);
+    // }
 
-    return {
-      ...result,
-      price,
-    };
+    return result;
   }
 
   private batchSwaps(
