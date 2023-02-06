@@ -64,25 +64,10 @@ export class BalancerSorService {
   }
 
   async getSwaps({ tokenIn, tokenOut, swapType, swapOptions, swapAmount, tokens }: GetSwapsInput) {
-    // tokenIn = replaceEthWithZeroAddress(tokenIn);
-    // tokenOut = replaceEthWithZeroAddress(tokenOut);
-    tokenIn = replaceEthWithWeth(tokenIn.toLowerCase());
-    tokenOut = replaceEthWithWeth(tokenOut.toLowerCase());
-
-    // tokenIn = tokenIn.toLowerCase();
-    // tokenOut = tokenOut.toLowerCase();
-
-    // let isNativeIn = false;
-    // if (tokenIn === networkConfig.eth.address) {
-    //   tokenIn = toLowerCase(networkConfig.weth.address);
-    //   isNativeIn = true;
-    // }
-
-    // let isNativeOut = false;
-    // if (tokenOut === networkConfig.eth.address) {
-    //   tokenOut = toLowerCase(networkConfig.weth.address);
-    //   isNativeOut = true;
-    // }
+    tokenIn = replaceEthWithZeroAddress(tokenIn);
+    tokenOut = replaceEthWithZeroAddress(tokenOut);
+    tokenIn = tokenIn.toLowerCase();
+    tokenOut = tokenOut.toLowerCase();
 
     const isExactInSwap = swapType === 'EXACT_IN';
 
@@ -214,8 +199,8 @@ export class BalancerSorService {
 
     return {
       ...swapInfo,
-      tokenIn: replaceWethWithEth(swapInfo.tokenIn),
-      tokenOut: replaceWethWithEth(swapInfo.tokenOut),
+      tokenIn: replaceZeroAddressWithEth(swapInfo.tokenIn),
+      tokenOut: replaceZeroAddressWithEth(swapInfo.tokenOut),
       swapType,
       tokenInAmount,
       tokenOutAmount,
@@ -311,9 +296,6 @@ export class BalancerSorService {
       where: {
         address,
       },
-      include: {
-        currentPrice: true,
-      },
     });
 
     if (!token) {
@@ -323,33 +305,28 @@ export class BalancerSorService {
     const result = {
       ...token,
     };
-    // let price: string;
-    // if (token.useDexscreener) {
-    //   if (!token.dexscreenPairAddress) {
-    //     throw new Error(`Missing dexscreenPairAddress for token ${token.address}`);
-    //   }
-    //   const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
-    //   price = String(info.priceNum);
-    // } else if (token.coingeckoTokenId) {
-    //   if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
-    //     throw new Error(`Missing coingecko data for token ${token.address}`);
-    //   }
+    let price: string;
+    if (token.useDexscreener) {
+      if (!token.dexscreenPairAddress) {
+        throw new Error(`Missing dexscreenPairAddress for token ${token.address}`);
+      }
+      const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
+      price = String(info.priceNum);
+    } else if (token.coingeckoTokenId) {
+      if (!token.coingeckoPlatformId || !token.coingeckoContractAddress) {
+        throw new Error(`Missing coingecko data for token ${token.address}`);
+      }
 
-    //   price = await this.sorPriceService.getTokenPrice(token as unknown as TokenDefinition);
-    // } else if (token.usePoolPricing) {
-    //   price = String(await this.poolPricing.getTokenPrice(token as unknown as TokenDefinition));
-    // } else {
-    //   console.error(`Token ${token.address} is not dexscreener or gecko...?`);
-    // }
-
-    // return {
-    //   ...result,
-    //   price,
-    // };
+      price = await this.sorPriceService.getTokenPrice(token as unknown as TokenDefinition);
+    } else if (token.usePoolPricing) {
+      price = String(await this.poolPricing.getTokenPrice(token as unknown as TokenDefinition));
+    } else {
+      throw new Error(`Token ${token.address} has no price provider...?`);
+    }
 
     return {
-      ...token,
-      price: String(token.currentPrice.price),
+      ...result,
+      price,
     };
   }
 

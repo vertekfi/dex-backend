@@ -58,6 +58,13 @@ async function bootstrap() {
     await nestApp.listen(PORT, async () => {
       // All service instances are initialized at this point
       await runInitialSyncMutations(nestApp.get(ScheduledJobService));
+
+      const ps = nestApp.get(PrismaService);
+      await ps.prismaTokenPrice.deleteMany({
+        where: {
+          tokenAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+        },
+      });
       console.log(`DEX Backend running at: ${PORT}`);
     });
   }
