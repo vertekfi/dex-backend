@@ -291,7 +291,6 @@ export class BalancerSorService {
   }
 
   private async getToken(address: string) {
-    console.log(address);
     const token = await this.prisma.prismaToken.findUniqueOrThrow({
       where: {
         address,

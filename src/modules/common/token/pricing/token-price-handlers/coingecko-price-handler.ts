@@ -77,7 +77,9 @@ export class CoingeckoPriceHandlerService implements TokenPriceHandler {
       if (exists && priceUsd) {
         operations.push(
           this.prisma.prismaTokenPrice.upsert({
-            where: { tokenAddress_timestamp: { tokenAddress: normalizedTokenAddress, timestamp } },
+            where: {
+              tokenAddress_timestamp: { tokenAddress: normalizedTokenAddress, timestamp },
+            },
             update: { price: priceUsd, close: priceUsd },
             create: {
               tokenAddress: normalizedTokenAddress,
