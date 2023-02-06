@@ -50,6 +50,11 @@ const pricingPoolsMap = {
       priceAgainst: getTokenAddress('WBNB'),
       inputAmount: parseUnits('1'),
     },
+    [getTokenAddress('UP')]: {
+      poolId: '0x64bf08fac067b25c77967affafce73760d8d0bdf000200000000000000000011',
+      priceAgainst: getTokenAddress('BUSD'),
+      inputAmount: parseUnits('1'),
+    },
   },
 };
 

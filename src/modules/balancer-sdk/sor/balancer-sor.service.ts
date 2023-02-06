@@ -392,7 +392,9 @@ export class BalancerSorService {
       return 18;
     }
 
-    const match = tokens.find((token) => getAddress(token.address) === getAddress(tokenAddress));
+    const match = tokens.find(
+      (token) => token.address.toLowerCase() === tokenAddress.toLowerCase(),
+    );
 
     if (!match) {
       throw new Error('Unknown token: ' + tokenAddress);
