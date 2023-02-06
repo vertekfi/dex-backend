@@ -250,7 +250,7 @@ export class PoolService {
   async updatePoolAprs() {
     // TODO: Use fee collector to get protocol fee
     // Also move all of this apr stuff into its own concern/service
-    const swaps = new SwapFeeAprService(this.prisma, 0.25);
+    const swaps = new SwapFeeAprService(this.prisma, 0.5);
     const gauges = new VeGaugeAprService(
       this.gaugeService,
       [networkConfig.beets.address],

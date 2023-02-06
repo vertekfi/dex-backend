@@ -2,7 +2,7 @@ import { parseUnits } from 'ethers/lib/utils';
 import { PrismaService } from 'nestjs-prisma';
 import { toLowerCaseArr } from 'src/modules/utils/general.utils';
 import { getChainId } from '../../web3/rpc.provider';
-import { PoolPricingMap, PricingAssetInfo } from '../types';
+import { PricingAssetInfo } from '../types';
 import { getTokenAddress } from '../utils';
 
 const pricingPoolsMap = {
@@ -22,11 +22,11 @@ const pricingPoolsMap = {
       priceAgainst: getTokenAddress('BUSD'),
       inputAmount: parseUnits('0.1'),
     },
-    // [getTokenAddress('wAALTO')]: {
-    //   poolId: '0x5deb10ed6a66a1e6188b7925a723b6bdfd97476500020000000000000000000a',
-    //   priceAgainst: getTokenAddress('BUSD'),
-    //   inputAmount: parseUnits('1'),
-    // },
+    [getTokenAddress('wAALTO')]: {
+      poolId: '0xcf61cf9654f5536b8d6c93f09a0308ff3c2650f9000200000000000000000015',
+      priceAgainst: getTokenAddress('BUSD'),
+      inputAmount: parseUnits('1'),
+    },
     [getTokenAddress('SERENE')]: {
       poolId: '0x32934c1122c0d7b0fc3daab588a4490b53c1568c00020000000000000000000e',
       priceAgainst: getTokenAddress('ETH'),

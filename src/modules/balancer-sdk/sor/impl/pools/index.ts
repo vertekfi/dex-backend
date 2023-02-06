@@ -1,8 +1,4 @@
 import { WeightedPool } from './weightedPool/weightedPool';
-// import { StablePool } from './stablePool/stablePool';
-// import { MetaStablePool } from './metaStablePool/metaStablePool';
-// import { LinearPool } from './linearPool/linearPool';
-// import { PhantomStablePool } from './phantomStablePool/phantomStablePool';
 import { BigNumber as OldBigNumber, INFINITY, scale, ZERO } from '../utils/bignumber';
 import { SubgraphPoolBase, PoolBase, SwapTypes, PoolPairBase, PoolTypes } from '../types';
 import { StablePool } from './stablePool/stablePool';
@@ -65,5 +61,5 @@ export function getOutputAmountSwap(
       return pool._tokenInForExactTokenOut(poolPairData, amount);
     }
   }
-  throw Error('Unsupported swap');
+  // throw Error('Unsupported swap');
 }
