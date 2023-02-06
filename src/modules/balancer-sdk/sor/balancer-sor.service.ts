@@ -15,24 +15,16 @@ import { ContractService } from 'src/modules/common/web3/contract.service';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { PoolService } from 'src/modules/pool/pool.service';
 import { networkConfig } from '../../config/network-config';
-import {
-  replaceEthWithWeth,
-  replaceEthWithZeroAddress,
-  replaceWethWithEth,
-  replaceZeroAddressWithEth,
-} from '../../utils/addresses';
+import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../utils/addresses';
 import { oldBnum } from '../../utils/old-big-number';
-import { GetSwapsInput, PoolFilter, SwapTypes, SwapV2 } from './types';
+import { GetSwapsInput, PoolFilter, SwapOptions, SwapTypes } from './types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { SorPriceService } from './api/sor-price.service';
 import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
 import { SOR } from './impl/wrapper';
 import { PrismaService } from 'nestjs-prisma';
-import { getDexPriceFromPair } from 'src/modules/common/token/pricing/dexscreener';
-import { TokenDefinition } from 'src/modules/common/token/types';
-import { PoolPricingService } from 'src/modules/common/token/pricing/pool-pricing.service';
-import { toLowerCase } from 'src/modules/utils/general.utils';
+import { SwapV2 } from './impl/types';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
@@ -40,7 +32,6 @@ const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
 @Injectable()
 export class BalancerSorService {
   private readonly sor: SOR;
-  private readonly sorV1: SOR;
 
   constructor(
     private readonly contractService: ContractService,
@@ -49,7 +40,6 @@ export class BalancerSorService {
     private readonly sorPriceService: SorPriceService,
     private readonly prisma: PrismaService,
     private readonly poolService: PoolService,
-    private readonly poolPricing: PoolPricingService,
   ) {
     this.sor = new SOR(
       this.rpc.provider,
@@ -72,132 +62,45 @@ export class BalancerSorService {
     const isExactInSwap = swapType === 'EXACT_IN';
 
     const tokenDecimals = this.getTokenDecimals(isExactInSwap ? tokenIn : tokenOut, tokens);
+    const swapAmountScaled = this.getSwapAmountScaled(swapAmount, tokenDecimals);
 
-    let swapAmountScaled = BigNumber.from(`0`);
-    try {
-      swapAmountScaled = parseFixed(swapAmount, tokenDecimals);
-    } catch (e) {
-      console.log(
-        `Invalid input: Could not parse swapAmount ${swapAmount} with decimals ${tokenDecimals}`,
-      );
-      throw new Error('SOR: invalid swap amount input');
-    }
-
-    const [tokenInfoIn, tokenInfoOut] = await Promise.all([
-      this.getToken(tokenIn),
-      this.getToken(tokenOut),
-    ]);
-
-    console.log(tokenInfoIn.price);
-    const priceOfNativeAssetInBuyToken = Number(
-      formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoIn.price, 36)), 36),
-    );
-
-    const priceOfNativeAssetInSellToken = Number(
-      formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoOut.price, 36)), 36),
-    );
-
-    await Promise.all([
-      this.sor.swapCostCalculator.setNativeAssetPriceInToken(
-        tokenIn,
-        priceOfNativeAssetInBuyToken.toString(),
-      ),
-      this.sor.swapCostCalculator.setNativeAssetPriceInToken(
-        tokenOut,
-        priceOfNativeAssetInSellToken.toString(),
-      ),
-    ]);
-
+    // Using our own local pricing setup from database
+    // and manually setting `setNativeAssetPriceInToken` before continuing on
+    await this.setSwapNativeInfo(tokenIn, tokenOut);
     const sorSwapType = this.orderKindToSwapType(swapType);
 
-    const gasPrice = BigNumber.from(GAS_PRICE);
-    const swapGas = BigNumber.from(SWAP_COST);
-
-    console.time('[Sor] fetchPools');
-    await this.sor.fetchPools();
-    console.timeEnd(`[Sor] fetchPools`);
-
-    const options = {
-      forceRefresh: true,
-      maxPools: 8,
-      poolTypeFilter: PoolFilter.All,
-      gasPrice,
-      swapGas,
-      timestamp: Math.floor(Date.now() / 1000),
-    };
+    // Cache pools and then get swaps
+    await this.cacheSubgraphPools();
 
     const swapInfo = await this.sor.getSwaps(
       tokenIn,
       tokenOut,
       sorSwapType,
       swapAmountScaled,
-      options,
+      this.getSwapOptions(swapOptions),
     );
-
-    console.log('SorService: swapInfo result =');
-    console.log(swapInfo);
+    // console.log('SorService: swapInfo result =');
+    // console.log(swapInfo);
 
     const returnAmount = formatFixed(
       swapInfo.returnAmount,
       this.getTokenDecimals(isExactInSwap ? tokenOut : tokenIn, tokens),
     );
-
     const tokenInAmount = isExactInSwap ? swapAmount : returnAmount;
     const tokenOutAmount = isExactInSwap ? returnAmount : swapAmount;
-
     const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
     const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
     const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
 
-    // Will be cached at this point
-    // const pools = await this.sor.getPools();
-    const hops: GqlSorSwapRouteHop[] = [];
+    const routes = await this.getSwapResultPoolHops(
+      swapInfo.swaps,
+      tokenIn,
+      tokenOut,
+      tokenInAmount,
+      tokenOutAmount,
+    );
 
-    const poolIds = swapInfo.swaps.map((path) => path.poolId);
-
-    const gqlPoolsProms = poolIds.map((id) => this.poolService.getGqlPool(id));
-    const gqlPools = await Promise.all(gqlPoolsProms);
-
-    // TODO: Probably already a method on the sor to extract the routing/hop info for a given swap
-
-    gqlPools.forEach((pool) => {
-      const hop: GqlSorSwapRouteHop = {
-        poolId: pool.id,
-        pool: {
-          id: pool.id,
-          address: pool.address,
-          decimals: pool.decimals,
-          createTime: pool.createTime,
-          name: pool.name,
-          type: pool.type,
-          symbol: pool.symbol,
-          dynamicData: pool.dynamicData,
-          allTokens: pool.allTokens,
-          displayTokens: pool.displayTokens,
-        },
-        tokenIn,
-        tokenOut,
-        tokenInAmount,
-        tokenOutAmount,
-      };
-
-      hops.push(hop);
-    });
-
-    // TODO: Probably already a method on the sor to extract the routing/hop info for a given swap
-
-    const routes = swapInfo.swaps.map((path): GqlSorSwapRoute => {
-      return {
-        tokenIn,
-        tokenOut,
-        tokenInAmount,
-        tokenOutAmount: path.returnAmount,
-        share: 0,
-        hops,
-      };
-    });
-
-    return {
+    const swapResults = {
       ...swapInfo,
       tokenIn: replaceZeroAddressWithEth(swapInfo.tokenIn),
       tokenOut: replaceZeroAddressWithEth(swapInfo.tokenOut),
@@ -227,6 +130,10 @@ export class BalancerSorService {
       effectivePriceReversed: effectivePriceReversed.toString(),
       priceImpact: priceImpact.toString(),
     };
+
+    // console.log(swapResults);
+
+    return swapResults;
   }
 
   async getBatchSwapForTokensIn({
@@ -288,6 +195,120 @@ export class BalancerSorService {
       swaps: batchedSwaps.swaps,
       assets: batchedSwaps.assets,
     };
+  }
+
+  private async cacheSubgraphPools() {
+    console.time('[Sor] fetchPools');
+    await this.sor.fetchPools();
+    console.timeEnd(`[Sor] fetchPools`);
+  }
+
+  private getSwapAmountScaled(swapAmount: string, tokenDecimals: number) {
+    try {
+      return parseFixed(swapAmount, tokenDecimals);
+    } catch (e) {
+      console.log(
+        `Invalid input: Could not parse swapAmount ${swapAmount} with decimals ${tokenDecimals}`,
+      );
+      throw new Error('SOR: invalid swap amount input');
+    }
+  }
+
+  private async setSwapNativeInfo(tokenIn: string, tokenOut: string) {
+    // Using our own local pricing setup from database
+    // and manually setting `setNativeAssetPriceInToken` before continuing on
+    const [tokenInfoIn, tokenInfoOut] = await Promise.all([
+      this.getToken(tokenIn),
+      this.getToken(tokenOut),
+    ]);
+
+    const priceOfNativeAssetInBuyToken = Number(
+      formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoIn.price, 36)), 36),
+    );
+    const priceOfNativeAssetInSellToken = Number(
+      formatFixed(parseFixed('1', 72).div(parseFixed(tokenInfoOut.price, 36)), 36),
+    );
+
+    // Needs to be set before convertGasCostToToken is called
+    this.sor.swapCostCalculator.setNativeAssetPriceInToken(
+      tokenIn,
+      priceOfNativeAssetInBuyToken.toString(),
+    );
+    this.sor.swapCostCalculator.setNativeAssetPriceInToken(
+      tokenOut,
+      priceOfNativeAssetInSellToken.toString(),
+    );
+  }
+
+  private getSwapOptions(incomingOptions: GqlSorSwapOptionsInput): SwapOptions {
+    const gasPrice = BigNumber.from(GAS_PRICE);
+    const swapGas = BigNumber.from(SWAP_COST);
+    const defaultSwapOptions = {
+      forceRefresh: true,
+      maxPools: 4,
+      poolTypeFilter: PoolFilter.All,
+      gasPrice,
+      swapGas,
+      timestamp: Math.floor(Date.now() / 1000),
+    };
+
+    return {
+      ...defaultSwapOptions,
+      ...incomingOptions,
+    };
+  }
+
+  private async getSwapResultPoolHops(
+    swaps: SwapV2[],
+    tokenIn: string,
+    tokenOut: string,
+    tokenInAmount: string,
+    tokenOutAmount: string,
+  ) {
+    // Using local pool data from database instead
+    // const pools = await this.sor.getPools();
+    const poolIds = swaps.map((path) => path.poolId);
+    const gqlPoolsProms = poolIds.map((id) => this.poolService.getGqlPool(id));
+    const gqlPools = await Promise.all(gqlPoolsProms);
+
+    // TODO: Probably already a method on the sor to extract the routing/hop info for a given swap
+    const hops: GqlSorSwapRouteHop[] = [];
+    gqlPools.forEach((pool) => {
+      const hop: GqlSorSwapRouteHop = {
+        poolId: pool.id,
+        pool: {
+          id: pool.id,
+          address: pool.address,
+          decimals: pool.decimals,
+          createTime: pool.createTime,
+          name: pool.name,
+          type: pool.type,
+          symbol: pool.symbol,
+          dynamicData: pool.dynamicData,
+          allTokens: pool.allTokens,
+          displayTokens: pool.displayTokens,
+        },
+        tokenIn,
+        tokenOut,
+        tokenInAmount,
+        tokenOutAmount,
+      };
+
+      hops.push(hop);
+    });
+
+    const routes = swaps.map((path): GqlSorSwapRoute => {
+      return {
+        tokenIn,
+        tokenOut,
+        tokenInAmount,
+        tokenOutAmount: path.returnAmount,
+        share: 0,
+        hops,
+      };
+    });
+
+    return routes;
   }
 
   private async getToken(address: string) {
