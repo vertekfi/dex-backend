@@ -6,10 +6,22 @@ extend type Query {
   getProtocolTokenList: [String]
   getProtocolPoolData: [String]!
   getAllGaugePendingProtocolFees: [GqlProtocolPendingGaugeFee!]!
+  getFeeCollectorBalances: GqlFeesCollectorAmountsResult!
 }
 
 extend type Mutation {
   protocolCacheMetrics: String!
+}
+
+type GqlProtocolFeesCollectorAmounts {
+  token: String!
+  amount: String!
+  valueUSD: String!
+}
+
+type GqlFeesCollectorAmountsResult {
+  values: [GqlProtocolFeesCollectorAmounts]!
+  totalValueUSD: Float!
 }
 
 type GqlProtocolPendingGaugeFee {
