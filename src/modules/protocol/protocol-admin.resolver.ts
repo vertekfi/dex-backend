@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Query, Resolver } from '@nestjs/graphql';
+import { Args, Query, Resolver } from '@nestjs/graphql';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { ProtocolDataService } from './protocol-data.service';
 import { ProtocolService } from './protocol.service';
@@ -14,11 +14,20 @@ export class ProtocolAdminResolver {
 
   @Query()
   async adminGetAllGaugePendingProtocolFees() {
-    return this.protocolDataService.getAllGaugePendingProtocolFees();
+    return this.protocolDataService.getAllGaugePendingProtocolFees(
+      await this.protocolDataService.getPoolsAndBptsWithPrice(),
+    );
   }
 
   @Query()
   async adminGetFeeCollectorBalances() {
-    return this.protocolDataService.getFeeCollectorBalances();
+    return this.protocolDataService.getFeeCollectorPendingInfo(
+      await this.protocolDataService.getPoolsAndBptsWithPrice(),
+    );
+  }
+
+  @Query()
+  async adminGetAllPendingFeeData(@Args('onlyWithBalances') onlyWithBalances: boolean) {
+    return this.protocolDataService.getAllPendingFeeData(onlyWithBalances);
   }
 }

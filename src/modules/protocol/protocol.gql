@@ -5,12 +5,19 @@ extend type Query {
   contentGetNewsItems: [GqlContentNewsItem]!
   getProtocolTokenList: [String]
   getProtocolPoolData: [String]!
-  adminGetAllGaugePendingProtocolFees: [GqlProtocolPendingGaugeFee!]!
+  adminGetAllGaugePendingProtocolFees: GqlPendingGaugeFeeResult!
   adminGetFeeCollectorBalances: GqlFeesCollectorAmountsResult!
+  adminGetAllPendingFeeData(onlyWithBalances: Boolean): GqlAllFeesData!
 }
 
 extend type Mutation {
   protocolCacheMetrics: String!
+}
+
+type GqlAllFeesData {
+  totalValueUSD: Float!
+  gauges: GqlPendingGaugeFeeResult!
+  feeCollector: GqlFeesCollectorAmountsResult!
 }
 
 type GqlProtocolFeesCollectorAmounts {
@@ -24,11 +31,19 @@ type GqlFeesCollectorAmountsResult {
   totalValueUSD: Float!
 }
 
+type GqlPendingGaugeFeeResult {
+  values: [GqlProtocolPendingGaugeFee]!
+  totalValueUSD: Float!
+}
+
 type GqlProtocolPendingGaugeFee {
   poolId: String!
   poolName: String!
+  poolAddress: String!
+  gauge: String!
   gaugeAddress: String!
   pendingPoolTokensFee: Float!
+  valueUSD: Float!
 }
 
 type GqlProtocolMetrics {
