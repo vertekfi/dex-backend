@@ -5,8 +5,8 @@ extend type Query {
   contentGetNewsItems: [GqlContentNewsItem]!
   getProtocolTokenList: [String]
   getProtocolPoolData: [String]!
-  getAllGaugePendingProtocolFees: [GqlProtocolPendingGaugeFee!]!
-  getFeeCollectorBalances: GqlFeesCollectorAmountsResult!
+  adminGetAllGaugePendingProtocolFees: [GqlProtocolPendingGaugeFee!]!
+  adminGetFeeCollectorBalances: GqlFeesCollectorAmountsResult!
 }
 
 extend type Mutation {

@@ -13,12 +13,12 @@ export class ProtocolAdminResolver {
   ) {}
 
   @Query()
-  async getAllGaugePendingProtocolFees() {
+  async adminGetAllGaugePendingProtocolFees() {
     return this.protocolDataService.getAllGaugePendingProtocolFees();
   }
 
   @Query()
-  async getFeeCollectorBalances() {
+  async adminGetFeeCollectorBalances() {
     return this.protocolDataService.getFeeCollectorBalances();
   }
 }
