@@ -22,6 +22,8 @@ type GqlAllFeesData {
 
 type GqlProtocolFeesCollectorAmounts {
   token: String!
+  poolId: String!
+  poolName: String!
   amount: String!
   valueUSD: String!
 }

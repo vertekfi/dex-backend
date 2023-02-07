@@ -114,11 +114,14 @@ export class ProtocolDataService {
       const poolAddress = feeInfo[0];
       const poolBalance = ethNum(feeInfo[1].balance);
       const valueUSD = this.getAmountValueUSD(bpts, poolAddress, poolBalance);
+      const pool = pools.find((p) => p.address === poolAddress);
 
       totalValueUSD += valueUSD;
 
       return {
         token: poolAddress,
+        poolId: pool.id,
+        poolName: pool.name,
         amount: String(poolBalance),
         valueUSD,
       };
