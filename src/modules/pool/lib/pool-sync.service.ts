@@ -3,17 +3,28 @@ import { PrismaLastBlockSyncedCategory } from '@prisma/client';
 import { BlockService } from 'src/modules/common/web3/block.service';
 import { PrismaService } from 'nestjs-prisma';
 import { ContractService } from 'src/modules/common/web3/contract.service';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { AccountWeb3 } from 'src/modules/common/types';
+import { RPC } from 'src/modules/common/web3/rpc.provider';
+import { PoolCreatorService } from './pool-creator.service';
 
 @Injectable()
 export class PoolSyncService {
   constructor(
+    @Inject(RPC) private readonly rpc: AccountWeb3,
+    private readonly poolCreatorService: PoolCreatorService,
     private readonly prisma: PrismaService,
     private readonly blockService: BlockService,
     private readonly contractService: ContractService,
   ) {}
 
-  public async syncChangedPools(): Promise<{
+  async syncAllPoolsFromSubgraph(): Promise<string[]> {
+    return this.poolCreatorService.syncAllPoolsFromSubgraph(
+      await this.rpc.provider.getBlockNumber(),
+    );
+  }
+
+  async syncChangedPools(): Promise<{
     startBlock: number;
     endBlock: number;
     latestBlock: number;
@@ -55,5 +66,15 @@ export class PoolSyncService {
     const poolIds: string[] = _.uniq(filteredEvents.map((event) => event.args!.poolId));
 
     return poolIds;
+  }
+
+  async syncPoolTotalShares() {
+    const items = await this.prisma.prismaPoolDynamicData.findMany({});
+    for (const item of items) {
+      await this.prisma.prismaPoolDynamicData.update({
+        where: { id: item.id },
+        data: { totalSharesNum: parseFloat(item.totalShares) },
+      });
+    }
   }
 }

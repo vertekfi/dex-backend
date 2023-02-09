@@ -15,7 +15,7 @@ export class VeGaugeAprService implements PoolAprService {
     private readonly pricingService: TokenPriceService,
   ) {}
 
-  public async updateAprForPools(pools: PrismaPoolWithExpandedNesting[]): Promise<void> {
+  async updateAprForPools(pools: PrismaPoolWithExpandedNesting[]): Promise<void> {
     try {
       const operations: any[] = [];
       const [gauges, tokenPrices] = await Promise.all([
@@ -30,6 +30,7 @@ export class VeGaugeAprService implements PoolAprService {
           continue;
         }
 
+        // TODO: This should be gauge supply
         const totalShares = parseFloat(pool.dynamicData.totalShares);
         const gaugeTvl =
           totalShares > 0
@@ -67,8 +68,10 @@ export class VeGaugeAprService implements PoolAprService {
           );
         }
       }
+
       await prismaBulkExecuteOperations(operations);
     } catch (error) {
+      console.log(error);
       return null;
     }
   }

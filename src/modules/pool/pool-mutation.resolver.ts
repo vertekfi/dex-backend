@@ -4,6 +4,7 @@ import { AdminGuard } from '../common/guards/admin.guard';
 import { AccountWeb3 } from '../common/types';
 import { RPC } from '../common/web3/rpc.provider';
 import { PoolDataLoaderService } from './lib/pool-data-loader.service';
+import { PoolSyncService } from './lib/pool-sync.service';
 import { PoolService } from './pool.service';
 
 @Resolver()
@@ -13,11 +14,12 @@ export class PoolMutationResolver {
     @Inject(RPC) private rpc: AccountWeb3,
     private readonly poolService: PoolService,
     private readonly poolDataSync: PoolDataLoaderService,
+    private readonly poolSyncService: PoolSyncService,
   ) {}
 
   @Mutation()
   async poolSyncAllPoolsFromSubgraph() {
-    return this.poolService.syncAllPoolsFromSubgraph();
+    return this.poolSyncService.syncAllPoolsFromSubgraph();
   }
 
   @Mutation()
@@ -81,7 +83,7 @@ export class PoolMutationResolver {
 
   @Mutation()
   async poolSyncTotalShares() {
-    await this.poolService.syncPoolTotalShares();
+    await this.poolSyncService.syncPoolTotalShares();
     return 'success';
   }
 

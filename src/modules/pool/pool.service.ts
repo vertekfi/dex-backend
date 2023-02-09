@@ -32,8 +32,6 @@ import { PoolAprUpdaterService } from './lib/pool-apr-updater.service';
 import { PoolSyncService } from './lib/pool-sync.service';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
 import { ProtocolService } from '../protocol/protocol.service';
-import { CacheDecorator } from '../common/decorators/cache.decorator';
-import { FIVE_MINUTES_SECONDS } from '../utils/time';
 import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
 import { VeGaugeAprService } from './lib/aprs/ve-bal-gauge-apr.service';
 import { GaugeService } from '../gauge/gauge.service';
@@ -41,12 +39,9 @@ import { TokenPriceService } from '../common/token/pricing/token-price.service';
 import { networkConfig } from '../config/network-config';
 import { BlockService } from '../common/web3/block.service';
 
-const FEATURED_POOL_GROUPS_CACHE_KEY = 'pool:featuredPoolGroups';
-
 @Injectable()
 export class PoolService {
   constructor(
-    @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
     private readonly poolGqlLoaderService: PoolGqlLoaderService,
     private readonly poolSwapService: PoolSwapService,
@@ -112,7 +107,6 @@ export class PoolService {
     return this.poolSwapService.getUserSwapVolume(args);
   }
 
-  // @CacheDecorator(FEATURED_POOL_GROUPS_CACHE_KEY, FIVE_MINUTES_SECONDS)
   async getFeaturedPoolGroups(): Promise<GqlPoolFeaturedPoolGroup[]> {
     const config = await this.protocolService.getProtocolConfigDataForChain();
     const pools = await this.prisma.prismaPool.findMany({
@@ -154,22 +148,6 @@ export class PoolService {
 
   async getSnapshotsForPool(poolId: string, range: GqlPoolSnapshotDataRange) {
     return this.poolSnapshotService.getSnapshotsForPool(poolId, range);
-  }
-
-  async syncAllPoolsFromSubgraph(): Promise<string[]> {
-    return this.poolCreatorService.syncAllPoolsFromSubgraph(
-      await this.rpc.provider.getBlockNumber(),
-    );
-  }
-
-  async syncPoolTotalShares() {
-    const items = await this.prisma.prismaPoolDynamicData.findMany({});
-    for (const item of items) {
-      await this.prisma.prismaPoolDynamicData.update({
-        where: { id: item.id },
-        data: { totalSharesNum: parseFloat(item.totalShares) },
-      });
-    }
   }
 
   async syncPoolAllTokensRelationship(): Promise<void> {
@@ -248,7 +226,7 @@ export class PoolService {
   }
 
   async updatePoolAprs() {
-    // TODO: Use fee collector to get protocol fee
+    // TODO: Use ProtocolFeePercentagesProvider to get protocol fee
     // Also move all of this apr stuff into its own concern/service
     const swaps = new SwapFeeAprService(this.prisma, 0.5);
     const gauges = new VeGaugeAprService(

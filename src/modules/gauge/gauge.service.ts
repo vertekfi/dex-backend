@@ -25,7 +25,7 @@ import * as LGV5Abi from '../abis/LiquidityGaugeV5.json';
 import { BigNumber } from 'ethers';
 import { PrismaPoolStakingGauge } from '@prisma/client';
 import { ZERO_ADDRESS } from '../common/web3/utils';
-import { prismaPoolMinimal } from 'prisma/prisma-types';
+import { prismaPoolMinimal, PrismaPoolWithExpandedNesting } from 'prisma/prisma-types';
 import { ProtocolGaugeInfo } from '../protocol/types';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
@@ -254,7 +254,7 @@ export class GaugeService {
     gauges,
   }: {
     prices: TokenPrices;
-    pools: Pool[];
+    pools: PrismaPoolWithExpandedNesting[];
     gauges: SubgraphGauge[];
   }) {
     try {
@@ -283,7 +283,10 @@ export class GaugeService {
 
         const gaugeBALApr = calculateGaugeApr({
           gaugeAddress: getAddress(gauge.id),
-          bptPrice: getBptPrice(pool.totalLiquidity, pool.totalShares),
+          bptPrice: getBptPrice(
+            String(pool.dynamicData.totalLiquidity),
+            pool.dynamicData.totalShares,
+          ),
           balPrice: String(balPrice),
           // undefined inflation rate is guarded above
           inflationRate: inflationRate as string,
