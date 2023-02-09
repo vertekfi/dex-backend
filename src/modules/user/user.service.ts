@@ -16,10 +16,12 @@ import { AccountWeb3 } from '../common/types';
 import { toJsTimestamp } from '../utils/time';
 import { networkConfig } from '../config/network-config';
 import { bnum } from '@balancer-labs/sor';
-import { Contract } from 'ethers';
+import { BigNumber, Contract } from 'ethers';
 import { getContractAddress } from '../common/web3/contract';
 import { VeGaugeAprService } from '../common/gauges/ve-bal-gauge-apr.service';
 import { GaugeService } from '../common/gauges/gauge.service';
+import { GaugeUserShare } from '../gauge/types';
+import { formatFixed } from '@ethersproject/bignumber';
 
 @Injectable()
 export class UserService {
@@ -167,27 +169,43 @@ export class UserService {
       this.rpc.provider,
     );
 
-    const [veBALInfo, veBALBalance, databaseGauges, userGauges] = await Promise.all([
+    const poolGauges = await this.gaugeService.getDatabaseGauges();
+    const gaugeAddresses = poolGauges.map((p) => p.gauge.gaugeAddress);
+
+    const [veBALInfo, veBALBalance, userBalanceInfo, workingSupplies] = await Promise.all([
       this.getUserVeLockInfo(userAddress),
       veBalProxy.adjustedBalanceOf(userAddress),
-      this.gaugeService.getDatabaseGauges(),
-      this.gaugeService.getAllUserShares(userAddress),
+      this.getUserGaugeBalances(userAddress, gaugeAddresses),
+      this.gaugeAprService.getWorkingSupplyForGauges(gaugeAddresses),
     ]);
 
+    const userGauges: GaugeUserShare[] = userBalanceInfo.map((info) => {
+      const [gaugeAddress, balance] = info;
+      const dbPoolGauge = poolGauges.find((p) => p.gauge.gaugeAddress === gaugeAddress);
+
+      return {
+        poolId: dbPoolGauge.poolId,
+        gaugeAddress,
+        amount: formatFixed(balance.balance, 18),
+        tokens: [],
+      };
+    });
+
     const veBALTotalSupply = veBALInfo.totalSupply;
-    const workingSupplies = await this.gaugeAprService.getWorkingSupplyForGauges(
-      userGauges.map((g) => g.gaugeAddress),
-    );
 
     const boosts = userGauges.map((gaugeShare) => {
       const gaugeAddress = getAddress(gaugeShare.gaugeAddress);
-      const dbGauge = databaseGauges.find((g) => g.gaugeAddress === gaugeAddress);
+      const dbPoolGauge = poolGauges.find((p) => p.gauge.gaugeAddress === gaugeAddress);
       const gaugeWorkingSupply = bnum(workingSupplies[gaugeAddress]);
       const userGaugeBalance = bnum(gaugeShare.amount);
 
       const adjustedGaugeBalance = bnum(0.4)
         .times(gaugeWorkingSupply)
-        .plus(bnum(0.6).times(bnum(veBALBalance).div(veBALTotalSupply).times(dbGauge.totalSupply)));
+        .plus(
+          bnum(0.6).times(
+            bnum(veBALBalance).div(veBALTotalSupply).times(dbPoolGauge.gauge.totalSupply),
+          ),
+        );
 
       // choose the minimum of either gauge balance or the adjusted gauge balance
       const workingBalance = userGaugeBalance.lt(adjustedGaugeBalance)
@@ -212,5 +230,17 @@ export class UserService {
     });
 
     return boosts;
+  }
+
+  async getUserGaugeBalances(userAddress: string, gaugeAddresses: string[]) {
+    const multiCaller = new Multicaller(this.rpc, [
+      'function balanceOf(address) public view returns(uint)',
+    ]);
+
+    gaugeAddresses.forEach((g) => multiCaller.call(`${g}.balance`, g, 'balanceOf', [userAddress]));
+
+    return Object.entries(
+      await multiCaller.execute<Record<string, { balance: BigNumber }>>(),
+    ).filter((info) => !info[1].balance.isZero());
   }
 }

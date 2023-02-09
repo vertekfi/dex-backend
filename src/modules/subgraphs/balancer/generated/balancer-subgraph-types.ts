@@ -32,6 +32,7 @@ export type AmpUpdate = {
 export type AmpUpdate_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<AmpUpdate_Filter>>>;
   endAmp?: InputMaybe<Scalars['BigInt']>;
   endAmp_gt?: InputMaybe<Scalars['BigInt']>;
   endAmp_gte?: InputMaybe<Scalars['BigInt']>;
@@ -56,6 +57,7 @@ export type AmpUpdate_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<AmpUpdate_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -147,6 +149,7 @@ export type BalancerSnapshot = {
 export type BalancerSnapshot_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<BalancerSnapshot_Filter>>>;
   id?: InputMaybe<Scalars['ID']>;
   id_gt?: InputMaybe<Scalars['ID']>;
   id_gte?: InputMaybe<Scalars['ID']>;
@@ -155,6 +158,7 @@ export type BalancerSnapshot_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<BalancerSnapshot_Filter>>>;
   poolCount?: InputMaybe<Scalars['Int']>;
   poolCount_gt?: InputMaybe<Scalars['Int']>;
   poolCount_gte?: InputMaybe<Scalars['Int']>;
@@ -240,6 +244,7 @@ export enum BalancerSnapshot_OrderBy {
 export type Balancer_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<Balancer_Filter>>>;
   id?: InputMaybe<Scalars['ID']>;
   id_gt?: InputMaybe<Scalars['ID']>;
   id_gte?: InputMaybe<Scalars['ID']>;
@@ -248,6 +253,7 @@ export type Balancer_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<Balancer_Filter>>>;
   poolCount?: InputMaybe<Scalars['Int']>;
   poolCount_gt?: InputMaybe<Scalars['Int']>;
   poolCount_gte?: InputMaybe<Scalars['Int']>;
@@ -325,6 +331,7 @@ export type GradualWeightUpdate = {
 export type GradualWeightUpdate_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<GradualWeightUpdate_Filter>>>;
   endTimestamp?: InputMaybe<Scalars['BigInt']>;
   endTimestamp_gt?: InputMaybe<Scalars['BigInt']>;
   endTimestamp_gte?: InputMaybe<Scalars['BigInt']>;
@@ -347,6 +354,7 @@ export type GradualWeightUpdate_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<GradualWeightUpdate_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -417,7 +425,7 @@ export type JoinExit = {
   tx: Scalars['Bytes'];
   type: InvestType;
   user: User;
-  valueUSD: Scalars['BigDecimal'];
+  valueUSD?: Maybe<Scalars['BigDecimal']>;
 };
 
 export type JoinExit_Filter = {
@@ -429,6 +437,7 @@ export type JoinExit_Filter = {
   amounts_not?: InputMaybe<Array<Scalars['BigDecimal']>>;
   amounts_not_contains?: InputMaybe<Array<Scalars['BigDecimal']>>;
   amounts_not_contains_nocase?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  and?: InputMaybe<Array<InputMaybe<JoinExit_Filter>>>;
   id?: InputMaybe<Scalars['ID']>;
   id_gt?: InputMaybe<Scalars['ID']>;
   id_gte?: InputMaybe<Scalars['ID']>;
@@ -437,6 +446,7 @@ export type JoinExit_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<JoinExit_Filter>>>;
   pool?: InputMaybe<Scalars['String']>;
   pool_?: InputMaybe<Pool_Filter>;
   pool_contains?: InputMaybe<Scalars['String']>;
@@ -460,7 +470,11 @@ export type JoinExit_Filter = {
   pool_starts_with_nocase?: InputMaybe<Scalars['String']>;
   sender?: InputMaybe<Scalars['Bytes']>;
   sender_contains?: InputMaybe<Scalars['Bytes']>;
+  sender_gt?: InputMaybe<Scalars['Bytes']>;
+  sender_gte?: InputMaybe<Scalars['Bytes']>;
   sender_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  sender_lt?: InputMaybe<Scalars['Bytes']>;
+  sender_lte?: InputMaybe<Scalars['Bytes']>;
   sender_not?: InputMaybe<Scalars['Bytes']>;
   sender_not_contains?: InputMaybe<Scalars['Bytes']>;
   sender_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -474,7 +488,11 @@ export type JoinExit_Filter = {
   timestamp_not_in?: InputMaybe<Array<Scalars['Int']>>;
   tx?: InputMaybe<Scalars['Bytes']>;
   tx_contains?: InputMaybe<Scalars['Bytes']>;
+  tx_gt?: InputMaybe<Scalars['Bytes']>;
+  tx_gte?: InputMaybe<Scalars['Bytes']>;
   tx_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  tx_lt?: InputMaybe<Scalars['Bytes']>;
+  tx_lte?: InputMaybe<Scalars['Bytes']>;
   tx_not?: InputMaybe<Scalars['Bytes']>;
   tx_not_contains?: InputMaybe<Scalars['Bytes']>;
   tx_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -538,9 +556,14 @@ export type LatestPrice = {
 export type LatestPrice_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<LatestPrice_Filter>>>;
   asset?: InputMaybe<Scalars['Bytes']>;
   asset_contains?: InputMaybe<Scalars['Bytes']>;
+  asset_gt?: InputMaybe<Scalars['Bytes']>;
+  asset_gte?: InputMaybe<Scalars['Bytes']>;
   asset_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  asset_lt?: InputMaybe<Scalars['Bytes']>;
+  asset_lte?: InputMaybe<Scalars['Bytes']>;
   asset_not?: InputMaybe<Scalars['Bytes']>;
   asset_not_contains?: InputMaybe<Scalars['Bytes']>;
   asset_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -560,6 +583,7 @@ export type LatestPrice_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<LatestPrice_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -591,7 +615,11 @@ export type LatestPrice_Filter = {
   price_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   pricingAsset?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_contains?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_gt?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_gte?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  pricingAsset_lt?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_lte?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not_contains?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -619,6 +647,7 @@ export type ManagementOperation = {
 export type ManagementOperation_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<ManagementOperation_Filter>>>;
   cashDelta?: InputMaybe<Scalars['BigDecimal']>;
   cashDelta_gt?: InputMaybe<Scalars['BigDecimal']>;
   cashDelta_gte?: InputMaybe<Scalars['BigDecimal']>;
@@ -643,6 +672,7 @@ export type ManagementOperation_Filter = {
   managedDelta_lte?: InputMaybe<Scalars['BigDecimal']>;
   managedDelta_not?: InputMaybe<Scalars['BigDecimal']>;
   managedDelta_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  or?: InputMaybe<Array<InputMaybe<ManagementOperation_Filter>>>;
   poolTokenId?: InputMaybe<Scalars['String']>;
   poolTokenId_?: InputMaybe<PoolToken_Filter>;
   poolTokenId_contains?: InputMaybe<Scalars['String']>;
@@ -702,14 +732,23 @@ export enum OrderDirection {
 export type Pool = {
   __typename?: 'Pool';
   address: Scalars['Bytes'];
+  alpha?: Maybe<Scalars['BigDecimal']>;
   amp?: Maybe<Scalars['BigInt']>;
   baseToken?: Maybe<Scalars['Bytes']>;
+  beta?: Maybe<Scalars['BigDecimal']>;
+  c?: Maybe<Scalars['BigDecimal']>;
   createTime: Scalars['Int'];
+  dSq?: Maybe<Scalars['BigDecimal']>;
+  delta?: Maybe<Scalars['BigDecimal']>;
+  epsilon?: Maybe<Scalars['BigDecimal']>;
   expiryTime?: Maybe<Scalars['BigInt']>;
   factory?: Maybe<Scalars['Bytes']>;
   historicalValues?: Maybe<Array<PoolHistoricalLiquidity>>;
   holdersCount: Scalars['BigInt'];
   id: Scalars['ID'];
+  isInRecoveryMode?: Maybe<Scalars['Boolean']>;
+  isPaused?: Maybe<Scalars['Boolean']>;
+  lambda?: Maybe<Scalars['BigDecimal']>;
   lowerTarget?: Maybe<Scalars['BigDecimal']>;
   mainIndex?: Maybe<Scalars['Int']>;
   managementFee?: Maybe<Scalars['BigDecimal']>;
@@ -721,15 +760,25 @@ export type Pool = {
   priceRateProviders?: Maybe<Array<PriceRateProvider>>;
   principalToken?: Maybe<Scalars['Bytes']>;
   protocolAumFeeCache?: Maybe<Scalars['BigDecimal']>;
+  protocolId?: Maybe<Scalars['Int']>;
   protocolSwapFeeCache?: Maybe<Scalars['BigDecimal']>;
   protocolYieldFeeCache?: Maybe<Scalars['BigDecimal']>;
+  root3Alpha?: Maybe<Scalars['BigDecimal']>;
+  s?: Maybe<Scalars['BigDecimal']>;
   shares?: Maybe<Array<PoolShare>>;
+  snapshots?: Maybe<Array<PoolSnapshot>>;
+  sqrtAlpha?: Maybe<Scalars['BigDecimal']>;
+  sqrtBeta?: Maybe<Scalars['BigDecimal']>;
   strategyType: Scalars['Int'];
   swapEnabled: Scalars['Boolean'];
   swapFee: Scalars['BigDecimal'];
   swaps?: Maybe<Array<Swap>>;
   swapsCount: Scalars['BigInt'];
   symbol?: Maybe<Scalars['String']>;
+  tauAlphaX?: Maybe<Scalars['BigDecimal']>;
+  tauAlphaY?: Maybe<Scalars['BigDecimal']>;
+  tauBetaX?: Maybe<Scalars['BigDecimal']>;
+  tauBetaY?: Maybe<Scalars['BigDecimal']>;
   tokens?: Maybe<Array<PoolToken>>;
   tokensList: Array<Scalars['Bytes']>;
   totalLiquidity: Scalars['BigDecimal'];
@@ -738,11 +787,15 @@ export type Pool = {
   totalSwapVolume: Scalars['BigDecimal'];
   totalWeight?: Maybe<Scalars['BigDecimal']>;
   tx?: Maybe<Scalars['Bytes']>;
+  u?: Maybe<Scalars['BigDecimal']>;
   unitSeconds?: Maybe<Scalars['BigInt']>;
   upperTarget?: Maybe<Scalars['BigDecimal']>;
+  v?: Maybe<Scalars['BigDecimal']>;
   vaultID: Balancer;
+  w?: Maybe<Scalars['BigDecimal']>;
   weightUpdates?: Maybe<Array<GradualWeightUpdate>>;
   wrappedIndex?: Maybe<Scalars['Int']>;
+  z?: Maybe<Scalars['BigDecimal']>;
 };
 
 export type PoolHistoricalValuesArgs = {
@@ -769,6 +822,14 @@ export type PoolSharesArgs = {
   where?: InputMaybe<PoolShare_Filter>;
 };
 
+export type PoolSnapshotsArgs = {
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PoolSnapshot_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<PoolSnapshot_Filter>;
+};
+
 export type PoolSwapsArgs = {
   first?: InputMaybe<Scalars['Int']>;
   orderBy?: InputMaybe<Swap_OrderBy>;
@@ -793,6 +854,53 @@ export type PoolWeightUpdatesArgs = {
   where?: InputMaybe<GradualWeightUpdate_Filter>;
 };
 
+export type PoolContract = {
+  __typename?: 'PoolContract';
+  id: Scalars['ID'];
+  pool: Pool;
+};
+
+export type PoolContract_Filter = {
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PoolContract_Filter>>>;
+  id?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<PoolContract_Filter>>>;
+  pool?: InputMaybe<Scalars['String']>;
+  pool_?: InputMaybe<Pool_Filter>;
+  pool_contains?: InputMaybe<Scalars['String']>;
+  pool_contains_nocase?: InputMaybe<Scalars['String']>;
+  pool_ends_with?: InputMaybe<Scalars['String']>;
+  pool_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  pool_gt?: InputMaybe<Scalars['String']>;
+  pool_gte?: InputMaybe<Scalars['String']>;
+  pool_in?: InputMaybe<Array<Scalars['String']>>;
+  pool_lt?: InputMaybe<Scalars['String']>;
+  pool_lte?: InputMaybe<Scalars['String']>;
+  pool_not?: InputMaybe<Scalars['String']>;
+  pool_not_contains?: InputMaybe<Scalars['String']>;
+  pool_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  pool_not_ends_with?: InputMaybe<Scalars['String']>;
+  pool_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  pool_not_in?: InputMaybe<Array<Scalars['String']>>;
+  pool_not_starts_with?: InputMaybe<Scalars['String']>;
+  pool_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  pool_starts_with?: InputMaybe<Scalars['String']>;
+  pool_starts_with_nocase?: InputMaybe<Scalars['String']>;
+};
+
+export enum PoolContract_OrderBy {
+  Id = 'id',
+  Pool = 'pool',
+}
+
 export type PoolHistoricalLiquidity = {
   __typename?: 'PoolHistoricalLiquidity';
   block: Scalars['BigInt'];
@@ -807,6 +915,7 @@ export type PoolHistoricalLiquidity = {
 export type PoolHistoricalLiquidity_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PoolHistoricalLiquidity_Filter>>>;
   block?: InputMaybe<Scalars['BigInt']>;
   block_gt?: InputMaybe<Scalars['BigInt']>;
   block_gte?: InputMaybe<Scalars['BigInt']>;
@@ -823,6 +932,7 @@ export type PoolHistoricalLiquidity_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<PoolHistoricalLiquidity_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -870,7 +980,11 @@ export type PoolHistoricalLiquidity_Filter = {
   poolTotalShares_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   pricingAsset?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_contains?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_gt?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_gte?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  pricingAsset_lt?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_lte?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not_contains?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -897,6 +1011,7 @@ export type PoolShare = {
 export type PoolShare_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PoolShare_Filter>>>;
   balance?: InputMaybe<Scalars['BigDecimal']>;
   balance_gt?: InputMaybe<Scalars['BigDecimal']>;
   balance_gte?: InputMaybe<Scalars['BigDecimal']>;
@@ -913,6 +1028,7 @@ export type PoolShare_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<PoolShare_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -987,6 +1103,7 @@ export type PoolSnapshot_Filter = {
   amounts_not?: InputMaybe<Array<Scalars['BigDecimal']>>;
   amounts_not_contains?: InputMaybe<Array<Scalars['BigDecimal']>>;
   amounts_not_contains_nocase?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  and?: InputMaybe<Array<InputMaybe<PoolSnapshot_Filter>>>;
   holdersCount?: InputMaybe<Scalars['BigInt']>;
   holdersCount_gt?: InputMaybe<Scalars['BigInt']>;
   holdersCount_gte?: InputMaybe<Scalars['BigInt']>;
@@ -1011,6 +1128,7 @@ export type PoolSnapshot_Filter = {
   liquidity_lte?: InputMaybe<Scalars['BigDecimal']>;
   liquidity_not?: InputMaybe<Scalars['BigDecimal']>;
   liquidity_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  or?: InputMaybe<Array<InputMaybe<PoolSnapshot_Filter>>>;
   pool?: InputMaybe<Scalars['String']>;
   pool_?: InputMaybe<Pool_Filter>;
   pool_contains?: InputMaybe<Scalars['String']>;
@@ -1095,11 +1213,12 @@ export type PoolToken = {
   cashBalance: Scalars['BigDecimal'];
   decimals: Scalars['Int'];
   id: Scalars['ID'];
-  invested: Scalars['BigDecimal'];
+  index?: Maybe<Scalars['Int']>;
+  isExemptFromYieldProtocolFee?: Maybe<Scalars['Boolean']>;
   managedBalance: Scalars['BigDecimal'];
   managements?: Maybe<Array<ManagementOperation>>;
   name: Scalars['String'];
-  poolId: Pool;
+  poolId?: Maybe<Pool>;
   priceRate: Scalars['BigDecimal'];
   symbol: Scalars['String'];
   token: Token;
@@ -1137,9 +1256,14 @@ export type PoolToken_Filter = {
   address_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   address_starts_with?: InputMaybe<Scalars['String']>;
   address_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  and?: InputMaybe<Array<InputMaybe<PoolToken_Filter>>>;
   assetManager?: InputMaybe<Scalars['Bytes']>;
   assetManager_contains?: InputMaybe<Scalars['Bytes']>;
+  assetManager_gt?: InputMaybe<Scalars['Bytes']>;
+  assetManager_gte?: InputMaybe<Scalars['Bytes']>;
   assetManager_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  assetManager_lt?: InputMaybe<Scalars['Bytes']>;
+  assetManager_lte?: InputMaybe<Scalars['Bytes']>;
   assetManager_not?: InputMaybe<Scalars['Bytes']>;
   assetManager_not_contains?: InputMaybe<Scalars['Bytes']>;
   assetManager_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -1175,14 +1299,18 @@ export type PoolToken_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
-  invested?: InputMaybe<Scalars['BigDecimal']>;
-  invested_gt?: InputMaybe<Scalars['BigDecimal']>;
-  invested_gte?: InputMaybe<Scalars['BigDecimal']>;
-  invested_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
-  invested_lt?: InputMaybe<Scalars['BigDecimal']>;
-  invested_lte?: InputMaybe<Scalars['BigDecimal']>;
-  invested_not?: InputMaybe<Scalars['BigDecimal']>;
-  invested_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  index?: InputMaybe<Scalars['Int']>;
+  index_gt?: InputMaybe<Scalars['Int']>;
+  index_gte?: InputMaybe<Scalars['Int']>;
+  index_in?: InputMaybe<Array<Scalars['Int']>>;
+  index_lt?: InputMaybe<Scalars['Int']>;
+  index_lte?: InputMaybe<Scalars['Int']>;
+  index_not?: InputMaybe<Scalars['Int']>;
+  index_not_in?: InputMaybe<Array<Scalars['Int']>>;
+  isExemptFromYieldProtocolFee?: InputMaybe<Scalars['Boolean']>;
+  isExemptFromYieldProtocolFee_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isExemptFromYieldProtocolFee_not?: InputMaybe<Scalars['Boolean']>;
+  isExemptFromYieldProtocolFee_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
   managedBalance?: InputMaybe<Scalars['BigDecimal']>;
   managedBalance_gt?: InputMaybe<Scalars['BigDecimal']>;
   managedBalance_gte?: InputMaybe<Scalars['BigDecimal']>;
@@ -1212,6 +1340,7 @@ export type PoolToken_Filter = {
   name_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   name_starts_with?: InputMaybe<Scalars['String']>;
   name_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  or?: InputMaybe<Array<InputMaybe<PoolToken_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -1299,7 +1428,8 @@ export enum PoolToken_OrderBy {
   CashBalance = 'cashBalance',
   Decimals = 'decimals',
   Id = 'id',
-  Invested = 'invested',
+  Index = 'index',
+  IsExemptFromYieldProtocolFee = 'isExemptFromYieldProtocolFee',
   ManagedBalance = 'managedBalance',
   Managements = 'managements',
   Name = 'name',
@@ -1315,10 +1445,22 @@ export type Pool_Filter = {
   _change_block?: InputMaybe<BlockChangedFilter>;
   address?: InputMaybe<Scalars['Bytes']>;
   address_contains?: InputMaybe<Scalars['Bytes']>;
+  address_gt?: InputMaybe<Scalars['Bytes']>;
+  address_gte?: InputMaybe<Scalars['Bytes']>;
   address_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  address_lt?: InputMaybe<Scalars['Bytes']>;
+  address_lte?: InputMaybe<Scalars['Bytes']>;
   address_not?: InputMaybe<Scalars['Bytes']>;
   address_not_contains?: InputMaybe<Scalars['Bytes']>;
   address_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  alpha?: InputMaybe<Scalars['BigDecimal']>;
+  alpha_gt?: InputMaybe<Scalars['BigDecimal']>;
+  alpha_gte?: InputMaybe<Scalars['BigDecimal']>;
+  alpha_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  alpha_lt?: InputMaybe<Scalars['BigDecimal']>;
+  alpha_lte?: InputMaybe<Scalars['BigDecimal']>;
+  alpha_not?: InputMaybe<Scalars['BigDecimal']>;
+  alpha_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   amp?: InputMaybe<Scalars['BigInt']>;
   amp_gt?: InputMaybe<Scalars['BigInt']>;
   amp_gte?: InputMaybe<Scalars['BigInt']>;
@@ -1327,12 +1469,33 @@ export type Pool_Filter = {
   amp_lte?: InputMaybe<Scalars['BigInt']>;
   amp_not?: InputMaybe<Scalars['BigInt']>;
   amp_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  and?: InputMaybe<Array<InputMaybe<Pool_Filter>>>;
   baseToken?: InputMaybe<Scalars['Bytes']>;
   baseToken_contains?: InputMaybe<Scalars['Bytes']>;
+  baseToken_gt?: InputMaybe<Scalars['Bytes']>;
+  baseToken_gte?: InputMaybe<Scalars['Bytes']>;
   baseToken_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  baseToken_lt?: InputMaybe<Scalars['Bytes']>;
+  baseToken_lte?: InputMaybe<Scalars['Bytes']>;
   baseToken_not?: InputMaybe<Scalars['Bytes']>;
   baseToken_not_contains?: InputMaybe<Scalars['Bytes']>;
   baseToken_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  beta?: InputMaybe<Scalars['BigDecimal']>;
+  beta_gt?: InputMaybe<Scalars['BigDecimal']>;
+  beta_gte?: InputMaybe<Scalars['BigDecimal']>;
+  beta_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  beta_lt?: InputMaybe<Scalars['BigDecimal']>;
+  beta_lte?: InputMaybe<Scalars['BigDecimal']>;
+  beta_not?: InputMaybe<Scalars['BigDecimal']>;
+  beta_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  c?: InputMaybe<Scalars['BigDecimal']>;
+  c_gt?: InputMaybe<Scalars['BigDecimal']>;
+  c_gte?: InputMaybe<Scalars['BigDecimal']>;
+  c_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  c_lt?: InputMaybe<Scalars['BigDecimal']>;
+  c_lte?: InputMaybe<Scalars['BigDecimal']>;
+  c_not?: InputMaybe<Scalars['BigDecimal']>;
+  c_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   createTime?: InputMaybe<Scalars['Int']>;
   createTime_gt?: InputMaybe<Scalars['Int']>;
   createTime_gte?: InputMaybe<Scalars['Int']>;
@@ -1341,6 +1504,30 @@ export type Pool_Filter = {
   createTime_lte?: InputMaybe<Scalars['Int']>;
   createTime_not?: InputMaybe<Scalars['Int']>;
   createTime_not_in?: InputMaybe<Array<Scalars['Int']>>;
+  dSq?: InputMaybe<Scalars['BigDecimal']>;
+  dSq_gt?: InputMaybe<Scalars['BigDecimal']>;
+  dSq_gte?: InputMaybe<Scalars['BigDecimal']>;
+  dSq_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  dSq_lt?: InputMaybe<Scalars['BigDecimal']>;
+  dSq_lte?: InputMaybe<Scalars['BigDecimal']>;
+  dSq_not?: InputMaybe<Scalars['BigDecimal']>;
+  dSq_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  delta?: InputMaybe<Scalars['BigDecimal']>;
+  delta_gt?: InputMaybe<Scalars['BigDecimal']>;
+  delta_gte?: InputMaybe<Scalars['BigDecimal']>;
+  delta_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  delta_lt?: InputMaybe<Scalars['BigDecimal']>;
+  delta_lte?: InputMaybe<Scalars['BigDecimal']>;
+  delta_not?: InputMaybe<Scalars['BigDecimal']>;
+  delta_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  epsilon?: InputMaybe<Scalars['BigDecimal']>;
+  epsilon_gt?: InputMaybe<Scalars['BigDecimal']>;
+  epsilon_gte?: InputMaybe<Scalars['BigDecimal']>;
+  epsilon_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  epsilon_lt?: InputMaybe<Scalars['BigDecimal']>;
+  epsilon_lte?: InputMaybe<Scalars['BigDecimal']>;
+  epsilon_not?: InputMaybe<Scalars['BigDecimal']>;
+  epsilon_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   expiryTime?: InputMaybe<Scalars['BigInt']>;
   expiryTime_gt?: InputMaybe<Scalars['BigInt']>;
   expiryTime_gte?: InputMaybe<Scalars['BigInt']>;
@@ -1351,7 +1538,11 @@ export type Pool_Filter = {
   expiryTime_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   factory?: InputMaybe<Scalars['Bytes']>;
   factory_contains?: InputMaybe<Scalars['Bytes']>;
+  factory_gt?: InputMaybe<Scalars['Bytes']>;
+  factory_gte?: InputMaybe<Scalars['Bytes']>;
   factory_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  factory_lt?: InputMaybe<Scalars['Bytes']>;
+  factory_lte?: InputMaybe<Scalars['Bytes']>;
   factory_not?: InputMaybe<Scalars['Bytes']>;
   factory_not_contains?: InputMaybe<Scalars['Bytes']>;
   factory_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -1372,6 +1563,22 @@ export type Pool_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  isInRecoveryMode?: InputMaybe<Scalars['Boolean']>;
+  isInRecoveryMode_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isInRecoveryMode_not?: InputMaybe<Scalars['Boolean']>;
+  isInRecoveryMode_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isPaused?: InputMaybe<Scalars['Boolean']>;
+  isPaused_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isPaused_not?: InputMaybe<Scalars['Boolean']>;
+  isPaused_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  lambda?: InputMaybe<Scalars['BigDecimal']>;
+  lambda_gt?: InputMaybe<Scalars['BigDecimal']>;
+  lambda_gte?: InputMaybe<Scalars['BigDecimal']>;
+  lambda_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  lambda_lt?: InputMaybe<Scalars['BigDecimal']>;
+  lambda_lte?: InputMaybe<Scalars['BigDecimal']>;
+  lambda_not?: InputMaybe<Scalars['BigDecimal']>;
+  lambda_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   lowerTarget?: InputMaybe<Scalars['BigDecimal']>;
   lowerTarget_gt?: InputMaybe<Scalars['BigDecimal']>;
   lowerTarget_gte?: InputMaybe<Scalars['BigDecimal']>;
@@ -1416,13 +1623,18 @@ export type Pool_Filter = {
   name_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   name_starts_with?: InputMaybe<Scalars['String']>;
   name_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  or?: InputMaybe<Array<InputMaybe<Pool_Filter>>>;
   oracleEnabled?: InputMaybe<Scalars['Boolean']>;
   oracleEnabled_in?: InputMaybe<Array<Scalars['Boolean']>>;
   oracleEnabled_not?: InputMaybe<Scalars['Boolean']>;
   oracleEnabled_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
   owner?: InputMaybe<Scalars['Bytes']>;
   owner_contains?: InputMaybe<Scalars['Bytes']>;
+  owner_gt?: InputMaybe<Scalars['Bytes']>;
+  owner_gte?: InputMaybe<Scalars['Bytes']>;
   owner_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  owner_lt?: InputMaybe<Scalars['Bytes']>;
+  owner_lte?: InputMaybe<Scalars['Bytes']>;
   owner_not?: InputMaybe<Scalars['Bytes']>;
   owner_not_contains?: InputMaybe<Scalars['Bytes']>;
   owner_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -1457,7 +1669,11 @@ export type Pool_Filter = {
   priceRateProviders_?: InputMaybe<PriceRateProvider_Filter>;
   principalToken?: InputMaybe<Scalars['Bytes']>;
   principalToken_contains?: InputMaybe<Scalars['Bytes']>;
+  principalToken_gt?: InputMaybe<Scalars['Bytes']>;
+  principalToken_gte?: InputMaybe<Scalars['Bytes']>;
   principalToken_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  principalToken_lt?: InputMaybe<Scalars['Bytes']>;
+  principalToken_lte?: InputMaybe<Scalars['Bytes']>;
   principalToken_not?: InputMaybe<Scalars['Bytes']>;
   principalToken_not_contains?: InputMaybe<Scalars['Bytes']>;
   principalToken_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -1469,6 +1685,14 @@ export type Pool_Filter = {
   protocolAumFeeCache_lte?: InputMaybe<Scalars['BigDecimal']>;
   protocolAumFeeCache_not?: InputMaybe<Scalars['BigDecimal']>;
   protocolAumFeeCache_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  protocolId?: InputMaybe<Scalars['Int']>;
+  protocolId_gt?: InputMaybe<Scalars['Int']>;
+  protocolId_gte?: InputMaybe<Scalars['Int']>;
+  protocolId_in?: InputMaybe<Array<Scalars['Int']>>;
+  protocolId_lt?: InputMaybe<Scalars['Int']>;
+  protocolId_lte?: InputMaybe<Scalars['Int']>;
+  protocolId_not?: InputMaybe<Scalars['Int']>;
+  protocolId_not_in?: InputMaybe<Array<Scalars['Int']>>;
   protocolSwapFeeCache?: InputMaybe<Scalars['BigDecimal']>;
   protocolSwapFeeCache_gt?: InputMaybe<Scalars['BigDecimal']>;
   protocolSwapFeeCache_gte?: InputMaybe<Scalars['BigDecimal']>;
@@ -1485,7 +1709,40 @@ export type Pool_Filter = {
   protocolYieldFeeCache_lte?: InputMaybe<Scalars['BigDecimal']>;
   protocolYieldFeeCache_not?: InputMaybe<Scalars['BigDecimal']>;
   protocolYieldFeeCache_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  root3Alpha?: InputMaybe<Scalars['BigDecimal']>;
+  root3Alpha_gt?: InputMaybe<Scalars['BigDecimal']>;
+  root3Alpha_gte?: InputMaybe<Scalars['BigDecimal']>;
+  root3Alpha_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  root3Alpha_lt?: InputMaybe<Scalars['BigDecimal']>;
+  root3Alpha_lte?: InputMaybe<Scalars['BigDecimal']>;
+  root3Alpha_not?: InputMaybe<Scalars['BigDecimal']>;
+  root3Alpha_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  s?: InputMaybe<Scalars['BigDecimal']>;
+  s_gt?: InputMaybe<Scalars['BigDecimal']>;
+  s_gte?: InputMaybe<Scalars['BigDecimal']>;
+  s_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  s_lt?: InputMaybe<Scalars['BigDecimal']>;
+  s_lte?: InputMaybe<Scalars['BigDecimal']>;
+  s_not?: InputMaybe<Scalars['BigDecimal']>;
+  s_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   shares_?: InputMaybe<PoolShare_Filter>;
+  snapshots_?: InputMaybe<PoolSnapshot_Filter>;
+  sqrtAlpha?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtAlpha_gt?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtAlpha_gte?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtAlpha_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  sqrtAlpha_lt?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtAlpha_lte?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtAlpha_not?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtAlpha_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  sqrtBeta?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtBeta_gt?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtBeta_gte?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtBeta_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  sqrtBeta_lt?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtBeta_lte?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtBeta_not?: InputMaybe<Scalars['BigDecimal']>;
+  sqrtBeta_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   strategyType?: InputMaybe<Scalars['Int']>;
   strategyType_gt?: InputMaybe<Scalars['Int']>;
   strategyType_gte?: InputMaybe<Scalars['Int']>;
@@ -1535,6 +1792,38 @@ export type Pool_Filter = {
   symbol_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   symbol_starts_with?: InputMaybe<Scalars['String']>;
   symbol_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  tauAlphaX?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaX_gt?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaX_gte?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaX_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  tauAlphaX_lt?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaX_lte?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaX_not?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaX_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  tauAlphaY?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaY_gt?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaY_gte?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaY_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  tauAlphaY_lt?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaY_lte?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaY_not?: InputMaybe<Scalars['BigDecimal']>;
+  tauAlphaY_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  tauBetaX?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaX_gt?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaX_gte?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaX_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  tauBetaX_lt?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaX_lte?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaX_not?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaX_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  tauBetaY?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaY_gt?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaY_gte?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaY_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  tauBetaY_lt?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaY_lte?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaY_not?: InputMaybe<Scalars['BigDecimal']>;
+  tauBetaY_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   tokensList?: InputMaybe<Array<Scalars['Bytes']>>;
   tokensList_contains?: InputMaybe<Array<Scalars['Bytes']>>;
   tokensList_contains_nocase?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -1584,10 +1873,22 @@ export type Pool_Filter = {
   totalWeight_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   tx?: InputMaybe<Scalars['Bytes']>;
   tx_contains?: InputMaybe<Scalars['Bytes']>;
+  tx_gt?: InputMaybe<Scalars['Bytes']>;
+  tx_gte?: InputMaybe<Scalars['Bytes']>;
   tx_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  tx_lt?: InputMaybe<Scalars['Bytes']>;
+  tx_lte?: InputMaybe<Scalars['Bytes']>;
   tx_not?: InputMaybe<Scalars['Bytes']>;
   tx_not_contains?: InputMaybe<Scalars['Bytes']>;
   tx_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  u?: InputMaybe<Scalars['BigDecimal']>;
+  u_gt?: InputMaybe<Scalars['BigDecimal']>;
+  u_gte?: InputMaybe<Scalars['BigDecimal']>;
+  u_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  u_lt?: InputMaybe<Scalars['BigDecimal']>;
+  u_lte?: InputMaybe<Scalars['BigDecimal']>;
+  u_not?: InputMaybe<Scalars['BigDecimal']>;
+  u_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   unitSeconds?: InputMaybe<Scalars['BigInt']>;
   unitSeconds_gt?: InputMaybe<Scalars['BigInt']>;
   unitSeconds_gte?: InputMaybe<Scalars['BigInt']>;
@@ -1604,6 +1905,14 @@ export type Pool_Filter = {
   upperTarget_lte?: InputMaybe<Scalars['BigDecimal']>;
   upperTarget_not?: InputMaybe<Scalars['BigDecimal']>;
   upperTarget_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  v?: InputMaybe<Scalars['BigDecimal']>;
+  v_gt?: InputMaybe<Scalars['BigDecimal']>;
+  v_gte?: InputMaybe<Scalars['BigDecimal']>;
+  v_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  v_lt?: InputMaybe<Scalars['BigDecimal']>;
+  v_lte?: InputMaybe<Scalars['BigDecimal']>;
+  v_not?: InputMaybe<Scalars['BigDecimal']>;
+  v_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   vaultID?: InputMaybe<Scalars['String']>;
   vaultID_?: InputMaybe<Balancer_Filter>;
   vaultID_contains?: InputMaybe<Scalars['String']>;
@@ -1625,6 +1934,14 @@ export type Pool_Filter = {
   vaultID_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   vaultID_starts_with?: InputMaybe<Scalars['String']>;
   vaultID_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  w?: InputMaybe<Scalars['BigDecimal']>;
+  w_gt?: InputMaybe<Scalars['BigDecimal']>;
+  w_gte?: InputMaybe<Scalars['BigDecimal']>;
+  w_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  w_lt?: InputMaybe<Scalars['BigDecimal']>;
+  w_lte?: InputMaybe<Scalars['BigDecimal']>;
+  w_not?: InputMaybe<Scalars['BigDecimal']>;
+  w_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   weightUpdates_?: InputMaybe<GradualWeightUpdate_Filter>;
   wrappedIndex?: InputMaybe<Scalars['Int']>;
   wrappedIndex_gt?: InputMaybe<Scalars['Int']>;
@@ -1634,18 +1951,35 @@ export type Pool_Filter = {
   wrappedIndex_lte?: InputMaybe<Scalars['Int']>;
   wrappedIndex_not?: InputMaybe<Scalars['Int']>;
   wrappedIndex_not_in?: InputMaybe<Array<Scalars['Int']>>;
+  z?: InputMaybe<Scalars['BigDecimal']>;
+  z_gt?: InputMaybe<Scalars['BigDecimal']>;
+  z_gte?: InputMaybe<Scalars['BigDecimal']>;
+  z_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  z_lt?: InputMaybe<Scalars['BigDecimal']>;
+  z_lte?: InputMaybe<Scalars['BigDecimal']>;
+  z_not?: InputMaybe<Scalars['BigDecimal']>;
+  z_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
 };
 
 export enum Pool_OrderBy {
   Address = 'address',
+  Alpha = 'alpha',
   Amp = 'amp',
   BaseToken = 'baseToken',
+  Beta = 'beta',
+  C = 'c',
   CreateTime = 'createTime',
+  DSq = 'dSq',
+  Delta = 'delta',
+  Epsilon = 'epsilon',
   ExpiryTime = 'expiryTime',
   Factory = 'factory',
   HistoricalValues = 'historicalValues',
   HoldersCount = 'holdersCount',
   Id = 'id',
+  IsInRecoveryMode = 'isInRecoveryMode',
+  IsPaused = 'isPaused',
+  Lambda = 'lambda',
   LowerTarget = 'lowerTarget',
   MainIndex = 'mainIndex',
   ManagementFee = 'managementFee',
@@ -1657,15 +1991,25 @@ export enum Pool_OrderBy {
   PriceRateProviders = 'priceRateProviders',
   PrincipalToken = 'principalToken',
   ProtocolAumFeeCache = 'protocolAumFeeCache',
+  ProtocolId = 'protocolId',
   ProtocolSwapFeeCache = 'protocolSwapFeeCache',
   ProtocolYieldFeeCache = 'protocolYieldFeeCache',
+  Root3Alpha = 'root3Alpha',
+  S = 's',
   Shares = 'shares',
+  Snapshots = 'snapshots',
+  SqrtAlpha = 'sqrtAlpha',
+  SqrtBeta = 'sqrtBeta',
   StrategyType = 'strategyType',
   SwapEnabled = 'swapEnabled',
   SwapFee = 'swapFee',
   Swaps = 'swaps',
   SwapsCount = 'swapsCount',
   Symbol = 'symbol',
+  TauAlphaX = 'tauAlphaX',
+  TauAlphaY = 'tauAlphaY',
+  TauBetaX = 'tauBetaX',
+  TauBetaY = 'tauBetaY',
   Tokens = 'tokens',
   TokensList = 'tokensList',
   TotalLiquidity = 'totalLiquidity',
@@ -1674,22 +2018,26 @@ export enum Pool_OrderBy {
   TotalSwapVolume = 'totalSwapVolume',
   TotalWeight = 'totalWeight',
   Tx = 'tx',
+  U = 'u',
   UnitSeconds = 'unitSeconds',
   UpperTarget = 'upperTarget',
+  V = 'v',
   VaultId = 'vaultID',
+  W = 'w',
   WeightUpdates = 'weightUpdates',
   WrappedIndex = 'wrappedIndex',
+  Z = 'z',
 }
 
 export type PriceRateProvider = {
   __typename?: 'PriceRateProvider';
   address: Scalars['Bytes'];
-  cacheDuration: Scalars['Int'];
-  cacheExpiry: Scalars['Int'];
+  cacheDuration?: Maybe<Scalars['Int']>;
+  cacheExpiry?: Maybe<Scalars['Int']>;
   id: Scalars['ID'];
-  lastCached: Scalars['Int'];
+  lastCached?: Maybe<Scalars['Int']>;
   poolId: Pool;
-  rate: Scalars['BigDecimal'];
+  rate?: Maybe<Scalars['BigDecimal']>;
   token: PoolToken;
 };
 
@@ -1698,10 +2046,15 @@ export type PriceRateProvider_Filter = {
   _change_block?: InputMaybe<BlockChangedFilter>;
   address?: InputMaybe<Scalars['Bytes']>;
   address_contains?: InputMaybe<Scalars['Bytes']>;
+  address_gt?: InputMaybe<Scalars['Bytes']>;
+  address_gte?: InputMaybe<Scalars['Bytes']>;
   address_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  address_lt?: InputMaybe<Scalars['Bytes']>;
+  address_lte?: InputMaybe<Scalars['Bytes']>;
   address_not?: InputMaybe<Scalars['Bytes']>;
   address_not_contains?: InputMaybe<Scalars['Bytes']>;
   address_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  and?: InputMaybe<Array<InputMaybe<PriceRateProvider_Filter>>>;
   cacheDuration?: InputMaybe<Scalars['Int']>;
   cacheDuration_gt?: InputMaybe<Scalars['Int']>;
   cacheDuration_gte?: InputMaybe<Scalars['Int']>;
@@ -1734,6 +2087,7 @@ export type PriceRateProvider_Filter = {
   lastCached_lte?: InputMaybe<Scalars['Int']>;
   lastCached_not?: InputMaybe<Scalars['Int']>;
   lastCached_not_in?: InputMaybe<Array<Scalars['Int']>>;
+  or?: InputMaybe<Array<InputMaybe<PriceRateProvider_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -1816,6 +2170,8 @@ export type Query = {
   managementOperation?: Maybe<ManagementOperation>;
   managementOperations: Array<ManagementOperation>;
   pool?: Maybe<Pool>;
+  poolContract?: Maybe<PoolContract>;
+  poolContracts: Array<PoolContract>;
   poolHistoricalLiquidities: Array<PoolHistoricalLiquidity>;
   poolHistoricalLiquidity?: Maybe<PoolHistoricalLiquidity>;
   poolShare?: Maybe<PoolShare>;
@@ -1967,6 +2323,22 @@ export type QueryPoolArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
+};
+
+export type QueryPoolContractArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+export type QueryPoolContractsArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PoolContract_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<PoolContract_Filter>;
 };
 
 export type QueryPoolHistoricalLiquiditiesArgs = {
@@ -2222,6 +2594,8 @@ export type Subscription = {
   managementOperation?: Maybe<ManagementOperation>;
   managementOperations: Array<ManagementOperation>;
   pool?: Maybe<Pool>;
+  poolContract?: Maybe<PoolContract>;
+  poolContracts: Array<PoolContract>;
   poolHistoricalLiquidities: Array<PoolHistoricalLiquidity>;
   poolHistoricalLiquidity?: Maybe<PoolHistoricalLiquidity>;
   poolShare?: Maybe<PoolShare>;
@@ -2373,6 +2747,22 @@ export type SubscriptionPoolArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
+};
+
+export type SubscriptionPoolContractArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+export type SubscriptionPoolContractsArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PoolContract_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<PoolContract_Filter>;
 };
 
 export type SubscriptionPoolHistoricalLiquiditiesArgs = {
@@ -2640,6 +3030,7 @@ export type SwapFeeUpdate = {
 export type SwapFeeUpdate_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<SwapFeeUpdate_Filter>>>;
   endSwapFeePercentage?: InputMaybe<Scalars['BigDecimal']>;
   endSwapFeePercentage_gt?: InputMaybe<Scalars['BigDecimal']>;
   endSwapFeePercentage_gte?: InputMaybe<Scalars['BigDecimal']>;
@@ -2664,6 +3055,7 @@ export type SwapFeeUpdate_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<SwapFeeUpdate_Filter>>>;
   pool?: InputMaybe<Scalars['String']>;
   pool_?: InputMaybe<Pool_Filter>;
   pool_contains?: InputMaybe<Scalars['String']>;
@@ -2724,9 +3116,14 @@ export enum SwapFeeUpdate_OrderBy {
 export type Swap_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<Swap_Filter>>>;
   caller?: InputMaybe<Scalars['Bytes']>;
   caller_contains?: InputMaybe<Scalars['Bytes']>;
+  caller_gt?: InputMaybe<Scalars['Bytes']>;
+  caller_gte?: InputMaybe<Scalars['Bytes']>;
   caller_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  caller_lt?: InputMaybe<Scalars['Bytes']>;
+  caller_lte?: InputMaybe<Scalars['Bytes']>;
   caller_not?: InputMaybe<Scalars['Bytes']>;
   caller_not_contains?: InputMaybe<Scalars['Bytes']>;
   caller_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -2738,6 +3135,7 @@ export type Swap_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<Swap_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -2805,7 +3203,11 @@ export type Swap_Filter = {
   tokenInSym_starts_with?: InputMaybe<Scalars['String']>;
   tokenInSym_starts_with_nocase?: InputMaybe<Scalars['String']>;
   tokenIn_contains?: InputMaybe<Scalars['Bytes']>;
+  tokenIn_gt?: InputMaybe<Scalars['Bytes']>;
+  tokenIn_gte?: InputMaybe<Scalars['Bytes']>;
   tokenIn_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  tokenIn_lt?: InputMaybe<Scalars['Bytes']>;
+  tokenIn_lte?: InputMaybe<Scalars['Bytes']>;
   tokenIn_not?: InputMaybe<Scalars['Bytes']>;
   tokenIn_not_contains?: InputMaybe<Scalars['Bytes']>;
   tokenIn_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -2831,13 +3233,21 @@ export type Swap_Filter = {
   tokenOutSym_starts_with?: InputMaybe<Scalars['String']>;
   tokenOutSym_starts_with_nocase?: InputMaybe<Scalars['String']>;
   tokenOut_contains?: InputMaybe<Scalars['Bytes']>;
+  tokenOut_gt?: InputMaybe<Scalars['Bytes']>;
+  tokenOut_gte?: InputMaybe<Scalars['Bytes']>;
   tokenOut_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  tokenOut_lt?: InputMaybe<Scalars['Bytes']>;
+  tokenOut_lte?: InputMaybe<Scalars['Bytes']>;
   tokenOut_not?: InputMaybe<Scalars['Bytes']>;
   tokenOut_not_contains?: InputMaybe<Scalars['Bytes']>;
   tokenOut_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
   tx?: InputMaybe<Scalars['Bytes']>;
   tx_contains?: InputMaybe<Scalars['Bytes']>;
+  tx_gt?: InputMaybe<Scalars['Bytes']>;
+  tx_gte?: InputMaybe<Scalars['Bytes']>;
   tx_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  tx_lt?: InputMaybe<Scalars['Bytes']>;
+  tx_lte?: InputMaybe<Scalars['Bytes']>;
   tx_not?: InputMaybe<Scalars['Bytes']>;
   tx_not_contains?: InputMaybe<Scalars['Bytes']>;
   tx_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -2893,6 +3303,7 @@ export type Token = {
   address: Scalars['String'];
   decimals: Scalars['Int'];
   id: Scalars['ID'];
+  latestFXPrice?: Maybe<Scalars['BigDecimal']>;
   latestPrice?: Maybe<LatestPrice>;
   latestUSDPrice?: Maybe<Scalars['BigDecimal']>;
   name?: Maybe<Scalars['String']>;
@@ -2928,9 +3339,14 @@ export type TokenPrice_Filter = {
   amount_lte?: InputMaybe<Scalars['BigDecimal']>;
   amount_not?: InputMaybe<Scalars['BigDecimal']>;
   amount_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  and?: InputMaybe<Array<InputMaybe<TokenPrice_Filter>>>;
   asset?: InputMaybe<Scalars['Bytes']>;
   asset_contains?: InputMaybe<Scalars['Bytes']>;
+  asset_gt?: InputMaybe<Scalars['Bytes']>;
+  asset_gte?: InputMaybe<Scalars['Bytes']>;
   asset_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  asset_lt?: InputMaybe<Scalars['Bytes']>;
+  asset_lte?: InputMaybe<Scalars['Bytes']>;
   asset_not?: InputMaybe<Scalars['Bytes']>;
   asset_not_contains?: InputMaybe<Scalars['Bytes']>;
   asset_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -2950,6 +3366,7 @@ export type TokenPrice_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<TokenPrice_Filter>>>;
   poolId?: InputMaybe<Scalars['String']>;
   poolId_?: InputMaybe<Pool_Filter>;
   poolId_contains?: InputMaybe<Scalars['String']>;
@@ -2981,7 +3398,11 @@ export type TokenPrice_Filter = {
   price_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   pricingAsset?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_contains?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_gt?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_gte?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  pricingAsset_lt?: InputMaybe<Scalars['Bytes']>;
+  pricingAsset_lte?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not_contains?: InputMaybe<Scalars['Bytes']>;
   pricingAsset_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -3021,6 +3442,7 @@ export type TokenSnapshot = {
 export type TokenSnapshot_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<TokenSnapshot_Filter>>>;
   id?: InputMaybe<Scalars['ID']>;
   id_gt?: InputMaybe<Scalars['ID']>;
   id_gte?: InputMaybe<Scalars['ID']>;
@@ -3029,6 +3451,7 @@ export type TokenSnapshot_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<TokenSnapshot_Filter>>>;
   timestamp?: InputMaybe<Scalars['Int']>;
   timestamp_gt?: InputMaybe<Scalars['Int']>;
   timestamp_gte?: InputMaybe<Scalars['Int']>;
@@ -3134,6 +3557,7 @@ export type Token_Filter = {
   address_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   address_starts_with?: InputMaybe<Scalars['String']>;
   address_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  and?: InputMaybe<Array<InputMaybe<Token_Filter>>>;
   decimals?: InputMaybe<Scalars['Int']>;
   decimals_gt?: InputMaybe<Scalars['Int']>;
   decimals_gte?: InputMaybe<Scalars['Int']>;
@@ -3150,6 +3574,14 @@ export type Token_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  latestFXPrice?: InputMaybe<Scalars['BigDecimal']>;
+  latestFXPrice_gt?: InputMaybe<Scalars['BigDecimal']>;
+  latestFXPrice_gte?: InputMaybe<Scalars['BigDecimal']>;
+  latestFXPrice_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
+  latestFXPrice_lt?: InputMaybe<Scalars['BigDecimal']>;
+  latestFXPrice_lte?: InputMaybe<Scalars['BigDecimal']>;
+  latestFXPrice_not?: InputMaybe<Scalars['BigDecimal']>;
+  latestFXPrice_not_in?: InputMaybe<Array<Scalars['BigDecimal']>>;
   latestPrice?: InputMaybe<Scalars['String']>;
   latestPrice_?: InputMaybe<LatestPrice_Filter>;
   latestPrice_contains?: InputMaybe<Scalars['String']>;
@@ -3199,6 +3631,7 @@ export type Token_Filter = {
   name_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   name_starts_with?: InputMaybe<Scalars['String']>;
   name_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  or?: InputMaybe<Array<InputMaybe<Token_Filter>>>;
   pool?: InputMaybe<Scalars['String']>;
   pool_?: InputMaybe<Pool_Filter>;
   pool_contains?: InputMaybe<Scalars['String']>;
@@ -3286,6 +3719,7 @@ export enum Token_OrderBy {
   Address = 'address',
   Decimals = 'decimals',
   Id = 'id',
+  LatestFxPrice = 'latestFXPrice',
   LatestPrice = 'latestPrice',
   LatestUsdPrice = 'latestUSDPrice',
   Name = 'name',
@@ -3320,6 +3754,7 @@ export type TradePairSnapshot = {
 export type TradePairSnapshot_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<TradePairSnapshot_Filter>>>;
   id?: InputMaybe<Scalars['ID']>;
   id_gt?: InputMaybe<Scalars['ID']>;
   id_gte?: InputMaybe<Scalars['ID']>;
@@ -3328,6 +3763,7 @@ export type TradePairSnapshot_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<TradePairSnapshot_Filter>>>;
   pair?: InputMaybe<Scalars['String']>;
   pair_?: InputMaybe<TradePair_Filter>;
   pair_contains?: InputMaybe<Scalars['String']>;
@@ -3386,6 +3822,7 @@ export enum TradePairSnapshot_OrderBy {
 export type TradePair_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<TradePair_Filter>>>;
   id?: InputMaybe<Scalars['ID']>;
   id_gt?: InputMaybe<Scalars['ID']>;
   id_gte?: InputMaybe<Scalars['ID']>;
@@ -3394,6 +3831,7 @@ export type TradePair_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<TradePair_Filter>>>;
   token0?: InputMaybe<Scalars['String']>;
   token0_?: InputMaybe<Token_Filter>;
   token0_contains?: InputMaybe<Scalars['String']>;
@@ -3505,6 +3943,7 @@ export type UserInternalBalance = {
 export type UserInternalBalance_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<UserInternalBalance_Filter>>>;
   balance?: InputMaybe<Scalars['BigDecimal']>;
   balance_gt?: InputMaybe<Scalars['BigDecimal']>;
   balance_gte?: InputMaybe<Scalars['BigDecimal']>;
@@ -3521,9 +3960,14 @@ export type UserInternalBalance_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<UserInternalBalance_Filter>>>;
   token?: InputMaybe<Scalars['Bytes']>;
   token_contains?: InputMaybe<Scalars['Bytes']>;
+  token_gt?: InputMaybe<Scalars['Bytes']>;
+  token_gte?: InputMaybe<Scalars['Bytes']>;
   token_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  token_lt?: InputMaybe<Scalars['Bytes']>;
+  token_lte?: InputMaybe<Scalars['Bytes']>;
   token_not?: InputMaybe<Scalars['Bytes']>;
   token_not_contains?: InputMaybe<Scalars['Bytes']>;
   token_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
@@ -3560,6 +4004,7 @@ export enum UserInternalBalance_OrderBy {
 export type User_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<User_Filter>>>;
   id?: InputMaybe<Scalars['ID']>;
   id_gt?: InputMaybe<Scalars['ID']>;
   id_gte?: InputMaybe<Scalars['ID']>;
@@ -3568,6 +4013,7 @@ export type User_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<User_Filter>>>;
   sharesOwned_?: InputMaybe<PoolShare_Filter>;
   swaps_?: InputMaybe<Swap_Filter>;
   userInternalBalances_?: InputMaybe<UserInternalBalance_Filter>;
@@ -4055,7 +4501,7 @@ export type BalancerJoinExitsQuery = {
     timestamp: number;
     tx: string;
     type: InvestType;
-    valueUSD: string;
+    valueUSD?: string | null;
     pool: { __typename?: 'Pool'; id: string; tokensList: Array<string> };
   }>;
 };
@@ -4078,7 +4524,7 @@ export type BalancerJoinExitFragment = {
   timestamp: number;
   tx: string;
   type: InvestType;
-  valueUSD: string;
+  valueUSD?: string | null;
   pool: { __typename?: 'Pool'; id: string; tokensList: Array<string> };
 };
 

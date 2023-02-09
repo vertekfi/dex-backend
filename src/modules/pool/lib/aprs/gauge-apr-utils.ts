@@ -46,11 +46,6 @@ export function calculateGaugeApr({
   const relativeWeight = bnum((relativeWeights || {})[gaugeAddress]) || '0';
   const balPayable = calculateTokenPayableToGauge(bnum(inflationRate), relativeWeight);
 
-  // console.log(balPayable.toString());
-  // console.log(relativeWeight.toString());
-  // console.log(`
-  // `);
-
   // 0.4 is the working balance for 1 BPT
   const weeklyReward = calculateWeeklyReward(0.4, workingSupply, balPayable);
   const yearlyReward = weeklyReward.times(boost).times(52).times(balPrice);

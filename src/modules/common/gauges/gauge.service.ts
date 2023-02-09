@@ -183,9 +183,22 @@ export class GaugeService {
   }
 
   async getDatabaseGauges() {
-    return this.prisma.prismaPoolStakingGauge.findMany({
+    return this.prisma.prismaPoolStaking.findMany({
+      where: {
+        AND: [
+          {
+            gauge: {
+              isKilled: false,
+            },
+          },
+        ],
+      },
       include: {
-        rewards: true,
+        gauge: {
+          include: {
+            rewards: true,
+          },
+        },
       },
     });
   }

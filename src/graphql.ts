@@ -198,12 +198,17 @@ export interface IQuery {
     beetsGetBeetsPrice(): string | Promise<string>;
     protocolMetrics(): GqlProtocolMetrics | Promise<GqlProtocolMetrics>;
     latestSyncedBlocks(): GqlLatestSyncedBlocks | Promise<GqlLatestSyncedBlocks>;
-    blocksGetBlocksPerDay(): number | Promise<number>;
-    blocksGetAverageBlockTime(): number | Promise<number>;
     contentGetNewsItems(): Nullable<GqlContentNewsItem>[] | Promise<Nullable<GqlContentNewsItem>[]>;
     getProtocolTokenList(): Nullable<Nullable<string>[]> | Promise<Nullable<Nullable<string>[]>>;
     getProtocolPoolData(): Nullable<string>[] | Promise<Nullable<string>[]>;
+    adminGetAllGaugePendingProtocolFees(): GqlPendingGaugeFeeResult | Promise<GqlPendingGaugeFeeResult>;
+    adminGetFeeCollectorBalances(): GqlFeesCollectorAmountsResult | Promise<GqlFeesCollectorAmountsResult>;
+    adminGetAllPendingFeeData(onlyWithBalances?: Nullable<boolean>): GqlAllFeesData | Promise<GqlAllFeesData>;
     getRewardPools(user?: Nullable<string>): Nullable<RewardPool>[] | Promise<Nullable<RewardPool>[]>;
+    blocksGetAverageBlockTime(): number | Promise<number>;
+    blocksGetBlocksPerSecond(): number | Promise<number>;
+    blocksGetBlocksPerDay(): number | Promise<number>;
+    blocksGetBlocksPerYear(): number | Promise<number>;
     tokenGetTokens(): GqlToken[] | Promise<GqlToken[]>;
     tokenGetCurrentPrices(): GqlTokenPrice[] | Promise<GqlTokenPrice[]>;
     tokenGetHistoricalPrices(addresses: string[]): GqlHistoricalTokenPrice[] | Promise<GqlHistoricalTokenPrice[]>;
@@ -221,6 +226,7 @@ export interface IQuery {
     userGetSwaps(first: number, skip: number, poolId: string): GqlPoolSwap[] | Promise<GqlPoolSwap[]>;
     userGetPortfolioSnapshots(days: number): GqlUserPortfolioSnapshot[] | Promise<GqlUserPortfolioSnapshot[]>;
     userGetVeLockInfo(): GqlUserVoteEscrowInfo | Promise<GqlUserVoteEscrowInfo>;
+    userGetGaugeBoosts(userAddress?: Nullable<string>): Nullable<GqlUserGaugeBoost>[] | Promise<Nullable<GqlUserGaugeBoost>[]>;
 }
 
 export interface GqlSorGetSwapsResponse {
@@ -309,6 +315,7 @@ export interface IMutation {
     poolReloadAllTokenNestedPoolIds(): string | Promise<string>;
     protocolCacheMetrics(): string | Promise<string>;
     doStakes(): boolean | Promise<boolean>;
+    cacheAverageBlockTime(): string | Promise<string>;
     tokenReloadTokenPrices(): Nullable<boolean> | Promise<Nullable<boolean>>;
     tokenSyncTokenDefinitions(): string | Promise<string>;
     tokenSyncTokenDynamicData(): string | Promise<string>;
@@ -320,7 +327,7 @@ export interface IMutation {
     userInitWalletBalancesForAllPools(): string | Promise<string>;
     userInitWalletBalancesForPool(poolId: string): string | Promise<string>;
     userSyncChangedWalletBalancesForAllPools(): string | Promise<string>;
-    userInitStakedBalances(stakingTypes: GqlPoolStakingType[]): string | Promise<string>;
+    userInitStakedBalances(): string | Promise<string>;
     userSyncChangedStakedBalances(): string | Promise<string>;
 }
 
@@ -798,6 +805,21 @@ export interface GqlPoolAprSubItem {
     apr: BigDecimal;
 }
 
+export interface GqlBalancePoolAprItem {
+    __typename?: 'GqlBalancePoolAprItem';
+    id: string;
+    title: string;
+    apr: BigDecimal;
+    subItems?: Nullable<GqlBalancePoolAprSubItem[]>;
+}
+
+export interface GqlBalancePoolAprSubItem {
+    __typename?: 'GqlBalancePoolAprSubItem';
+    id: string;
+    title: string;
+    apr: BigDecimal;
+}
+
 export interface GqlPoolTokenExpanded {
     __typename?: 'GqlPoolTokenExpanded';
     id: string;
@@ -914,6 +936,8 @@ export interface GqlPoolStakingGauge {
     id: string;
     gaugeAddress: string;
     rewards: GqlPoolStakingGaugeReward[];
+    depositFee: number;
+    withdrawFee: number;
 }
 
 export interface GqlPoolStakingGaugeReward {
@@ -939,21 +963,6 @@ export interface GqlPoolJoinExitAmount {
     __typename?: 'GqlPoolJoinExitAmount';
     address: string;
     amount: string;
-}
-
-export interface GqlBalancePoolAprItem {
-    __typename?: 'GqlBalancePoolAprItem';
-    id: string;
-    title: string;
-    apr: BigDecimal;
-    subItems?: Nullable<GqlBalancePoolAprSubItem[]>;
-}
-
-export interface GqlBalancePoolAprSubItem {
-    __typename?: 'GqlBalancePoolAprSubItem';
-    id: string;
-    title: string;
-    apr: BigDecimal;
 }
 
 export interface GqlPoolUserSwapVolume {
@@ -1003,6 +1012,45 @@ export interface GqlPoolTokenDisplay {
     symbol: string;
     weight?: Nullable<BigDecimal>;
     nestedTokens?: Nullable<GqlPoolTokenDisplay[]>;
+}
+
+export interface GqlAllFeesData {
+    __typename?: 'GqlAllFeesData';
+    totalValueUSD: number;
+    gauges: GqlPendingGaugeFeeResult;
+    feeCollector: GqlFeesCollectorAmountsResult;
+}
+
+export interface GqlProtocolFeesCollectorAmounts {
+    __typename?: 'GqlProtocolFeesCollectorAmounts';
+    token: string;
+    poolId: string;
+    poolName: string;
+    amount: string;
+    valueUSD: string;
+}
+
+export interface GqlFeesCollectorAmountsResult {
+    __typename?: 'GqlFeesCollectorAmountsResult';
+    values: Nullable<GqlProtocolFeesCollectorAmounts>[];
+    totalValueUSD: number;
+}
+
+export interface GqlPendingGaugeFeeResult {
+    __typename?: 'GqlPendingGaugeFeeResult';
+    values: Nullable<GqlProtocolPendingGaugeFee>[];
+    totalValueUSD: number;
+}
+
+export interface GqlProtocolPendingGaugeFee {
+    __typename?: 'GqlProtocolPendingGaugeFee';
+    poolId: string;
+    poolName: string;
+    poolAddress: string;
+    gauge: string;
+    gaugeAddress: string;
+    pendingPoolTokensFee: number;
+    valueUSD: number;
 }
 
 export interface GqlProtocolMetrics {
@@ -1159,10 +1207,17 @@ export interface GqlTokenData {
     twitterUsername?: Nullable<string>;
 }
 
+export interface GqlUserGaugeBoost {
+    __typename?: 'GqlUserGaugeBoost';
+    poolId: string;
+    gaugeAddress: string;
+    boost: string;
+}
+
 export interface GqlUserVoteEscrowInfo {
     __typename?: 'GqlUserVoteEscrowInfo';
     lockedAmount: string;
-    lockEndDate: number;
+    lockEndDate: string;
     totalSupply: string;
     currentBalance: string;
     epoch: string;
