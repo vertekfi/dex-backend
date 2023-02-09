@@ -4,6 +4,8 @@ import { PrismaPoolWithExpandedNesting } from '../../../../../prisma/prisma-type
 import { PoolAprService } from '../../pool-types';
 
 export class StaderStakedBnbAprService implements PoolAprService {
+  readonly name = 'StaderStakedBnbAprService';
+
   private readonly SBNBX_ADDRESS = '';
   private readonly SBNBX_APR = 0.046;
 

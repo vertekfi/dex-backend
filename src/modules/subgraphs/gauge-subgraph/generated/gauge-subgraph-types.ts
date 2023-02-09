@@ -1580,7 +1580,6 @@ export const GaugeUserGaugesDocument = gql`
           id
           poolId
           tokens {
-            name
             address
             decimals
             symbol

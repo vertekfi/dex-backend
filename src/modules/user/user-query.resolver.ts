@@ -54,4 +54,10 @@ export class UserQueryResolver {
     const accountAddress = getRequiredAccountAddress(context);
     return this.userService.getUserVeLockInfo(accountAddress);
   }
+
+  @Query()
+  async userGetGaugeBoosts(@Args('userAddress') userAddress: string, @Context() context) {
+    const accountAddress = userAddress ? userAddress : getRequiredAccountAddress(context);
+    return this.userService.getUserBoosts(accountAddress);
+  }
 }

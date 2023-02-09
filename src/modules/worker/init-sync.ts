@@ -20,6 +20,7 @@ export async function runInitialSyncMutations(scheduledJobs: ScheduledJobService
     await runMutation('poolSyncSanityPoolData');
     await runMutation('poolSyncAllPoolsFromSubgraph');
     await runMutation('poolReloadStakingForAllPools');
+    await runMutation('poolUpdateAprs');
     // After initial data loads start scheduled jobs. Cleaner to manage initial setup this way imo
     scheduledJobs.init();
   } catch (error) {

@@ -14,7 +14,7 @@ export class PoolAprUpdaterService {
 
     for (const aprService of aprServices) {
       try {
-        console.log(`Running APR update using ${aprService.constructor.name}`);
+        // console.log(`Running APR update using ${aprService.name}`);
         await aprService.updateAprForPools(pools);
       } catch (e) {
         console.log(`Error during APR update of aprService:`, e);

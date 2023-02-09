@@ -16,6 +16,8 @@ import { TokenService } from './token/token.service';
 import { TokenPriceService } from './token/pricing/token-price.service';
 import { TokenSyncService } from './token/token-sync.service';
 import { PoolPricingService } from './token/pricing/pool-pricing.service';
+import { VeGaugeAprService } from './gauges/ve-bal-gauge-apr.service';
+import { GaugeService } from './gauges/gauge.service';
 
 @Global()
 @Module({
@@ -49,6 +51,10 @@ import { PoolPricingService } from './token/pricing/pool-pricing.service';
     DexScreenerService,
     TokenPriceServicesProvider,
     TokenSyncService,
+
+    // Gauges
+    VeGaugeAprService,
+    GaugeService,
   ],
   exports: [
     CacheModule,
@@ -68,6 +74,10 @@ import { PoolPricingService } from './token/pricing/pool-pricing.service';
     DexScreenerService,
     TokenPriceServicesProvider,
     TokenSyncService,
+
+    // Gauges
+    VeGaugeAprService,
+    GaugeService,
   ],
 })
 export class CommonModule {}

@@ -3,6 +3,8 @@ import { BigNumber } from 'ethers';
 import { PrismaPoolWithExpandedNesting } from 'prisma/prisma-types';
 
 export interface PoolAprService {
+  name: string;
+  setPrimaryTokens?: (tokens: string[]) => void;
   updateAprForPools(pools: PrismaPoolWithExpandedNesting[]): Promise<void>;
 }
 

@@ -8,7 +8,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
-import { GaugeService } from 'src/modules/gauge/gauge.service';
+import { GaugeService } from 'src/modules/common/gauges/gauge.service';
 
 @Injectable()
 export class UserBalanceService {

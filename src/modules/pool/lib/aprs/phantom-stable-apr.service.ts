@@ -4,6 +4,8 @@ import { PoolAprService } from '../../pool-types';
 import { isComposableStablePool } from '../pool-utils';
 
 export class PhantomStableAprService implements PoolAprService {
+  readonly name = 'PhantomStableAprService';
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly yieldProtocolFeePercentage: number,

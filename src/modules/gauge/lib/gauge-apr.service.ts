@@ -3,7 +3,7 @@ import { ProtocolService } from 'src/modules/protocol/protocol.service';
 import { TokenPrices } from 'src/modules/token/token-types-old';
 import { bnSum, bnum } from 'src/modules/utils/bignumber-utils';
 import { AprRange, FiatCurrency, Pool, PoolAPRs } from '../types';
-import { VeBalAprCalc } from './vebal-apr.calc';
+import { VeBalAprCalc } from '../../pool/lib/aprs/vebal-apr.calc';
 
 @Injectable()
 export class GaugeAprService {

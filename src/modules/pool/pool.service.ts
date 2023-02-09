@@ -33,15 +33,18 @@ import { PoolSyncService } from './lib/pool-sync.service';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
 import { ProtocolService } from '../protocol/protocol.service';
 import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
-import { VeGaugeAprService } from './lib/aprs/ve-bal-gauge-apr.service';
-import { GaugeService } from '../gauge/gauge.service';
+import { VeGaugeAprService } from '../common/gauges/ve-bal-gauge-apr.service';
+import { GaugeService } from '../common/gauges/gauge.service';
 import { TokenPriceService } from '../common/token/pricing/token-price.service';
 import { networkConfig } from '../config/network-config';
 import { BlockService } from '../common/web3/block.service';
+import { APR_SERVICES } from './lib/providers/apr-services.provider';
+import { PoolAprService } from './pool-types';
 
 @Injectable()
 export class PoolService {
   constructor(
+    @Inject(APR_SERVICES) private readonly aprServices: PoolAprService[],
     private readonly prisma: PrismaService,
     private readonly poolGqlLoaderService: PoolGqlLoaderService,
     private readonly poolSwapService: PoolSwapService,
@@ -229,12 +232,8 @@ export class PoolService {
     // TODO: Use ProtocolFeePercentagesProvider to get protocol fee
     // Also move all of this apr stuff into its own concern/service
     const swaps = new SwapFeeAprService(this.prisma, 0.5);
-    const gauges = new VeGaugeAprService(
-      this.gaugeService,
-      [networkConfig.beets.address],
-      this.pricingService,
-    );
-    await this.poolAprUpdaterService.updatePoolAprs([swaps, gauges]);
+    // await this.poolAprUpdaterService.updatePoolAprs([swaps, ...this.aprServices]);
+    await this.poolAprUpdaterService.updatePoolAprs([...this.aprServices]);
   }
 
   async syncChangedPools() {

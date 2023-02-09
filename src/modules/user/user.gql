@@ -6,6 +6,7 @@ extend type Query {
   userGetSwaps(first: Int!, skip: Int!, poolId: String!): [GqlPoolSwap!]!
   userGetPortfolioSnapshots(days: Int!): [GqlUserPortfolioSnapshot!]!
   userGetVeLockInfo: GqlUserVoteEscrowInfo!
+  userGetGaugeBoosts(userAddress: String): [GqlUserGaugeBoost]!
   # userGetPoolSnapshots(poolId: String!, range: GqlUserSnapshotDataRange!): [GqlUserPoolSnapshot!]!
 }
 
@@ -19,6 +20,12 @@ extend type Mutation {
 
   userInitStakedBalances: String!
   userSyncChangedStakedBalances: String!
+}
+
+type GqlUserGaugeBoost {
+  poolId: String!
+  gaugeAddress: String!
+  boost: String!
 }
 
 type GqlUserVoteEscrowInfo {

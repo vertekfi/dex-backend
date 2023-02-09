@@ -1,5 +1,5 @@
 import { Args, Query, Resolver } from '@nestjs/graphql';
-import { GaugeService } from './gauge.service';
+import { GaugeService } from '../common/gauges/gauge.service';
 
 @Resolver()
 export class GaugeQueryResolver {

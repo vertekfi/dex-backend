@@ -516,6 +516,19 @@ type GqlPoolAprSubItem {
   apr: BigDecimal!
 }
 
+type GqlBalancePoolAprItem {
+  id: ID!
+  title: String!
+  apr: BigDecimal!
+  subItems: [GqlBalancePoolAprSubItem!]
+}
+
+type GqlBalancePoolAprSubItem {
+  id: ID!
+  title: String!
+  apr: BigDecimal!
+}
+
 enum GqlPoolOrderBy {
   totalLiquidity
   totalShares
@@ -708,19 +721,6 @@ enum GqlPoolJoinExitType {
 type GqlPoolJoinExitAmount {
   address: String!
   amount: String!
-}
-
-type GqlBalancePoolAprItem {
-  id: ID!
-  title: String!
-  apr: BigDecimal!
-  subItems: [GqlBalancePoolAprSubItem!]
-}
-
-type GqlBalancePoolAprSubItem {
-  id: ID!
-  title: String!
-  apr: BigDecimal!
 }
 
 input GqlUserSwapVolumeFilter {

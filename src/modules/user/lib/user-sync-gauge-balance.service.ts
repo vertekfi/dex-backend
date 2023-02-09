@@ -6,7 +6,7 @@ import { UserStakedBalanceService, UserSyncUserBalanceInput } from '../user-type
 import { PrismaService } from 'nestjs-prisma';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { OrderDirection } from 'src/modules/subgraphs/balancer/generated/balancer-subgraph-types';
-import { GaugeService } from 'src/modules/gauge/gauge.service';
+import { GaugeService } from 'src/modules/common/gauges/gauge.service';
 import { GaugeShare } from 'src/modules/gauge/types';
 import * as LiqGaugeV5abi from '../../abis/LiquidityGaugeV5.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';

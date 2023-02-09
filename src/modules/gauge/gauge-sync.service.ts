@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
-import { GaugeService } from './gauge.service';
+import { GaugeService } from '../common/gauges/gauge.service';
 import { ProtocolService } from '../protocol/protocol.service';
 
 @Injectable()

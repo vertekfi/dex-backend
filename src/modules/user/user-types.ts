@@ -74,3 +74,13 @@ export interface UserPoolSnapshot {
 //     totalValue: number;
 //     percentOfPortfolio: number;
 // }
+
+export type UserGaugeShare = {
+  id: string;
+  gauge: {
+    id: string;
+    poolId: string;
+    totalSupply: string;
+  };
+  balance: string;
+};

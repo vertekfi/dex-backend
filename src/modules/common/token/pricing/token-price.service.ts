@@ -11,6 +11,7 @@ import { getTokenAddress } from '../utils';
 
 const PRICE_CACHE_KEY = 'PRICE_CACHE_KEY';
 const TOKEN_PRICES_24H_AGO_CACHE_KEY = 'token:prices:24h-ago';
+const GOV_TOKEN_KEY = 'GOV_TOKEN_KEY';
 
 @Injectable()
 export class TokenPriceService {
@@ -19,6 +20,7 @@ export class TokenPriceService {
     private readonly poolPricing: PoolPricingService,
   ) {}
 
+  @CacheDecorator(GOV_TOKEN_KEY, 20)
   async getProtocolTokenPrice(): Promise<string> {
     const tokenAddress = getTokenAddress('VRTK');
     const price = await this.poolPricing.getWeightedTokenPoolPrices([tokenAddress]);

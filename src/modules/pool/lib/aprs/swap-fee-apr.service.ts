@@ -4,6 +4,8 @@ import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { PoolAprService } from '../../pool-types';
 
 export class SwapFeeAprService implements PoolAprService {
+  readonly name = 'SwapFeeAprService';
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly swapProtocolFeePercentage: number,

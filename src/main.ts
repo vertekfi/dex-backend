@@ -13,61 +13,61 @@ const cluster = require('cluster');
 export let nestApp: INestApplication;
 
 async function bootstrap() {
-  if (cluster.isMaster && process.env.NODE_ENV === 'production') {
-    console.log(`Master process: ${process.pid} is running`);
+  // if (cluster.isMaster && process.env.NODE_ENV === 'production') {
+  //   console.log(`Master process: ${process.pid} is running`);
 
-    const WORKERS = process.env.WEB_CONCURRENCY || 1;
-    for (let i = 0; i < WORKERS; i++) {
-      cluster.fork();
-    }
+  //   const WORKERS = process.env.WEB_CONCURRENCY || 1;
+  //   for (let i = 0; i < WORKERS; i++) {
+  //     cluster.fork();
+  //   }
 
-    cluster.on('exit', (worker, code, signal) => {
-      console.log(`worker ${worker.process.pid} died`);
-      console.log('Forking a new worker.');
-      cluster.fork();
-    });
-  } else {
-    // App hosting platform does not use .env
-    if (process.env.NODE_ENV === 'development') {
-      config();
-    }
-
-    nestApp = await NestFactory.create(AppModule);
-
-    nestApp.enableCors();
-    nestApp.use(compression());
-
-    nestApp.use(helmet.dnsPrefetchControl());
-    nestApp.use(helmet.expectCt());
-    nestApp.use(helmet.frameguard());
-    nestApp.use(helmet.hidePoweredBy());
-    nestApp.use(helmet.hsts());
-    nestApp.use(helmet.ieNoOpen());
-    nestApp.use(helmet.noSniff());
-    nestApp.use(helmet.originAgentCluster());
-    nestApp.use(helmet.permittedCrossDomainPolicies());
-    nestApp.use(helmet.referrerPolicy());
-    nestApp.use(helmet.xssFilter());
-
-    nestApp.use(accountMiddleware);
-
-    const prismaService: PrismaService = nestApp.get(PrismaService);
-    await prismaService.enableShutdownHooks(nestApp);
-
-    const PORT = process.env.PORT || 5000;
-    await nestApp.listen(PORT, async () => {
-      // All service instances are initialized at this point
-      await runInitialSyncMutations(nestApp.get(ScheduledJobService));
-
-      const ps = nestApp.get(PrismaService);
-      await ps.prismaTokenPrice.deleteMany({
-        where: {
-          tokenAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-        },
-      });
-      console.log(`DEX Backend running at: ${PORT}`);
-    });
+  //   cluster.on('exit', (worker, code, signal) => {
+  //     console.log(`worker ${worker.process.pid} died`);
+  //     console.log('Forking a new worker.');
+  //     cluster.fork();
+  //   });
+  // } else {
+  // App hosting platform does not use .env
+  if (process.env.NODE_ENV === 'development') {
+    config();
   }
+
+  nestApp = await NestFactory.create(AppModule);
+
+  nestApp.enableCors();
+  nestApp.use(compression());
+
+  nestApp.use(helmet.dnsPrefetchControl());
+  nestApp.use(helmet.expectCt());
+  nestApp.use(helmet.frameguard());
+  nestApp.use(helmet.hidePoweredBy());
+  nestApp.use(helmet.hsts());
+  nestApp.use(helmet.ieNoOpen());
+  nestApp.use(helmet.noSniff());
+  nestApp.use(helmet.originAgentCluster());
+  nestApp.use(helmet.permittedCrossDomainPolicies());
+  nestApp.use(helmet.referrerPolicy());
+  nestApp.use(helmet.xssFilter());
+
+  nestApp.use(accountMiddleware);
+
+  const prismaService: PrismaService = nestApp.get(PrismaService);
+  await prismaService.enableShutdownHooks(nestApp);
+
+  const PORT = process.env.PORT || 5000;
+  await nestApp.listen(PORT, async () => {
+    // All service instances are initialized at this point
+    await runInitialSyncMutations(nestApp.get(ScheduledJobService));
+
+    const ps = nestApp.get(PrismaService);
+    await ps.prismaTokenPrice.deleteMany({
+      where: {
+        tokenAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+      },
+    });
+    console.log(`DEX Backend running at: ${PORT}`);
+  });
+  // }
 }
 
 bootstrap();
