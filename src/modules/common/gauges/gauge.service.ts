@@ -6,7 +6,6 @@ import { GaugeShare, GaugeUserShare } from '../../gauge/types';
 import { Multicaller } from '../web3/multicaller';
 import { RPC } from '../web3/rpc.provider';
 import { AccountWeb3 } from '../types';
-import { CONTRACT_MAP } from '../../data/contracts';
 import { PrismaService } from 'nestjs-prisma';
 import * as moment from 'moment-timezone';
 import { ethNum, scaleDown } from '../../utils/old-big-number';
@@ -124,38 +123,94 @@ export class GaugeService {
     return gauges;
   }
 
-  async getGaugesRewardData(gauges: PrismaPoolStakingGauge[]) {
+  async getGaugeRewardTokenAddresses(gauges: string[]) {
     const multiCaller = new Multicaller(this.rpc, LGV5Abi);
 
     gauges.forEach((gauge) => {
-      [].fill(MAX_REWARDS - 1).forEach((idx) => {
-        multiCaller.call(`${gauge.id}.reward_data.${idx}`, gauge.id, 'reward_data', [idx]);
-      });
+      let count = 0;
+      while (count < MAX_REWARDS) {
+        multiCaller.call(`${gauge}.reward_tokens.${count}`, gauge, 'reward_tokens', [count]);
+        count++;
+      }
     });
+
+    const rewardTokensResult = await multiCaller.execute<
+      Record<string, { reward_tokens: string[] }>
+    >();
+
+    for (const gauge of gauges) {
+      rewardTokensResult[gauge].reward_tokens = rewardTokensResult[gauge].reward_tokens.filter(
+        (t) => t !== ZERO_ADDRESS,
+      );
+    }
+
+    return rewardTokensResult;
+  }
+
+  async getGaugesRewardData(gauges: string[]) {
+    const tokenAddresses = await this.getGaugeRewardTokenAddresses(gauges);
+
+    const multiCaller = new Multicaller(this.rpc, LGV5Abi);
+
+    const tokenMapping: {
+      [gauge: string]: {
+        tokens: {
+          tokenAddress: string;
+          rate: BigNumber;
+          period_finish: BigNumber;
+          gaugeId: string;
+          rewardPerSecond: string;
+        }[];
+      };
+    } = {};
+
+    gauges.forEach(
+      (gauge) =>
+        (tokenMapping[gauge] = {
+          tokens: [],
+        }),
+    );
+
+    for (const gauge in tokenAddresses) {
+      const rewardTokens = tokenAddresses[gauge].reward_tokens;
+      rewardTokens.forEach((token, idx) => {
+        tokenMapping[gauge].tokens.push({
+          tokenAddress: token,
+          period_finish: null,
+          rate: null,
+          gaugeId: gauge,
+          rewardPerSecond: '0',
+        });
+
+        multiCaller.call(`${gauge}.reward_data.${idx}`, gauge, 'reward_data', [token]);
+      });
+    }
+
+    // Not concerned with empty reward tokens
+    const tokenResult = Object.fromEntries(
+      Object.entries(tokenMapping).filter((data) => data[1].tokens.length),
+    );
 
     const rewardDataResult = (await multiCaller.execute()) as Record<
       string,
-      { rate: BigNumber; period_finish: BigNumber; token: string }
+      {
+        reward_data: { token: string; rate: BigNumber; period_finish: BigNumber }[];
+      }
     >;
 
-    return gauges
-      .map((gauge) => {
-        const rewardData = rewardDataResult[gauge.id];
-        if (rewardData && rewardData.token !== ZERO_ADDRESS) {
-          const isActive = moment.unix(rewardData.period_finish.toNumber()).isAfter(moment());
+    for (const gauge in rewardDataResult) {
+      rewardDataResult[gauge].reward_data.forEach((token, idx) => {
+        const isActive = moment.unix(token.period_finish.toNumber()).isAfter(moment());
+        const rewardPerSecond = isActive ? scaleDown(token.rate.toString(), 18).toNumber() : 0;
+        const tokenInfo = tokenResult[gauge].tokens[idx];
 
-          return {
-            [gauge.id]: {
-              // TODO: A none 18 decimal reward would cause issues here
-              // Could try to map to database tokens since adding tokens to gauges is "permissioned"
-              rewardPerSecond: isActive ? scaleDown(rewardData.rate.toString(), 18).toNumber() : 0,
-              tokenAddress: rewardData.token,
-              gaugeid: gauge.id,
-            },
-          };
-        }
-      })
-      .filter((g) => g !== undefined);
+        tokenInfo.period_finish = token.period_finish;
+        tokenInfo.rate = token.rate;
+        tokenInfo.rewardPerSecond = rewardPerSecond.toString();
+      });
+    }
+
+    return Object.entries(tokenResult);
   }
 
   async getGaugeAdditionalInfo(gauges: { id: string }[]) {
