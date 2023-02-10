@@ -72,6 +72,7 @@ export class CoingeckoPriceHandlerService implements TokenPriceHandler {
 
       if (!exists) {
         console.log('skipping token', normalizedTokenAddress);
+        continue;
       }
 
       if (exists && priceUsd) {
