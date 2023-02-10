@@ -31,9 +31,7 @@ export class ProtocolService {
     const url = networkConfig.protocol.poolDataUrl;
     const { data } = await axios.get(url);
 
-    console.log(data);
-
-    return data[String(this.rpc.chainId)].gauges;
+    return data[String(this.rpc.chainId)];
   }
 
   async getProtocolTokenList() {
