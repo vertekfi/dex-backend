@@ -9,7 +9,7 @@ import { isNil, mapValues } from 'lodash';
 import { getBptPrice } from 'src/modules/common/pool/pool-utils';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { calculateGaugeApr, getAprRange } from 'src/modules/pool/lib/aprs/gauge-apr-utils';
-import { Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { BalTokenAdmin } from 'src/modules/balancer-sdk/contracts/bal-token-admin';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
@@ -21,6 +21,7 @@ import { BigNumber, Contract } from 'ethers';
 import { getContractAddress } from 'src/modules/common/web3/contract';
 import { bnum } from 'src/modules/utils/bignumber-utils';
 
+@Injectable()
 export class VeGaugeAprService implements PoolAprService {
   readonly name = 'VeGaugeAprService';
   primaryTokens: string[] = [];
