@@ -127,8 +127,8 @@ export class VeGaugeAprService implements PoolAprService {
         continue;
       }
 
-      const max = parseFloat(aprs.max) / 100;
-      const min = parseFloat(aprs.min) / 100;
+      const max = parseFloat(aprs.max);
+      const min = parseFloat(aprs.min);
       const userApr = max;
 
       const aprItemId = `${poolId}-VRTK-apr`;
