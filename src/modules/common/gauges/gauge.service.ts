@@ -17,6 +17,7 @@ import { PrismaPoolStakingGauge } from '@prisma/client';
 import { ZERO_ADDRESS } from '../web3/utils';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
 import { ProtocolGaugeInfo } from '../../protocol/types';
+import { getContractAddress } from '../web3/contract';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const SUBGRAPH_GAUGE_CACHE_KEY = 'SUBGRAPH_GAUGE_CACHE_KEY';
@@ -108,7 +109,7 @@ export class GaugeService {
         address: gauge.id,
         totalSupply: pool.staking.gauge.totalSupply,
         factory: {
-          id: CONTRACT_MAP.LIQUIDITY_GAUGEV5_FACTORY[this.rpc.chainId],
+          id: getContractAddress('LIQUIDITY_GAUGEV5_FACTORY'),
         },
         isKilled: pool.staking.gauge.isKilled,
         rewardTokens: pool.staking.gauge.rewards,
@@ -144,7 +145,7 @@ export class GaugeService {
           return {
             [gauge.id]: {
               // TODO: A none 18 decimal reward would cause issues here
-              // Could try to map to database tokens since adding tokens is "permissioned"
+              // Could try to map to database tokens since adding tokens to gauges is "permissioned"
               rewardPerSecond: isActive ? scaleDown(rewardData.rate.toString(), 18).toNumber() : 0,
               tokenAddress: rewardData.token,
               gaugeid: gauge.id,

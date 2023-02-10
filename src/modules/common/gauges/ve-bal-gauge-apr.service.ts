@@ -58,6 +58,7 @@ export class VeGaugeAprService implements PoolAprService {
         this.pricingService.getCurrentTokenPrices(),
       ]);
 
+      // Not awaiting these
       this.updateGaugeNativeAprs(pools);
       this.updateVeVrtkApr();
 
@@ -77,6 +78,7 @@ export class VeGaugeAprService implements PoolAprService {
         let thirdPartyApr = 0;
 
         for (let rewardToken of gauge.rewardTokens) {
+          // Missing price shouldn't be possible since gauges stored in database are only ones added to gauge controller
           const tokenPrice =
             this.pricingService.getPriceForToken(tokenPrices, rewardToken.address) || 0.1;
 
