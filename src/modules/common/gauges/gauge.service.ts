@@ -102,21 +102,23 @@ export class GaugeService {
         }),
       };
 
-      gauges.push({
-        id: gauge.id,
-        symbol: pool.staking.gauge.symbol,
-        poolId: gauge.poolId,
-        address: gauge.id,
-        totalSupply: pool.staking.gauge.totalSupply,
-        factory: {
-          id: getContractAddress('LIQUIDITY_GAUGEV5_FACTORY'),
-        },
-        isKilled: pool.staking.gauge.isKilled,
-        rewardTokens: pool.staking.gauge.rewards,
-        depositFee: pool.staking.gauge.depositFee,
-        withdrawFee: pool.staking.gauge.withdrawFee,
-        pool: gqlPool,
-      });
+      if (pool.staking.gauge) {
+        gauges.push({
+          id: gauge.id,
+          symbol: pool.staking.gauge.symbol,
+          poolId: gauge.poolId,
+          address: gauge.id,
+          totalSupply: pool.staking.gauge.totalSupply,
+          factory: {
+            id: getContractAddress('LIQUIDITY_GAUGEV5_FACTORY'),
+          },
+          isKilled: pool.staking.gauge.isKilled,
+          rewardTokens: pool.staking.gauge.rewards,
+          depositFee: pool.staking.gauge.depositFee,
+          withdrawFee: pool.staking.gauge.withdrawFee,
+          pool: gqlPool,
+        });
+      }
     }
 
     return gauges;
