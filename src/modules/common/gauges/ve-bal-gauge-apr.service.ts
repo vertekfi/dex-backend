@@ -116,7 +116,7 @@ export class VeGaugeAprService implements PoolAprService {
       gauges: gaugeData,
     });
 
-    const operations: any[] = [];
+    let operations: any[] = [];
 
     for (const aprInfo of Object.entries(gaugeAprData)) {
       const [poolId, aprs] = aprInfo;
@@ -127,8 +127,8 @@ export class VeGaugeAprService implements PoolAprService {
         continue;
       }
 
-      const max = parseFloat(aprs.max) / 100; // format result for database
-      const min = parseFloat(aprs.min) / 100;
+      const max = parseFloat(aprs.max);
+      const min = parseFloat(aprs.min);
       const userApr = max;
 
       const aprItemId = `${poolId}-VRTK-apr`;
