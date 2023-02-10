@@ -1,4 +1,7 @@
-import { PrismaPoolWithExpandedNesting } from '../../../../prisma/prisma-types';
+import {
+  prismaPoolWithExpandedNesting,
+  PrismaPoolWithExpandedNesting,
+} from '../../../../prisma/prisma-types';
 import { prismaBulkExecuteOperations } from '../../../../prisma/prisma-util';
 import { PoolAprService } from '../../pool/pool-types';
 import { GaugeService } from 'src/modules/common/gauges/gauge.service';
@@ -20,6 +23,11 @@ import { PrismaPoolAprItem, PrismaPoolAprRange } from '@prisma/client';
 import { BigNumber, Contract } from 'ethers';
 import { getContractAddress } from 'src/modules/common/web3/contract';
 import { bnum } from 'src/modules/utils/bignumber-utils';
+import { VeBalAprCalc } from 'src/modules/common/gauges/vebal-apr.calc';
+import { networkConfig } from 'src/modules/config/network-config';
+import { ProtocoFeesService } from 'src/modules/protocol/protocol-fees.service';
+import { AprConcern } from './apr-concern';
+import { PoolSnapshotService } from '../pool/pool-snapshot.service';
 
 @Injectable()
 export class VeGaugeAprService implements PoolAprService {
@@ -33,6 +41,9 @@ export class VeGaugeAprService implements PoolAprService {
     private readonly pricingService: TokenPriceService,
     private readonly protocolService: ProtocolService,
     private readonly prisma: PrismaService,
+    private readonly veBalAprService: VeBalAprCalc,
+    private readonly feesService: ProtocoFeesService,
+    private readonly poolSnapshots: PoolSnapshotService,
   ) {}
 
   setPrimaryTokens(tokens: string[]) {
@@ -47,7 +58,8 @@ export class VeGaugeAprService implements PoolAprService {
         this.pricingService.getCurrentTokenPrices(),
       ]);
 
-      this.getGaugeNativeAprs(pools);
+      this.updateGaugeNativeAprs(pools);
+      this.updateVeVrtkApr();
 
       for (const pool of pools) {
         const gauge = gauges.find((g) => g.address === pool.staking?.gauge?.gaugeAddress);
@@ -103,7 +115,42 @@ export class VeGaugeAprService implements PoolAprService {
     }
   }
 
-  async getGaugeNativeAprs(pools: PrismaPoolWithExpandedNesting[]) {
+  async updateVeVrtkApr() {
+    const operations = [];
+    // TODO: Need to check fee distributor because we may add multiple tokens
+    const vrtkPool = await this.prisma.prismaPool.findFirst({
+      where: {
+        id: networkConfig.balancer.votingEscrow.lockablePoolId,
+      },
+      ...prismaPoolWithExpandedNesting,
+    });
+
+    const vrtkApCalc = await this.veBalAprService.calc(
+      vrtkPool.dynamicData.totalLiquidity.toString(),
+      vrtkPool.dynamicData.totalShares,
+    );
+
+    const item: PrismaPoolAprItem = {
+      id: `${vrtkPool.id}-veVRTK-apr`,
+      poolId: vrtkPool.id,
+      title: `veVRTK reward APR`,
+      apr: parseFloat(vrtkApCalc),
+      type: 'VE_VRTK',
+      group: null,
+    };
+
+    operations.push(
+      this.prisma.prismaPoolAprItem.upsert({
+        where: { id: item.id },
+        update: item,
+        create: item,
+      }),
+    );
+
+    await prismaBulkExecuteOperations(operations);
+  }
+
+  async updateGaugeNativeAprs(pools: PrismaPoolWithExpandedNesting[]) {
     const protoData = await this.protocolService.getProtocolConfigDataForChain();
     const gaugeData = protoData.gauges.map((g) => {
       return {
@@ -112,14 +159,27 @@ export class VeGaugeAprService implements PoolAprService {
       };
     });
 
-    const gaugeAprData: any[] = await this.getGaugeBALAprs({
+    const poolIds = protoData.gauges.map((g) => g.poolId);
+    const gaugePools = pools.filter((p) => poolIds.includes(p.id));
+
+    for (const pool of gaugePools) {
+      // const snapshot = await this.prisma.prismaPoolSnapshot.findMany({
+      //   where: { poolId: pool.id },
+      //   orderBy: { timestamp: 'desc' }, // Double check this
+      //   take: 1,
+      // });
+      // console.log(snapshot);
+      // const aprConcern = new AprConcern(snapshot, this.veBalAprService);
+    }
+
+    const gaugeAprs: any[] = await this.getGaugeBALAprs({
       pools,
       gauges: gaugeData,
     });
 
     let operations: any[] = [];
 
-    for (const aprInfo of Object.entries(gaugeAprData)) {
+    for (const aprInfo of Object.entries(gaugeAprs)) {
       const [poolId, aprs] = aprInfo;
 
       const pool = gaugeData.find((g) => g.poolId === poolId);
@@ -176,7 +236,6 @@ export class VeGaugeAprService implements PoolAprService {
   }) {
     try {
       let gaugeAddresses = gauges.map((gauge) => gauge.id);
-      const protocolTokenAddress = getTokenAddress('VRTK');
 
       const [inflationRate, relativeWeights, workingSupplies, totalSupplies] = await Promise.all([
         this.tokenAdmin.getInflationRate(),
@@ -194,8 +253,6 @@ export class VeGaugeAprService implements PoolAprService {
 
         if (!pool) return nilApr;
         if (isNil(inflationRate)) return nilApr;
-
-        if (!protocolTokenAddress) return nilApr;
 
         const totalSupply = bnum(totalSupplies[getAddress(gauge.id)]);
 

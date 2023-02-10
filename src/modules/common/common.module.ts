@@ -18,6 +18,8 @@ import { TokenSyncService } from './token/token-sync.service';
 import { PoolPricingService } from './token/pricing/pool-pricing.service';
 import { VeGaugeAprService } from './gauges/ve-bal-gauge-apr.service';
 import { GaugeService } from './gauges/gauge.service';
+import { VeBalAprCalc } from './gauges/vebal-apr.calc';
+import { PoolSnapshotService } from './pool/pool-snapshot.service';
 
 @Global()
 @Module({
@@ -38,10 +40,13 @@ import { GaugeService } from './gauges/gauge.service';
     CacheService,
     RpcProvider,
     BlockService,
-    PoolSwapService,
     ContractService,
+
+    // Pools
+    PoolSwapService,
     PoolOnChainDataService,
     PoolPricingService,
+    PoolSnapshotService,
 
     // Tokens
     TokenPriceService,
@@ -55,16 +60,20 @@ import { GaugeService } from './gauges/gauge.service';
     // Gauges
     VeGaugeAprService,
     GaugeService,
+    VeBalAprCalc,
   ],
   exports: [
     CacheModule,
     CacheService,
     RpcProvider,
     BlockService,
-    PoolSwapService,
     ContractService,
+
+    // Pools
+    PoolSwapService,
     PoolOnChainDataService,
     PoolPricingService,
+    PoolSnapshotService,
 
     // Tokens
     TokenPriceService,
@@ -78,6 +87,7 @@ import { GaugeService } from './gauges/gauge.service';
     // Gauges
     VeGaugeAprService,
     GaugeService,
+    VeBalAprCalc,
   ],
 })
 export class CommonModule {}

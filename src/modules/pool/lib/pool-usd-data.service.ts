@@ -97,7 +97,6 @@ export class PoolUsdDataService {
 
     for (const pool of subgraphPools) {
       const balanceUSDs = (pool.tokens || []).map((token) => {
-        console.log(token);
         return {
           id: token.id,
           balanceUSD:

@@ -4,7 +4,7 @@ extend type Query {
   latestSyncedBlocks: GqlLatestSyncedBlocks!
   contentGetNewsItems: [GqlContentNewsItem]!
   getProtocolTokenList: [String]
-  getProtocolPoolData: [String]!
+  getProtocolPoolData: [GqlProtocolGaugeInfo]!
   adminGetAllGaugePendingProtocolFees: GqlPendingGaugeFeeResult!
   adminGetFeeCollectorBalances: GqlFeesCollectorAmountsResult!
   adminGetAllPendingFeeData(onlyWithBalances: Boolean): GqlAllFeesData!
@@ -12,6 +12,11 @@ extend type Query {
 
 extend type Mutation {
   protocolCacheMetrics: String!
+}
+
+type GqlProtocolGaugeInfo {
+  poolId: String!
+  address: String!
 }
 
 type GqlAllFeesData {
