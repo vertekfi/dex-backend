@@ -74,7 +74,7 @@ export class CoingeckoPriceHandlerService implements TokenPriceHandler {
         console.log('skipping token', normalizedTokenAddress);
       }
 
-      if (exists && priceUsd && normalizedTokenAddress !== networkConfig.eth.address) {
+      if (exists && priceUsd) {
         operations.push(
           this.prisma.prismaTokenPrice.upsert({
             where: {
