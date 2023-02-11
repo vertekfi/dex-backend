@@ -18,8 +18,6 @@ import {
   QueryPoolGetUserSwapVolumeArgs,
 } from 'src/gql-addons';
 import { GqlPoolMinimal } from 'src/graphql';
-import { AccountWeb3 } from '../common/types';
-import { RPC } from '../common/web3/rpc.provider';
 import { PoolGqlLoaderUtils } from './lib/gql-loader-utils.service';
 import { PoolCreatorService } from './lib/pool-creator.service';
 import { PoolGqlLoaderService } from './lib/pool-gql-loader.service';

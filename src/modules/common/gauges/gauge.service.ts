@@ -231,6 +231,11 @@ export class GaugeService {
               isKilled: false,
             },
           },
+          {
+            gauge: {
+              isNot: undefined,
+            },
+          },
         ],
       },
       include: {

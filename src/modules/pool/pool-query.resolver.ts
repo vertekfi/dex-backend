@@ -4,6 +4,7 @@ import {
   QueryPoolGetBatchSwapsArgs,
   QueryPoolGetJoinExitsArgs,
   QueryPoolGetPoolsArgs,
+  QueryPoolGetSwapsArgs,
   QueryPoolGetUserSwapVolumeArgs,
 } from 'src/gql-addons';
 import { PoolService } from './pool.service';
@@ -30,6 +31,11 @@ export class PoolQueryResolver {
   @Query()
   async poolGetPoolFilters() {
     return this.poolService.getPoolFilters();
+  }
+
+  @Query()
+  async poolGetSwaps(@Args() args: QueryPoolGetSwapsArgs) {
+    return this.poolService.getPoolSwaps(args);
   }
 
   @Query()
