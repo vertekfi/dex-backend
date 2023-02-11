@@ -49,7 +49,11 @@ export class GaugeService {
         },
         ...prismaPoolMinimal,
       }),
-      this.prisma.prismaToken.findMany({}),
+      this.prisma.prismaToken.findMany({
+        include: {
+          dynamicData: true,
+        },
+      }),
     ]);
 
     const stakingInfos = pools.filter((p) => p.staking).map((p) => p.staking);
@@ -70,6 +74,7 @@ export class GaugeService {
           return {
             ...token,
             ...token.token,
+            ...token.dynamicData,
           };
         }),
       };
@@ -246,31 +251,6 @@ export class GaugeService {
         },
       },
     });
-  }
-
-  private async getPoolsForGauges(poolIds: string[]) {
-    const [tokens, pools] = await Promise.all([
-      this.prisma.prismaToken.findMany({}),
-      this.prisma.prismaPool.findMany({
-        where: {
-          id: {
-            in: poolIds,
-          },
-        },
-        include: {
-          tokens: {
-            include: {
-              dynamicData: true,
-            },
-          },
-        },
-      }),
-    ]);
-
-    return {
-      pools,
-      tokens,
-    };
   }
 
   async getUserGaugeStakes(args: { user: string; poolIds: string[] }): Promise<LiquidityGauge[]> {
