@@ -55,7 +55,7 @@ export class UserBalanceService {
 
     const [pools, gaugesInfo] = await Promise.all([
       this.prisma.prismaPool.findMany({}),
-      this.gaugeService.getAllGaugeAddresses(),
+      this.gaugeService.getAllProtocolGauges(),
     ]);
 
     const multicaller = new Multicaller(this.rpc, [

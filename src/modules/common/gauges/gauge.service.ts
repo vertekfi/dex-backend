@@ -15,8 +15,9 @@ import { BigNumber } from 'ethers';
 import { PrismaPoolStakingGauge } from '@prisma/client';
 import { ZERO_ADDRESS } from '../web3/utils';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
-import { ProtocolGaugeInfo } from '../../protocol/types';
+import { ProtocolConfigData, ProtocolGaugeInfo } from '../../protocol/types';
 import { getContractAddress } from '../web3/contract';
+import { getGaugeAddresses, getGaugePoolIds } from './gauge-utils';
 
 const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
 const SUBGRAPH_GAUGE_CACHE_KEY = 'SUBGRAPH_GAUGE_CACHE_KEY';
@@ -32,63 +33,35 @@ export class GaugeService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async getAllGaugeAddresses(): Promise<ProtocolGaugeInfo[]> {
+  async getAllProtocolGauges(): Promise<ProtocolGaugeInfo[]> {
     const data = await this.protocolService.getProtocolConfigDataForChain();
     return data.gauges;
   }
 
-  async getAllGauges() {
-    const gauges = await this.getCoreGauges();
-    const { pools, tokens } = await this.getPoolsForGauges(gauges.map((g) => g.poolId));
-    // Attach each gauges pool info
-    // These can be cached along with the gauges since only static(mostly) data is asked for
-    pools.forEach((p) => {
-      const gauge = gauges.find((g) => g.poolId == p.id);
-      if (gauge) {
-        gauge.pool = {
-          ...p,
-          poolType: p.type,
-          name: p.name,
-          tokensList: p.tokens.map((t) => t.address),
-          tokens: p.tokens.map((t) => {
-            const token = tokens.find((tk) => tk.address === t.address);
-            const poolToken = p.tokens.find((tk) => tk.address === t.address);
-            console.log(poolToken);
-            return {
-              weight: poolToken.dynamicData.weight,
-              symbol: token.symbol,
-              address: t.address,
-              logoURI: tokens.find((t2) => t2.address == t.address)?.logoURI,
-            };
-          }),
-        };
-      }
-    });
-
-    return gauges;
-  }
-
   async getCoreGauges() {
     const protoData = await this.protocolService.getProtocolConfigDataForChain();
-    const poolIds = protoData.gauges.map((g) => g.poolId);
-    const pools = await this.prisma.prismaPool.findMany({
-      where: {
-        id: { in: poolIds },
-      },
-      ...prismaPoolMinimal,
-    });
+    const poolIds = getGaugePoolIds(protoData);
 
-    //  const gaugeInfos = pools.filter((p) => p.staking).map((p) => p.staking.gauge);
+    const [pools, tokens] = await Promise.all([
+      this.prisma.prismaPool.findMany({
+        where: {
+          id: { in: poolIds },
+        },
+        ...prismaPoolMinimal,
+      }),
+      this.prisma.prismaToken.findMany({}),
+    ]);
+
     const stakingInfos = pools.filter((p) => p.staking).map((p) => p.staking);
-
-    // TODO: reward tokens
-    // const [rewardTokens] = await Promise.all([this.getGaugesRewardData(gaugeInfos)]);
-    // const onchainInfo = await this.getGaugeAdditionalInfo(gaugeInfos);
 
     const gauges = [];
 
     for (const gauge of stakingInfos) {
       const pool = pools.find((p) => p.id === gauge.poolId);
+      if (!pool.staking.gauge) {
+        continue;
+      }
+      //
       const gqlPool = {
         ...pool,
         poolType: pool.type,
@@ -102,6 +75,16 @@ export class GaugeService {
       };
 
       if (pool.staking.gauge) {
+        const rewardTokens = pool.staking.gauge.rewards.map((token) => {
+          const dbToken = tokens.find((t) => t.address === token.tokenAddress.toLowerCase());
+
+          return {
+            ...dbToken,
+            ...token,
+            totalDeposited: 0,
+          };
+        });
+
         gauges.push({
           id: gauge.id,
           symbol: pool.staking.gauge.symbol,
@@ -112,7 +95,7 @@ export class GaugeService {
             id: getContractAddress('LIQUIDITY_GAUGEV5_FACTORY'),
           },
           isKilled: pool.staking.gauge.isKilled,
-          rewardTokens: pool.staking.gauge.rewards,
+          rewardTokens,
           depositFee: pool.staking.gauge.depositFee,
           withdrawFee: pool.staking.gauge.withdrawFee,
           pool: gqlPool,
@@ -139,9 +122,9 @@ export class GaugeService {
     >();
 
     for (const gauge of gauges) {
-      rewardTokensResult[gauge].reward_tokens = rewardTokensResult[gauge].reward_tokens.filter(
-        (t) => t !== ZERO_ADDRESS,
-      );
+      rewardTokensResult[gauge].reward_tokens = rewardTokensResult[gauge].reward_tokens
+        .filter((t) => t !== ZERO_ADDRESS)
+        .map((t) => t.toLowerCase());
     }
 
     return rewardTokensResult;
@@ -149,7 +132,6 @@ export class GaugeService {
 
   async getGaugesRewardData(gauges: string[]) {
     const tokenAddresses = await this.getGaugeRewardTokenAddresses(gauges);
-
     const multiCaller = new Multicaller(this.rpc, LGV5Abi);
 
     const tokenMapping: {

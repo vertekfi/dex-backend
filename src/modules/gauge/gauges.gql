@@ -73,10 +73,10 @@ type LiquidityGauge {
   totalSupply: BigDecimal!
 
   " List of user shares "
-  shares: [GaugeShare!]
+  shares: [GaugeShare!]!
 
   " List of reward tokens depositted in the gauge "
-  rewardTokens: [RewardToken]!
+  rewardTokens: [RewardToken!]!
 
   factory: GaugeFactory
 
@@ -100,6 +100,10 @@ type RewardToken {
   " Equal to: <tokenAddress>-<gaugeAddress> "
   id: ID!
 
+  tokenAddress: String!
+
+  logoURI: String!
+
   " ERC20 token symbol - empty string if call to symbol() reverts "
   symbol: String!
 
@@ -107,7 +111,8 @@ type RewardToken {
   decimals: Int!
 
   " Rate of reward tokens streamed per second "
-  rate: BigDecimal
+  # rate: BigDecimal
+  rewardPerSecond: BigDecimal!
 
   " Timestamp at which finishes the period of rewards "
   periodFinish: BigInt

@@ -87,7 +87,7 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
       const jsonRpcProvider = this.rpc.provider;
       const pools = await this.prisma.prismaPool.findMany({ include: { staking: true } });
       const latestBlock = await jsonRpcProvider.getBlockNumber();
-      const gaugeAddresses = (await this.gaugeService.getAllGaugeAddresses()).map((g) => g.address);
+      const gaugeAddresses = (await this.gaugeService.getAllProtocolGauges()).map((g) => g.address);
 
       // we sync at most 10k blocks at a time
       const startBlock = status.blockNumber + 1;
