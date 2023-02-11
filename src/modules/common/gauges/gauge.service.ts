@@ -183,7 +183,7 @@ export class GaugeService {
     for (const gauge in rewardDataResult) {
       rewardDataResult[gauge].reward_data.forEach((token, idx) => {
         const isActive = moment.unix(token.period_finish.toNumber()).isAfter(moment());
-        const rewardPerSecond = isActive ? scaleDown(token.rate.toString(), 18).toNumber() : 0;
+        const rewardPerSecond = isActive ? scaleDown(token.rate.toString(), 18) : 0;
         const tokenInfo = tokenResult[gauge].tokens[idx];
 
         tokenInfo.period_finish = token.period_finish;
