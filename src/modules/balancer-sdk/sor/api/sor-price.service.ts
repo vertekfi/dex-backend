@@ -46,11 +46,17 @@ export class SorPriceService implements TokenPriceService {
 
     const now = Date.now();
     if (!cached || now - cached.lastTimestamp > ttl) {
-      const price = await this.coingecko.getTokenPrice(token as unknown as TokenDefinition);
+      const tokenPrice = await this.prisma.prismaTokenCurrentPrice.findUniqueOrThrow({
+        where: {
+          tokenAddress: token.address,
+        },
+      });
+
+      // const price = await this.coingecko.getTokenPrice(token as unknown as TokenDefinition);
 
       priceCache[address] = {
         lastTimestamp: Date.now(),
-        price: String(price),
+        price: String(tokenPrice.price),
       };
 
       return priceCache[address].price;
@@ -61,22 +67,22 @@ export class SorPriceService implements TokenPriceService {
 
   async getNativeAssetPriceInToken(tokenAddress: string): Promise<string> {
     try {
-      const token = await this.prisma.prismaToken.findUniqueOrThrow({
+      const token = await this.prisma.prismaTokenCurrentPrice.findUniqueOrThrow({
         where: {
-          address: tokenAddress,
+          tokenAddress,
         },
       });
 
-      if (token.useDexscreener) {
-        const wbnbPair = '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16';
-        const nativeInfo = await getDexPriceFromPair('bsc', wbnbPair);
-        console.log(nativeInfo);
-        const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
-        console.log(info);
-        return parseUnits(String(nativeInfo.priceNum / info.priceNum)).toString();
-      }
+      // if (token.useDexscreener) {
+      const wbnbPair = '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16';
+      const nativeInfo = await getDexPriceFromPair('bsc', wbnbPair);
+      // console.log(nativeInfo);
+      // const info = await getDexPriceFromPair('bsc', token.dexscreenPairAddress);
+      //  console.log(info);
+      return parseUnits(String(nativeInfo.priceNum / token.price)).toString();
+      // }
     } catch (error) {
-      console.log('Error getting price from coingecko');
+      console.log('Error getting price from token');
     }
   }
 
