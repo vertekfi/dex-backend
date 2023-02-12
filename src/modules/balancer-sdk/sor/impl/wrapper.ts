@@ -6,7 +6,7 @@ import { getBestPaths } from './router';
 import { getWrappedInfo, setWrappedInfo } from './wrapInfo';
 import { formatSwaps } from './formatSwaps';
 import { PoolCacher } from './poolCacher';
-import { RouteProposer } from './routeProposal';
+import { RouteProposer } from './routeProposal/RouteProposer';
 import { filterPoolsByType } from './routeProposal/filtering';
 import { SwapCostCalculator } from './swapCostCalculator';
 import { isSameAddress } from './utils';
@@ -138,28 +138,6 @@ export class SOR {
 
     return swapInfo;
   }
-  /**
-   * getCostOfSwapInToken Calculates and saves price of a swap in outputToken denomination. Used to determine if extra swaps are cost effective.
-   * @param {string} outputToken - Address of outputToken.
-   * @param {number} outputTokenDecimals - Decimals of outputToken.
-   * @param {BigNumber} gasPrice - Gas price used to calculate cost.
-   * @param {BigNumber} swapGas - Gas cost of a swap. Default=85000.
-   * @returns {BigNumber} Price of a swap in outputToken denomination.
-   */
-  async getCostOfSwapInToken(
-    outputToken: string,
-    outputTokenDecimals: number,
-    gasPrice: BigNumber,
-    swapGas?: BigNumber,
-  ): Promise<BigNumber> {
-    if (gasPrice.isZero()) return Zero;
-    return this.swapCostCalculator.convertGasCostToToken(
-      outputToken,
-      outputTokenDecimals,
-      gasPrice,
-      swapGas,
-    );
-  }
 
   // Will process swap/pools data and return best swaps
   private async processSwaps(
@@ -229,6 +207,29 @@ export class SOR {
     );
 
     return swapInfo;
+  }
+
+  /**
+   * getCostOfSwapInToken Calculates and saves price of a swap in outputToken denomination. Used to determine if extra swaps are cost effective.
+   * @param {string} outputToken - Address of outputToken.
+   * @param {number} outputTokenDecimals - Decimals of outputToken.
+   * @param {BigNumber} gasPrice - Gas price used to calculate cost.
+   * @param {BigNumber} swapGas - Gas cost of a swap. Default=85000.
+   * @returns {BigNumber} Price of a swap in outputToken denomination.
+   */
+  async getCostOfSwapInToken(
+    outputToken: string,
+    outputTokenDecimals: number,
+    gasPrice: BigNumber,
+    swapGas?: BigNumber,
+  ): Promise<BigNumber> {
+    if (gasPrice.isZero()) return Zero;
+    return this.swapCostCalculator.convertGasCostToToken(
+      outputToken,
+      outputTokenDecimals,
+      gasPrice,
+      swapGas,
+    );
   }
 
   /**

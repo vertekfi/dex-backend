@@ -18,7 +18,7 @@ export function replaceZeroAddressWithEth(address: string) {
     return networkConfig.eth.address;
   }
 
-  return address;
+  return address.toLowerCase();
 }
 
 export function replaceEthWithWeth(address: string) {
@@ -26,7 +26,7 @@ export function replaceEthWithWeth(address: string) {
     return networkConfig.weth.address;
   }
 
-  return address;
+  return address.toLowerCase();
 }
 
 export function replaceWethWithEth(address: string) {
@@ -34,7 +34,7 @@ export function replaceWethWithEth(address: string) {
     return networkConfig.eth.address;
   }
 
-  return address;
+  return address.toLowerCase();
 }
 
 export function isEth(address: string) {

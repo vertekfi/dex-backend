@@ -18,7 +18,9 @@ import {
 export class RouteProposer {
   cache: Record<string, { paths: NewPath[] }> = {};
 
-  constructor(private readonly config: SorConfig) {}
+  constructor(private readonly config: SorConfig) {
+    //
+  }
 
   /**
    * Given a list of pools and a desired input/output, returns a set of possible paths to route through
