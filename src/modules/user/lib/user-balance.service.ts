@@ -8,14 +8,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
-import { GaugeService } from 'src/modules/common/gauges/gauge.service';
 
 @Injectable()
 export class UserBalanceService {
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
-    private readonly gaugeService: GaugeService,
   ) {}
 
   async getUserPoolBalances(userAddress: string): Promise<UserPoolBalance[]> {
@@ -53,25 +51,28 @@ export class UserBalanceService {
 
     // return data;
 
-    const [pools, gaugesInfo] = await Promise.all([
-      this.prisma.prismaPool.findMany({}),
-      this.gaugeService.getAllProtocolGauges(),
-    ]);
-
+    const pools = await this.prisma.prismaPool.findMany({
+      include: {
+        staking: {
+          include: {
+            gauge: true,
+          },
+        },
+      },
+    });
     const multicaller = new Multicaller(this.rpc, [
       'function balanceOf(address) public view returns (uint256)',
     ]);
 
-    if (!userAddress) {
+    if (!userAddress || userAddress === 'undefined') {
       return [];
     }
 
-    pools.forEach((p) => {
-      multicaller.call(`${p.address}.poolBalance`, p.address, 'balanceOf', [userAddress]);
-
-      const gauge = gaugesInfo.find((g) => g.poolId === p.id);
+    pools.forEach((pool) => {
+      multicaller.call(`${pool.address}.poolBalance`, pool.address, 'balanceOf', [userAddress]);
+      const gauge = pool.staking?.gauge;
       if (gauge) {
-        multicaller.call(`${gauge.address}.stakedBalance`, gauge.address, 'balanceOf', [
+        multicaller.call(`${gauge.gaugeAddress}.stakedBalance`, gauge.gaugeAddress, 'balanceOf', [
           userAddress,
         ]);
       }
@@ -80,20 +81,18 @@ export class UserBalanceService {
     const result = await multicaller.execute();
 
     const data = pools.map((pool) => {
-      const gauge = gaugesInfo.find((g) => g.poolId === pool.id);
+      const gauge = pool.staking?.gauge;
 
-      const stakedBalance = gauge ? formatEther(result[gauge.address].stakedBalance) : '0';
+      const stakedBalance = gauge ? formatEther(result[gauge.gaugeAddress].stakedBalance) : '0';
       const walletBalance = result[pool.address]?.poolBalance
         ? formatEther(result[pool.address].poolBalance)
         : '0';
       const stakedNum = parseUnits(stakedBalance, 18);
       const walletNum = parseUnits(walletBalance.toString(), 18);
 
-      const tokenAddress = gauge?.address || pool.address || '';
-
       return {
         poolId: pool.id,
-        tokenAddress,
+        tokenAddress: pool.address,
         totalBalance: formatFixed(stakedNum.add(walletNum), 18),
         stakedBalance,
         walletBalance,
