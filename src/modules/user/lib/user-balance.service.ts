@@ -64,7 +64,7 @@ export class UserBalanceService {
       'function balanceOf(address) public view returns (uint256)',
     ]);
 
-    if (!userAddress) {
+    if (!userAddress || userAddress === 'undefined') {
       return [];
     }
 
