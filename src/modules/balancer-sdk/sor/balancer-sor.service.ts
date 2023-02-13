@@ -77,17 +77,6 @@ export class BalancerSorService {
     await this.setSwapNativeInfo(tokenIn, tokenOut);
     const sorSwapType = this.orderKindToSwapType(swapType);
 
-    // const wrappedInfo = await getWrappedInfo(
-    //   this.rpc.provider,
-    //   sorSwapType,
-    //   tokenIn,
-    //   tokenOut,
-    //   this.config,
-    //   parseUnits(swapAmount),
-    // );
-
-    // console.log(wrappedInfo);
-
     // Cache pools and then get swaps
     await this.cacheSubgraphPools();
 
@@ -322,7 +311,7 @@ export class BalancerSorService {
       hops.push(hop);
     });
 
-    console.log(hops);
+    // console.log(hops);
 
     const routes = swaps.map((path): GqlSorSwapRoute => {
       return {
