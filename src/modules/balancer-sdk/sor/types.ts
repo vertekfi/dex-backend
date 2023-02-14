@@ -2,8 +2,6 @@ import { PrismaToken } from '@prisma/client';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { BigNumber as OldBigNumber } from './utils/bignumber';
 import { GqlSorSwapType, GqlSorSwapOptionsInput } from 'src/gql-addons';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { SwapType } from '@balancer-labs/sdk';
 
 export interface TokenPriceService {
   /**
@@ -16,6 +14,14 @@ export interface TokenPriceService {
 
 export interface PoolDataService {
   getPools(): Promise<SubgraphPoolBase[]>;
+}
+
+export interface V1ComparisonSwapInfo {
+  returnAmount: string;
+  tokenInAmount: string;
+  tokenOutAmount: string;
+  effectivePriceReversed: string;
+  priceImpact: string;
 }
 
 export interface GetSwapsInput {
@@ -236,7 +242,7 @@ export enum PoolFilter {
   ERC4626Linear = 'ERC4626Linear',
   // Gyro2 = 'Gyro2',
   // Gyro3 = 'Gyro3',
-  // ComposableStable = 'ComposableStable',
+  ComposableStable = 'ComposableStable',
 }
 
 export interface PoolBase {

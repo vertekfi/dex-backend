@@ -1,12 +1,9 @@
 import * as fetch from 'isomorphic-fetch';
 import { PoolDataService, SubgraphPoolBase } from '../types';
 import { getOnChainBalances } from './onchainData';
-import { Inject, Injectable } from '@nestjs/common';
-import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { gql } from 'graphql-request';
-import { networkConfig } from 'src/modules/config/network-config';
 
 const queryWithLinear = gql`
   {
@@ -48,9 +45,12 @@ export const Query: { [chainId: number]: string } = {
   56: queryWithLinear,
 };
 
-@Injectable()
 export class SubgraphPoolDataService implements PoolDataService {
-  constructor(@Inject(RPC) private readonly rpc: AccountWeb3) {}
+  constructor(
+    private readonly rpc: AccountWeb3,
+    private readonly subgraphUrl: string,
+    private readonly vault: string,
+  ) {}
 
   async getPools(): Promise<SubgraphPoolBase[]> {
     // const blockNumber = await this.rpc.provider.getBlockNumber();
@@ -59,7 +59,7 @@ export class SubgraphPoolDataService implements PoolDataService {
     // });
 
     try {
-      const response = await fetch(networkConfig.subgraphs.balancer, {
+      const response = await fetch(this.subgraphUrl, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -95,16 +95,7 @@ export class SubgraphPoolDataService implements PoolDataService {
         };
       });
 
-      // if (config.onchain) {
-      return getOnChainBalances(
-        subgraphPools ?? [],
-        CONTRACT_MAP.MULTICALL[this.rpc.chainId],
-        CONTRACT_MAP.VAULT[this.rpc.chainId],
-        this.rpc,
-      );
-      //}
-
-      // return subgraphPools ?? [];
+      return getOnChainBalances(subgraphPools ?? [], this.vault, this.rpc);
     } catch (error) {
       console.log('Error getting subgraph pools');
       return [];

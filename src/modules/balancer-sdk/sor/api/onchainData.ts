@@ -1,6 +1,4 @@
-import { JsonRpcProvider } from '@ethersproject/providers';
 import { formatFixed } from '@ethersproject/bignumber';
-import { Provider } from '@ethersproject/providers';
 
 // TODO: decide whether we want to trim these ABIs down to the relevant functions
 import * as VaultAbi from '../../../abis/Vault.json';
@@ -22,7 +20,6 @@ import { AccountWeb3 } from 'src/modules/common/types';
 
 export async function getOnChainBalances(
   subgraphPoolsOriginal: SubgraphPoolBase[],
-  multiAddress: string,
   vaultAddress: string,
   rpc: AccountWeb3,
 ): Promise<SubgraphPoolBase[]> {

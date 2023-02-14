@@ -15,22 +15,15 @@ import { ContractService } from 'src/modules/common/web3/contract.service';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
 import { PoolService } from 'src/modules/pool/pool.service';
 import { networkConfig } from '../../config/network-config';
-import {
-  replaceEthWithWeth,
-  replaceEthWithZeroAddress,
-  replaceWethWithEth,
-  replaceZeroAddressWithEth,
-} from '../../utils/addresses';
+import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../utils/addresses';
 import { oldBnum } from '../../utils/old-big-number';
-import { GetSwapsInput, PoolFilter, SwapOptions, SwapTypes } from './types';
+import { GetSwapsInput, PoolFilter, SwapOptions, SwapTypes, V1ComparisonSwapInfo } from './types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
-import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { SorPriceService } from './api/sor-price.service';
 import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
 import { SOR } from './impl/wrapper';
 import { PrismaService } from 'nestjs-prisma';
-import { SorConfig, SwapV2 } from './impl/types';
-import { getWrappedInfo } from './impl/wrapInfo';
+import { SorConfig, SwapInfo, SwapV2 } from './impl/types';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
@@ -46,26 +39,42 @@ export class BalancerSorService {
   private readonly sor: SOR;
   private readonly config: SorConfig = {
     chainId: this.rpc.chainId,
-    vault: CONTRACT_MAP.VAULT[this.rpc.chainId],
+    vault: networkConfig.balancer.vault,
+    weth: networkConfig.weth.address,
+  };
+
+  private readonly sorV1: SOR;
+  private readonly configV1: SorConfig = {
+    chainId: this.rpc.chainId,
+    vault: networkConfig.balancer.vaultV1,
     weth: networkConfig.weth.address,
   };
 
   constructor(
     private readonly contractService: ContractService,
     @Inject(RPC) private rpc: AccountWeb3,
-    private readonly poolDataService: SubgraphPoolDataService,
     private readonly sorPriceService: SorPriceService,
     private readonly prisma: PrismaService,
     private readonly poolService: PoolService,
   ) {
-    this.sor = new SOR(this.rpc.provider, this.config, this.poolDataService, this.sorPriceService);
+    const poolDataV2 = new SubgraphPoolDataService(
+      this.rpc,
+      networkConfig.subgraphs.balancer,
+      this.config.vault,
+    );
+    this.sor = new SOR(this.rpc.provider, this.config, poolDataV2, this.sorPriceService);
+
+    const poolDataV1 = new SubgraphPoolDataService(
+      this.rpc,
+      networkConfig.subgraphs.balancerV1,
+      this.configV1.vault,
+    );
+    this.sorV1 = new SOR(this.rpc.provider, this.configV1, poolDataV1, this.sorPriceService);
   }
 
   async getSwaps({ tokenIn, tokenOut, swapType, swapOptions, swapAmount, tokens }: GetSwapsInput) {
     tokenIn = replaceEthWithZeroAddress(tokenIn);
     tokenOut = replaceEthWithZeroAddress(tokenOut);
-    // tokenIn = replaceEthWithWeth(tokenIn);
-    // tokenOut = replaceEthWithWeth(tokenOut);
 
     const isExactInSwap = swapType === 'EXACT_IN';
 
@@ -80,15 +89,32 @@ export class BalancerSorService {
     // Cache pools and then get swaps
     await this.cacheSubgraphPools();
 
-    const swapInfo = await this.sor.getSwaps(
-      tokenIn,
-      tokenOut,
-      sorSwapType,
-      swapAmountScaled,
-      this.getSwapOptions(swapOptions),
-    );
-    // console.log('SorService: swapInfo result =');
-    // console.log(swapInfo);
+    // TODO: Add conditionally query/use of V1 (tokens in/out relevant for V1 pools, etc)
+    // We are only really concered with a few pools from V1
+    // No need to slow things down for all queries
+    const [swapInfo, swapInfoV1] = await Promise.all([
+      this.sor.getSwaps(
+        tokenIn,
+        tokenOut,
+        sorSwapType,
+        swapAmountScaled,
+        this.getSwapOptions(swapOptions),
+      ),
+      this.sorV1.getSwaps(
+        tokenIn,
+        tokenOut,
+        sorSwapType,
+        swapAmountScaled,
+        this.getSwapOptions(swapOptions),
+      ),
+    ]);
+    console.log('SorService: swapInfo result =');
+    console.log(swapInfo);
+
+    console.log(`
+    `);
+    console.log('SorServiceV1: swapInfoV1 result =');
+    console.log(swapInfoV1);
 
     const returnAmount = formatFixed(
       swapInfo.returnAmount,
@@ -99,6 +125,14 @@ export class BalancerSorService {
     const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
     const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
     const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
+
+    const swapResult = this.getSwapResult(swapInfo, swapAmount, isExactInSwap, tokens);
+    const swapResultV1 = this.getSwapResult(swapInfoV1, swapAmount, isExactInSwap, tokens);
+
+    const bestResult = this.getBestSwapResult(swapResult, swapResultV1);
+    console.log(`
+    `);
+    // console.log(bestResult);
 
     const routes = await this.getSwapResultPoolHops(
       swapInfo.swaps,
@@ -142,6 +176,60 @@ export class BalancerSorService {
     // console.log(swapResults);
 
     return swapResults;
+  }
+
+  private getSwapResult(
+    swapInfo: SwapInfo,
+    swapAmount: string,
+    isExactInSwap: boolean,
+    tokens: PrismaToken[],
+  ): V1ComparisonSwapInfo {
+    const tokenIn = swapInfo.tokenIn;
+    const tokenOut = swapInfo.tokenOut;
+    const returnAmount = formatFixed(
+      swapInfo.returnAmount,
+      this.getTokenDecimals(isExactInSwap ? tokenOut : tokenIn, tokens),
+    );
+    const tokenInAmount = isExactInSwap ? swapAmount : returnAmount;
+    const tokenOutAmount = isExactInSwap ? returnAmount : swapAmount;
+    const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
+    const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount).toString();
+    const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1).toString();
+
+    return {
+      returnAmount,
+      tokenInAmount,
+      tokenOutAmount,
+      effectivePriceReversed,
+      priceImpact,
+    };
+  }
+
+  private getBestSwapResult(
+    swapResult: V1ComparisonSwapInfo,
+    swapResultV1: V1ComparisonSwapInfo,
+  ): V1ComparisonSwapInfo & { isV1Trade: boolean } {
+    const isV1Trade = oldBnum(swapResultV1.returnAmount).gt(oldBnum(swapResult.returnAmount));
+
+    console.log({
+      ...swapResult,
+      isV1Trade,
+    });
+
+    console.log({
+      ...swapResultV1,
+      isV1Trade,
+    });
+
+    return isV1Trade
+      ? {
+          ...swapResultV1,
+          isV1Trade,
+        }
+      : {
+          ...swapResult,
+          isV1Trade,
+        };
   }
 
   async getBatchSwapForTokensIn({
@@ -208,7 +296,8 @@ export class BalancerSorService {
 
   private async cacheSubgraphPools() {
     console.time('[Sor] fetchPools');
-    await this.sor.fetchPools();
+    await Promise.all([this.sor.fetchPools(), this.sorV1.fetchPools()]);
+    // await this.sor.fetchPools();
     console.timeEnd(`[Sor] fetchPools`);
   }
 
@@ -244,6 +333,16 @@ export class BalancerSorService {
       priceOfNativeAssetInBuyToken.toString(),
     );
     this.sor.swapCostCalculator.setNativeAssetPriceInToken(
+      tokenOut,
+      priceOfNativeAssetInSellToken.toString(),
+    );
+
+    // Replicate everything with V1 also
+    this.sorV1.swapCostCalculator.setNativeAssetPriceInToken(
+      tokenIn,
+      priceOfNativeAssetInBuyToken.toString(),
+    );
+    this.sorV1.swapCostCalculator.setNativeAssetPriceInToken(
       tokenOut,
       priceOfNativeAssetInSellToken.toString(),
     );
