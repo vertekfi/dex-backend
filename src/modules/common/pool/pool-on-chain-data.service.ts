@@ -140,7 +140,9 @@ export class PoolOnChainDataService {
     let poolsOnChainData = {} as Record<string, MulticallExecuteResult>;
 
     try {
-      poolsOnChainData = (await multiPool.execute()) as Record<string, MulticallExecuteResult>;
+      poolsOnChainData = (await multiPool.execute(
+        'PoolOnChainDataService:updateOnChainDataV1',
+      )) as Record<string, MulticallExecuteResult>;
     } catch (err: any) {
       console.error(err);
       throw `Issue with multicall execution. ${err}`;
