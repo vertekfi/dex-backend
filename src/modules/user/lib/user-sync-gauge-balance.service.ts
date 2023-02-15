@@ -138,14 +138,20 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
 
           // so if we scheduled more than 100 calls, we execute the batch
           if (multicall.numCalls >= 100) {
-            response = _.merge(response, await multicall.execute());
+            response = _.merge(
+              response,
+              await multicall.execute('UserSyncGaugeBalanceService:syncChangedStakedBalances'),
+            );
           }
         }
         allUserAddress.push(...uniqueUserAddresses);
       }
       // see if we have some more calls to execute
       if (multicall.numCalls > 0) {
-        response = _.merge(response, await multicall.execute());
+        response = _.merge(
+          response,
+          await multicall.execute('UserSyncGaugeBalanceService:syncChangedStakedBalances'),
+        );
       }
 
       /*

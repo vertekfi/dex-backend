@@ -12,15 +12,11 @@ import { ethNum, scaleDown } from '../../utils/old-big-number';
 import { LiquidityGauge } from 'src/graphql';
 import * as LGV5Abi from '../../abis/LiquidityGaugeV5.json';
 import { BigNumber } from 'ethers';
-import { PrismaPoolStakingGauge } from '@prisma/client';
 import { ZERO_ADDRESS } from '../web3/utils';
 import { prismaPoolMinimal } from 'prisma/prisma-types';
-import { ProtocolConfigData, ProtocolGaugeInfo } from '../../protocol/types';
+import { ProtocolGaugeInfo } from '../../protocol/types';
 import { getContractAddress } from '../web3/contract';
-import { getGaugeAddresses, getGaugePoolIds } from './gauge-utils';
-
-const GAUGE_CACHE_KEY = 'GAUGE_CACHE_KEY';
-const SUBGRAPH_GAUGE_CACHE_KEY = 'SUBGRAPH_GAUGE_CACHE_KEY';
+import { getGaugePoolIds } from './gauge-utils';
 
 const MAX_REWARDS = 8;
 
@@ -124,7 +120,7 @@ export class GaugeService {
 
     const rewardTokensResult = await multiCaller.execute<
       Record<string, { reward_tokens: string[] }>
-    >();
+    >('GaugeService:getGaugeRewardTokenAddresses');
 
     for (const gauge of gauges) {
       rewardTokensResult[gauge].reward_tokens = rewardTokensResult[gauge].reward_tokens
@@ -178,7 +174,9 @@ export class GaugeService {
       Object.entries(tokenMapping).filter((data) => data[1].tokens.length),
     );
 
-    const rewardDataResult = (await multiCaller.execute()) as Record<
+    const rewardDataResult = (await multiCaller.execute(
+      'GaugeService:getGaugesRewardData',
+    )) as Record<
       string,
       {
         reward_data: { token: string; rate: BigNumber; period_finish: BigNumber }[];
@@ -211,7 +209,7 @@ export class GaugeService {
       multiCaller.call(`${gauge.id}.symbol`, gauge.id, 'symbol');
     });
 
-    const data = await multiCaller.execute();
+    const data = await multiCaller.execute('GaugeService:getGaugeAdditionalInfo');
 
     const results: any = {};
     for (const address in data) {

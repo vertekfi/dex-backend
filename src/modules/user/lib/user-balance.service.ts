@@ -78,7 +78,7 @@ export class UserBalanceService {
       }
     });
 
-    const result = await multicaller.execute();
+    const result = await multicaller.execute('UserBalanceService:getUserPoolBalances');
 
     const data = pools.map((pool) => {
       const gauge = pool.staking?.gauge;
