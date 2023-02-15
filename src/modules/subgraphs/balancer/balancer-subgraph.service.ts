@@ -81,11 +81,15 @@ export class BalancerSubgraphService {
     args: BalancerPoolsQueryVariables,
     applyTotalSharesFilter = true,
   ): Promise<BalancerPoolFragment[]> {
+    const v1PoolsOfConcern = [
+      '0xb3a07a9cef918b2ccec4bc85c6f2a7975c5e83f9000000000000000000000001', // stable
+      '0x74154c70f113c2b603aa49899371d05eeedd1e8c000200000000000000000003', // ashare(may remove then)
+    ];
+
     return subgraphLoadAll<BalancerPoolFragment>(this.sdkv1.BalancerPools, 'pools', {
       ...args,
       where: {
-        totalShares_not: applyTotalSharesFilter ? '0.00000000001' : undefined,
-        ...args.where,
+        id_in: v1PoolsOfConcern,
       },
     });
   }

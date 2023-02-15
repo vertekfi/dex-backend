@@ -24,14 +24,8 @@ export class PoolCreatorService {
       this.balancerSubgraphService.getAllPoolsV1({}, true),
     ]);
 
-    // const excludedV1 = [
-    //   '0x6d133655ae3548b8a5be1a385adcaabb089eaaf6000000000000000000000028',
-    //   ''
-    // ]
-
     const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools);
     let sortedSubgraphPoolsV1 = this.sortSubgraphPools(subgraphPoolsV1);
-    //sortedSubgraphPoolsV1 = sortedSubgraphPoolsV1.filter(p => p.id)
 
     const poolIds = await this.addPools(sortedSubgraphPools, existingPools, blockNumber, false);
     const v1PoolIds = await this.addPools(sortedSubgraphPoolsV1, existingPools, blockNumber, true);
@@ -205,14 +199,24 @@ export class PoolCreatorService {
       select: { createTime: true },
     });
 
-    const subgraphPools = await this.balancerSubgraphService.getAllPools(
-      {
-        where: { createTime_gte: latest?.createTime || 0 },
-      },
-      false,
-    );
+    // const subgraphPools = await this.balancerSubgraphService.getAllPools(
+    //   {
+    //     where: { createTime_gte: latest?.createTime || 0 },
+    //   },
+    //   false,
+    // );
 
-    const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools);
+    const [subgraphPools, subgraphPoolsV1] = await Promise.all([
+      this.balancerSubgraphService.getAllPools(
+        {
+          where: { createTime_gte: latest?.createTime || 0 },
+        },
+        false,
+      ),
+      this.balancerSubgraphService.getAllPoolsV1({}, true),
+    ]);
+
+    const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools.concat(subgraphPoolsV1));
     const poolIds = new Set<string>();
 
     for (const subgraphPool of sortedSubgraphPools) {

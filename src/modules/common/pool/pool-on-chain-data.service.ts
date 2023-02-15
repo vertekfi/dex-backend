@@ -385,6 +385,12 @@ export class PoolOnChainDataService {
         console.error(`Unknown pool type: ${pool.type} ${pool.id}`);
         return;
       }
+
+      if (pool.isV1) {
+        console.error(`Skipping v1 pool: ${pool.id}`);
+        return;
+      }
+
       multiPool.call(
         `${pool.id}.poolTokens`,
         CONTRACT_MAP.VAULT[this.rpc.chainId],

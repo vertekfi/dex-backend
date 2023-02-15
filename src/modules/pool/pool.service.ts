@@ -180,7 +180,6 @@ export class PoolService {
         categories: {
           none: { category: 'BLACK_LISTED' },
         },
-        // isV1: false,
       },
     });
     const poolIds = result.map((item) => item.id);
