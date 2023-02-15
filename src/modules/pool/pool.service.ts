@@ -265,6 +265,7 @@ export class PoolService {
             gt: 0.000000000001,
           },
         },
+        isV1: false,
       },
     });
 

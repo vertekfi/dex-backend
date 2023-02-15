@@ -57,8 +57,6 @@ export class SubgraphPoolDataService implements PoolDataService {
     //   block: { number: blockNumber },
     // });
 
-    // TODO: So this isn't really needed for V2 pools... it's already synced(ing)
-
     try {
       const response = await fetch(this.subgraphUrl, {
         method: 'POST',
@@ -75,6 +73,7 @@ export class SubgraphPoolDataService implements PoolDataService {
       const subgraphPools: SubgraphPoolBase[] = pools.map((pool): SubgraphPoolBase => {
         const poolType = pool.poolType;
         return {
+          isV1: false,
           id: pool.id,
           address: pool.address,
           poolType: pool.poolType,

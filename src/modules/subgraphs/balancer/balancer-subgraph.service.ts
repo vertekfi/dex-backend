@@ -23,6 +23,7 @@ import { GraphQLClient } from 'graphql-request';
 import { subgraphLoadAll } from '../utils';
 import { BalancerUserPoolShare } from './balancer-types';
 import { networkConfig } from 'src/modules/config/network-config';
+import { V1_POOLS_OF_CONCERN } from 'src/modules/constants/v1-pool';
 
 @Injectable()
 export class BalancerSubgraphService {
@@ -77,19 +78,11 @@ export class BalancerSubgraphService {
     });
   }
 
-  async getAllPoolsV1(
-    args: BalancerPoolsQueryVariables,
-    applyTotalSharesFilter = true,
-  ): Promise<BalancerPoolFragment[]> {
-    const v1PoolsOfConcern = [
-      '0xb3a07a9cef918b2ccec4bc85c6f2a7975c5e83f9000000000000000000000001', // stable
-      '0x74154c70f113c2b603aa49899371d05eeedd1e8c000200000000000000000003', // ashare(may remove then)
-    ];
-
+  async getAllPoolsV1(args: BalancerPoolsQueryVariables): Promise<BalancerPoolFragment[]> {
     return subgraphLoadAll<BalancerPoolFragment>(this.sdkv1.BalancerPools, 'pools', {
       ...args,
       where: {
-        id_in: v1PoolsOfConcern,
+        id_in: V1_POOLS_OF_CONCERN,
       },
     });
   }

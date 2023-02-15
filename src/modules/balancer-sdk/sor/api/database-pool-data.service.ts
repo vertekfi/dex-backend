@@ -1,50 +1,8 @@
-import * as fetch from 'isomorphic-fetch';
 import { PoolDataService, SubgraphPoolBase } from '../types';
 import { getOnChainBalances } from './onchainData';
 import { AccountWeb3 } from 'src/modules/common/types';
-import { gql } from 'graphql-request';
 import { PrismaService } from 'nestjs-prisma';
 import { convertPoolTypeForSubgraph } from './utils';
-
-const queryWithLinear = gql`
-  {
-    pools(
-      where: { swapEnabled: true, totalShares_gt: "0.000000000001" }
-      orderBy: totalLiquidity
-      orderDirection: desc
-    ) {
-      id
-      address
-      poolType
-      swapFee
-      totalShares
-      tokens {
-        address
-        balance
-        decimals
-        weight
-        priceRate
-      }
-      tokensList
-      totalWeight
-      amp
-      expiryTime
-      unitSeconds
-      principalToken
-      baseToken
-      swapEnabled
-      wrappedIndex
-      mainIndex
-      lowerTarget
-      upperTarget
-    }
-  }
-`;
-
-export const Query: { [chainId: number]: string } = {
-  5: queryWithLinear,
-  56: queryWithLinear,
-};
 
 export class DatabasePoolDataService implements PoolDataService {
   constructor(
@@ -77,6 +35,7 @@ export class DatabasePoolDataService implements PoolDataService {
       const subgraphPools: SubgraphPoolBase[] = pools.map((pool): SubgraphPoolBase => {
         const poolType = convertPoolTypeForSubgraph(pool.type);
         return {
+          isV1: pool.isV1,
           id: pool.id,
           address: pool.address,
           poolType,
@@ -101,15 +60,8 @@ export class DatabasePoolDataService implements PoolDataService {
       // Pool data in synced with database at fairly frequent intervals
       // But for purposes of trades we will get certain values fresh each time on chain
       // A multicall is used and we have fast RPC's.
-      // So this should be sufficient while still fast.
-      for (const pool of subgraphPools) {
-        console.log(pool.id);
-        console.log(`
-        `);
-        await getOnChainBalances([pool], this.vault, this.rpc);
-      }
-      // return getOnChainBalances(subgraphPools, this.vault, this.rpc);
-      return [];
+      // So this should be fast while still being sufficient.
+      return getOnChainBalances(subgraphPools, this.vault, this.rpc);
     } catch (error) {
       console.log('Error getting subgraph pools');
       return [];

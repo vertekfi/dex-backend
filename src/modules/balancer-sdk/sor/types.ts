@@ -115,6 +115,7 @@ export interface Swap {
 }
 
 export interface SubgraphPoolBase {
+  isV1: boolean;
   id: string;
   address: string;
   poolType: string;

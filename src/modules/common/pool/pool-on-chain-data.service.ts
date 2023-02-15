@@ -23,6 +23,7 @@ import * as WeightedPoolV2Abi from '../../abis/WeightedPoolV2.json';
 import * as LiquidityBootstrappingPoolAbi from '../../abis/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { TokenPriceService } from '../token/pricing/token-price.service';
+import { networkConfig } from 'src/modules/config/network-config';
 
 @Injectable()
 export class PoolOnChainDataService {
@@ -346,18 +347,32 @@ export class PoolOnChainDataService {
 
   async updateOnChainData(poolIds: string[], blockNumber: number) {
     if (poolIds.length === 0) return;
-    const tokenPrices = await this.pricingService.getCurrentTokenPrices();
+    // const tokenPrices = await this.pricingService.getCurrentTokenPrices();
 
-    const pools = await this.prisma.prismaPool.findMany({
-      where: { id: { in: poolIds } },
-      include: {
-        tokens: { orderBy: { index: 'asc' }, include: { dynamicData: true, token: true } },
-        stableDynamicData: true,
-        dynamicData: true,
-        linearDynamicData: true,
-        linearData: true,
-      },
-    });
+    // const pools = await this.prisma.prismaPool.findMany({
+    //   where: { id: { in: poolIds } },
+    //   include: {
+    //     tokens: { orderBy: { index: 'asc' }, include: { dynamicData: true, token: true } },
+    //     stableDynamicData: true,
+    //     dynamicData: true,
+    //     linearDynamicData: true,
+    //     linearData: true,
+    //   },
+    // });
+
+    const [tokenPrices, pools] = await Promise.all([
+      this.pricingService.getCurrentTokenPrices(),
+      this.prisma.prismaPool.findMany({
+        where: { id: { in: poolIds } },
+        include: {
+          tokens: { orderBy: { index: 'asc' }, include: { dynamicData: true, token: true } },
+          stableDynamicData: true,
+          dynamicData: true,
+          linearDynamicData: true,
+          linearData: true,
+        },
+      }),
+    ]);
 
     const abis: any = Object.values(
       // Remove duplicate entries using their names
@@ -386,14 +401,15 @@ export class PoolOnChainDataService {
         return;
       }
 
-      if (pool.isV1) {
-        console.error(`Skipping v1 pool: ${pool.id}`);
-        return;
-      }
+      // if (pool.isV1) {
+      //   console.error(`Skipping v1 pool: ${pool.id}`);
+      //   return;
+      // }
 
+      // Need to account for v1 vault
       multiPool.call(
         `${pool.id}.poolTokens`,
-        CONTRACT_MAP.VAULT[this.rpc.chainId],
+        pool.isV1 ? networkConfig.balancer.vaultV1 : networkConfig.balancer.vault,
         'getPoolTokens',
         [pool.id],
       );

@@ -15,7 +15,7 @@ const priceCache: {
   };
 } = {};
 
-const ttl = 1000 * 30;
+const ttl = 1000 * 10;
 
 @Injectable()
 export class SorPriceService implements TokenPriceService {

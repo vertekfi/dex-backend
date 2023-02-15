@@ -21,7 +21,7 @@ export class PoolCreatorService {
     const existingPools = await this.prisma.prismaPool.findMany({});
     const [subgraphPools, subgraphPoolsV1] = await Promise.all([
       this.balancerSubgraphService.getAllPools({}, true),
-      this.balancerSubgraphService.getAllPoolsV1({}, true),
+      this.balancerSubgraphService.getAllPoolsV1({}),
     ]);
 
     const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools);
@@ -199,13 +199,6 @@ export class PoolCreatorService {
       select: { createTime: true },
     });
 
-    // const subgraphPools = await this.balancerSubgraphService.getAllPools(
-    //   {
-    //     where: { createTime_gte: latest?.createTime || 0 },
-    //   },
-    //   false,
-    // );
-
     const [subgraphPools, subgraphPoolsV1] = await Promise.all([
       this.balancerSubgraphService.getAllPools(
         {
@@ -213,7 +206,7 @@ export class PoolCreatorService {
         },
         false,
       ),
-      this.balancerSubgraphService.getAllPoolsV1({}, true),
+      this.balancerSubgraphService.getAllPoolsV1({}),
     ]);
 
     const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools.concat(subgraphPoolsV1));

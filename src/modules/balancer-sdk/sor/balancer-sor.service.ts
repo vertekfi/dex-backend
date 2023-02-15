@@ -3,7 +3,6 @@ import { parseFixed, formatFixed } from '@ethersproject/bignumber';
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaToken } from '@prisma/client';
 import { BigNumber } from 'ethers';
-import { getAddress, parseUnits } from 'ethers/lib/utils';
 import {
   GqlSorSwapOptionsInput,
   GqlSorSwapRoute,
@@ -17,17 +16,28 @@ import { PoolService } from 'src/modules/pool/pool.service';
 import { networkConfig } from '../../config/network-config';
 import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../utils/addresses';
 import { oldBnum } from '../../utils/old-big-number';
-import { GetSwapsInput, PoolFilter, SwapOptions, SwapTypes, SwapResult } from './types';
+import { GetSwapsInput, PoolFilter, SwapOptions, SwapTypes } from './types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { SorPriceService } from './api/sor-price.service';
-import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
 import { SOR } from './impl/wrapper';
 import { PrismaService } from 'nestjs-prisma';
-import { SorConfig, SwapInfo, SwapV2 } from './impl/types';
+import { SorConfig, SwapV2 } from './impl/types';
 import { DatabasePoolDataService } from './api/database-pool-data.service';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
+
+const V1_STABLE_POOL_TOKENS = [
+  '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', // BUSD
+  '0x55d398326f99059fF775485246999027B3197955', // USDT
+  '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // USDC
+].map((t) => t.toLowerCase());
+const V1_ASHARE_POOL_TOKENS = [
+  '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', // BUSD
+  '0xFa4b16b0f63F5A6D0651592620D585D308F749A4', // ASHARE
+].map((t) => t.toLowerCase());
+
+const V1_STABLE_POOL_ID = '';
 
 /**
  * Wraps the underlying work for providing pool data and prices to the Smart Order Router in this backend setup.
@@ -44,13 +54,6 @@ export class BalancerSorService {
     weth: networkConfig.weth.address,
   };
 
-  //private readonly sorV1: SOR;
-  private readonly configV1: SorConfig = {
-    chainId: this.rpc.chainId,
-    vault: networkConfig.balancer.vaultV1,
-    weth: networkConfig.weth.address,
-  };
-
   constructor(
     private readonly contractService: ContractService,
     @Inject(RPC) private rpc: AccountWeb3,
@@ -59,31 +62,29 @@ export class BalancerSorService {
     private readonly poolService: PoolService,
   ) {
     const poolDataV2 = new DatabasePoolDataService(this.rpc, this.config.vault, this.prisma);
-
-    // const poolDataV2 = new SubgraphPoolDataService(
-    //   this.rpc,
-    //   networkConfig.subgraphs.balancer,
-    //   this.config.vault,
-    // );
     this.sor = new SOR(this.rpc.provider, this.config, poolDataV2, this.sorPriceService);
-
-    // const poolDataV1 = new SubgraphPoolDataService(
-    //   this.rpc,
-    //   networkConfig.subgraphs.balancerV1,
-    //   this.configV1.vault,
-    // );
-
-    // this.sorV1 = new SOR(this.rpc.provider, this.configV1, poolDataV1, this.sorPriceService);
   }
 
   async getSwaps({ tokenIn, tokenOut, swapType, swapOptions, swapAmount, tokens }: GetSwapsInput) {
     tokenIn = replaceEthWithZeroAddress(tokenIn);
     tokenOut = replaceEthWithZeroAddress(tokenOut);
-    // tokenIn = replaceEthWithWeth(tokenIn);
-    // tokenOut = replaceEthWithWeth(tokenOut);
+
+    // hmm can't "hop" through a v1 vault pool
+    // So need to simply check for stable swaps and ashare-busd direct pool access
+
+    // if token in is in stable pool, and, token out is in stable pool
+    // run a separate query to get swap amount out to determine v1 trade
+
+    // else filter them out of the pools considered for routing
+
+    let includeV1Pools = true;
+    if (V1_STABLE_POOL_TOKENS.includes(tokenIn) && V1_STABLE_POOL_TOKENS.includes(tokenOut)) {
+      includeV1Pools = true;
+    }
+
+    console.log(includeV1Pools);
 
     const isExactInSwap = swapType === 'EXACT_IN';
-
     const tokenDecimals = this.getTokenDecimals(isExactInSwap ? tokenIn : tokenOut, tokens);
     const swapAmountScaled = this.getSwapAmountScaled(swapAmount, tokenDecimals);
 
@@ -158,88 +159,6 @@ export class BalancerSorService {
 
     return swapResults;
   }
-  // private getSwapResult(
-  //   swapInfo: SwapInfo,
-  //   swapAmount: string,
-  //   isExactInSwap: boolean,
-  //   tokens: PrismaToken[],
-  // ): SwapResult {
-  //   const tokenIn = swapInfo.tokenIn;
-  //   const tokenOut = swapInfo.tokenOut;
-  //   const returnAmount = formatFixed(
-  //     swapInfo.returnAmount,
-  //     this.getTokenDecimals(isExactInSwap ? tokenOut : tokenIn, tokens),
-  //   );
-  //   const tokenInAmount = isExactInSwap ? swapAmount : returnAmount;
-  //   const tokenOutAmount = isExactInSwap ? returnAmount : swapAmount;
-  //   const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
-  //   const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount).toString();
-  //   const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1).toString();
-
-  //   const swapAmountScaled = BigNumber.from(swapInfo.swapAmount).toString();
-  //   const swapAmountForSwaps = swapInfo.swapAmountForSwaps
-  //     ? BigNumber.from(swapInfo.swapAmountForSwaps).toString()
-  //     : undefined;
-
-  //   const returnAmountScaled = BigNumber.from(swapInfo.returnAmount).toString();
-  //   const returnAmountConsideringFees = BigNumber.from(
-  //     swapInfo.returnAmountConsideringFees,
-  //   ).toString();
-
-  //   // Used with stETH/wstETH
-  //   const returnAmountFromSwaps = swapInfo.returnAmountFromSwaps
-  //     ? BigNumber.from(swapInfo.returnAmountFromSwaps).toString()
-  //     : undefined;
-
-  //   return {
-  //     // tokenIn: replaceZeroAddressWithEth(tokenIn),
-  //     // tokenOut: replaceZeroAddressWithEth(tokenOut),
-  //     returnAmount,
-  //     tokenInAmount,
-  //     tokenOutAmount,
-  //     effectivePrice: effectivePrice.toString(),
-  //     effectivePriceReversed,
-  //     priceImpact,
-  //     swapAmountScaled,
-  //     swapAmountForSwaps,
-  //     returnAmountScaled,
-  //     returnAmountFromSwaps,
-  //     returnAmountConsideringFees,
-  //   };
-  // }
-
-  // private getBestSwapResult(
-  //   swapResult: SwapResult,
-  //   swapResultV1: SwapResult,
-  // ): SwapResult & { isV1Trade: boolean } {
-  //   const isV1ReturnBetter = oldBnum(swapResultV1.returnAmount).gt(
-  //     oldBnum(swapResult.returnAmount),
-  //   );
-  //   const isV1ReturnBetterAccountingForFees = oldBnum(swapResultV1.returnAmountConsideringFees).gt(
-  //     oldBnum(swapResult.returnAmountConsideringFees),
-  //   );
-
-  //   const isV1Trade = isV1ReturnBetter && isV1ReturnBetterAccountingForFees;
-  //   // console.log({
-  //   //   ...swapResult,
-  //   //   isV1Trade,
-  //   // });
-
-  //   // console.log({
-  //   //   ...swapResultV1,
-  //   //   isV1Trade,
-  //   // });
-
-  //   return isV1Trade
-  //     ? {
-  //         ...swapResultV1,
-  //         isV1Trade,
-  //       }
-  //     : {
-  //         ...swapResult,
-  //         isV1Trade,
-  //       };
-  // }
 
   async getBatchSwapForTokensIn({
     tokensIn,
