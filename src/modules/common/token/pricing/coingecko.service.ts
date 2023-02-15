@@ -164,12 +164,12 @@ export class CoingeckoService implements TokenPricingService {
       // const results = this.parsePaginatedTokens(paginatedResults, mapped);
       // console.log(results);
       // Inject native asset price if included in requested addresses
-      if (
-        addresses.includes(networkConfig.eth.address) ||
-        addresses.includes(networkConfig.eth.addressFormatted)
-      ) {
-        results[networkConfig.eth.address] = await this.getNativeAssetPrice();
-      }
+      // if (
+      //   addresses.includes(networkConfig.eth.address) ||
+      //   addresses.includes(networkConfig.eth.addressFormatted)
+      // ) {
+      //   results[networkConfig.eth.address] = await this.getNativeAssetPrice();
+      // }
 
       return results;
     } catch (error: any) {
