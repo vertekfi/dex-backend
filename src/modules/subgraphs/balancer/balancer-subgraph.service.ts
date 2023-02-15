@@ -27,13 +27,19 @@ import { networkConfig } from 'src/modules/config/network-config';
 @Injectable()
 export class BalancerSubgraphService {
   readonly client: GraphQLClient;
+  readonly v1Client: GraphQLClient;
 
   private get sdk() {
     return getSdk(this.client);
   }
 
+  private get sdkv1() {
+    return getSdk(this.v1Client);
+  }
+
   constructor() {
     this.client = new GraphQLClient(networkConfig.subgraphs.balancer);
+    this.v1Client = new GraphQLClient(networkConfig.subgraphs.balancerV1);
   }
 
   async getMetadata() {
@@ -63,6 +69,19 @@ export class BalancerSubgraphService {
     applyTotalSharesFilter = true,
   ): Promise<BalancerPoolFragment[]> {
     return subgraphLoadAll<BalancerPoolFragment>(this.sdk.BalancerPools, 'pools', {
+      ...args,
+      where: {
+        totalShares_not: applyTotalSharesFilter ? '0.00000000001' : undefined,
+        ...args.where,
+      },
+    });
+  }
+
+  async getAllPoolsV1(
+    args: BalancerPoolsQueryVariables,
+    applyTotalSharesFilter = true,
+  ): Promise<BalancerPoolFragment[]> {
+    return subgraphLoadAll<BalancerPoolFragment>(this.sdkv1.BalancerPools, 'pools', {
       ...args,
       where: {
         totalShares_not: applyTotalSharesFilter ? '0.00000000001' : undefined,

@@ -34,6 +34,12 @@ export class PoolMutationResolver {
   }
 
   @Mutation()
+  async poolLoadOnChainDataForPoolsWithActiveUpdates() {
+    await this.poolService.loadOnChainDataForPoolsWithActiveUpdates();
+    return 'success';
+  }
+
+  @Mutation()
   async poolSyncSanityPoolData() {
     await this.poolDataSync.syncPoolConfigData();
     return 'success';
@@ -54,12 +60,6 @@ export class PoolMutationResolver {
   @Mutation()
   async poolSyncSwapsForLast48Hours() {
     await this.poolService.syncSwapsForLast48Hours();
-    return 'success';
-  }
-
-  @Mutation()
-  async poolLoadOnChainDataForPoolsWithActiveUpdates() {
-    await this.poolService.loadOnChainDataForPoolsWithActiveUpdates();
     return 'success';
   }
 

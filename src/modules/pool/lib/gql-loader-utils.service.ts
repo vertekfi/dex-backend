@@ -748,6 +748,9 @@ export class PoolGqlLoaderUtils {
           categories: {
             none: { category: 'BLACK_LISTED' },
           },
+          isV1: {
+            equals: false,
+          },
           // dynamicData: {
           //   totalSharesNum: {
           //     gt: 0.000000000001,

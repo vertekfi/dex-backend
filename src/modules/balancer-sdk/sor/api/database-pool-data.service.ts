@@ -3,6 +3,8 @@ import { PoolDataService, SubgraphPoolBase } from '../types';
 import { getOnChainBalances } from './onchainData';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { gql } from 'graphql-request';
+import { PrismaService } from 'nestjs-prisma';
+import { convertPoolTypeForSubgraph } from './utils';
 
 const queryWithLinear = gql`
   {
@@ -44,59 +46,61 @@ export const Query: { [chainId: number]: string } = {
   56: queryWithLinear,
 };
 
-export class SubgraphPoolDataService implements PoolDataService {
+export class DatabasePoolDataService implements PoolDataService {
   constructor(
     private readonly rpc: AccountWeb3,
-    private readonly subgraphUrl: string,
     private readonly vault: string,
+    private readonly prisma: PrismaService,
   ) {}
 
   async getPools(): Promise<SubgraphPoolBase[]> {
-    // const blockNumber = await this.rpc.provider.getBlockNumber();
-    // const pools = await this.balancerSubgraphService.getAllPools({
-    //   block: { number: blockNumber },
-    // });
-
-    // TODO: So this isn't really needed for V2 pools... it's already synced(ing)
-
     try {
-      const response = await fetch(this.subgraphUrl, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
+      const pools = await this.prisma.prismaPool.findMany({
+        // where: {
+        //   isV1: false,
+        // },
+        include: {
+          dynamicData: true,
+          stableDynamicData: true,
+          tokens: {
+            include: {
+              dynamicData: true,
+              token: true,
+            },
+          },
         },
-        body: JSON.stringify({ query: Query[this.rpc.chainId] }),
       });
 
-      const { data } = await response.json();
-      const pools: SubgraphPoolBase[] = data.pools;
-
       const subgraphPools: SubgraphPoolBase[] = pools.map((pool): SubgraphPoolBase => {
-        const poolType = pool.poolType;
+        const poolType = convertPoolTypeForSubgraph(pool.type);
+        console.log(poolType);
         return {
           id: pool.id,
           address: pool.address,
-          poolType: pool.poolType,
-          swapFee: pool.swapFee,
-          swapEnabled: pool.swapEnabled,
-          totalShares: pool.totalShares,
-          amp: poolType === 'Stable' ? pool.amp : null,
+          poolType: pool.type,
+          swapFee: pool.dynamicData.swapFee,
+          swapEnabled: pool.dynamicData.swapEnabled,
+          totalShares: pool.dynamicData.totalShares,
+          amp: poolType === 'Stable' ? pool.stableDynamicData.amp : null,
           tokens: pool.tokens.map((t) => {
             return {
-              decimals: t.decimals,
+              decimals: t.token.decimals,
               address: t.address,
-              balance: t.balance,
-              weight: poolType === 'Weighted' ? t.weight : null,
-              priceRate: t.priceRate,
+              balance: t.dynamicData.balance,
+              weight: poolType === 'Weighted' ? t.dynamicData.weight : null,
+              priceRate: t.dynamicData.priceRate,
             };
           }),
           tokensList: pool.tokens.map((t) => t.address),
-          totalWeight: pool.totalWeight,
+          totalWeight: '1',
         };
       });
 
-      return getOnChainBalances(subgraphPools ?? [], this.vault, this.rpc);
+      // Pool data in synced with database at fairly frequent intervals
+      // But for purposes of trades we will get certain values fresh each time on chain
+      // A multicall is used and we have fast RPC's.
+      // So this should be sufficient while still fast.
+      return getOnChainBalances(subgraphPools, this.vault, this.rpc);
     } catch (error) {
       console.log('Error getting subgraph pools');
       return [];

@@ -24,6 +24,7 @@ import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
 import { SOR } from './impl/wrapper';
 import { PrismaService } from 'nestjs-prisma';
 import { SorConfig, SwapInfo, SwapV2 } from './impl/types';
+import { DatabasePoolDataService } from './api/database-pool-data.service';
 
 const SWAP_COST = process.env.APP_SWAP_COST || '100000';
 const GAS_PRICE = process.env.APP_GAS_PRICE || '100000000000';
@@ -57,11 +58,13 @@ export class BalancerSorService {
     private readonly prisma: PrismaService,
     private readonly poolService: PoolService,
   ) {
-    const poolDataV2 = new SubgraphPoolDataService(
-      this.rpc,
-      networkConfig.subgraphs.balancer,
-      this.config.vault,
-    );
+    const poolDataV2 = new DatabasePoolDataService(this.rpc, this.config.vault, this.prisma);
+
+    // const poolDataV2 = new SubgraphPoolDataService(
+    //   this.rpc,
+    //   networkConfig.subgraphs.balancer,
+    //   this.config.vault,
+    // );
     this.sor = new SOR(this.rpc.provider, this.config, poolDataV2, this.sorPriceService);
 
     const poolDataV1 = new SubgraphPoolDataService(

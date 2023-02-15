@@ -60,6 +60,7 @@ model PrismaPool {
 
     userPoolBalanceSnapshots    PrismaUserPoolBalanceSnapshot[]
 
+    isV1                Boolean? @default(false)
 }
 
 enum PrismaPoolType {

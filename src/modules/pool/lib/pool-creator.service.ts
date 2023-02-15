@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaPoolType } from '@prisma/client';
+import { PrismaPool, PrismaPoolType } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaPoolWithExpandedNesting } from 'prisma/prisma-types';
 import { ZERO_ADDRESS } from 'src/modules/common/web3/utils';
@@ -19,9 +19,32 @@ export class PoolCreatorService {
 
   async syncAllPoolsFromSubgraph(blockNumber: number): Promise<string[]> {
     const existingPools = await this.prisma.prismaPool.findMany({});
-    const subgraphPools = await this.balancerSubgraphService.getAllPools({}, false);
-    const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools);
+    const [subgraphPools, subgraphPoolsV1] = await Promise.all([
+      this.balancerSubgraphService.getAllPools({}, true),
+      this.balancerSubgraphService.getAllPoolsV1({}, true),
+    ]);
 
+    // const excludedV1 = [
+    //   '0x6d133655ae3548b8a5be1a385adcaabb089eaaf6000000000000000000000028',
+    //   ''
+    // ]
+
+    const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools);
+    let sortedSubgraphPoolsV1 = this.sortSubgraphPools(subgraphPoolsV1);
+    //sortedSubgraphPoolsV1 = sortedSubgraphPoolsV1.filter(p => p.id)
+
+    const poolIds = await this.addPools(sortedSubgraphPools, existingPools, blockNumber, false);
+    const v1PoolIds = await this.addPools(sortedSubgraphPoolsV1, existingPools, blockNumber, true);
+
+    return poolIds.concat(v1PoolIds);
+  }
+
+  private async addPools(
+    sortedSubgraphPools: BalancerPoolFragment[],
+    existingPools: PrismaPool[],
+    blockNumber: number,
+    isV1 = false,
+  ) {
     const poolIds: string[] = [];
 
     let counter = 1;
@@ -31,7 +54,7 @@ export class PoolCreatorService {
       const existsInDb = !!existingPools.find((pool) => pool.id === subgraphPool.id);
 
       if (!existsInDb) {
-        await this.createPoolRecord(subgraphPool, sortedSubgraphPools, blockNumber);
+        await this.createPoolRecord(subgraphPool, sortedSubgraphPools, blockNumber, isV1);
         poolIds.push(subgraphPool.id);
       }
     }
@@ -43,6 +66,7 @@ export class PoolCreatorService {
     pool: BalancerPoolFragment,
     allPools: BalancerPoolFragment[],
     blockNumber: number,
+    isV1 = false,
   ) {
     const poolType = this.mapSubgraphPoolTypeToPoolType(pool.poolType || '');
     const poolTokens = pool.tokens || [];
@@ -67,6 +91,7 @@ export class PoolCreatorService {
 
     await this.prisma.prismaPool.create({
       data: {
+        isV1,
         id: pool.id,
         createTime: pool.createTime,
         address: pool.address,
@@ -186,6 +211,7 @@ export class PoolCreatorService {
       },
       false,
     );
+
     const sortedSubgraphPools = this.sortSubgraphPools(subgraphPools);
     const poolIds = new Set<string>();
 
@@ -322,7 +348,7 @@ export class PoolCreatorService {
       if (poolType === 'LINEAR') {
         return 0;
       } else if (poolType === 'PHANTOM_STABLE') {
-        //if the phantom stable has a nested phantom stable, it needs to appear later in the list
+        // If the phantom stable has a nested phantom stable, it needs to appear later in the list
         const nestedPhantomStableToken = (pool.tokens || []).find((token) => {
           if (token.address === pool.address) {
             return false;
