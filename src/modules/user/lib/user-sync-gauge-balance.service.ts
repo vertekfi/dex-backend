@@ -142,6 +142,10 @@ export class UserSyncGaugeBalanceService implements UserStakedBalanceService {
               response,
               await multicall.execute('UserSyncGaugeBalanceService:syncChangedStakedBalances'),
             );
+            response = _.merge(
+              response,
+              await multicall.execute('UserSyncGaugeBalanceService:syncChangedStakedBalances'),
+            );
           }
         }
         allUserAddress.push(...uniqueUserAddresses);

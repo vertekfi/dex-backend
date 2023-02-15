@@ -32,6 +32,7 @@ export class VeBalHelpers {
       );
     }
     const result = await multicaller.execute('VeBalHelpers:getRelativeWeights');
+    const result = await multicaller.execute('VeBalHelpers:getRelativeWeights');
 
     const weights = mapValues(result, (weight) => {
       if (weight) {
