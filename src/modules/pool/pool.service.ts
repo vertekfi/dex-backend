@@ -180,22 +180,17 @@ export class PoolService {
         categories: {
           none: { category: 'BLACK_LISTED' },
         },
-        isV1: false,
+        // isV1: false,
       },
     });
     const poolIds = result.map((item) => item.id);
     const blockNumber = await this.blockService.getBlockNumber();
 
-    for (const id of poolIds) {
-      console.log(id);
-      await this.poolOnChainDataService.updateOnChainData([id], blockNumber);
+    const chunks = _.chunk(poolIds, 100);
+
+    for (const chunk of chunks) {
+      await this.poolOnChainDataService.updateOnChainData(chunk, blockNumber);
     }
-
-    // const chunks = _.chunk(poolIds, 100);
-
-    // for (const chunk of chunks) {
-    //   await this.poolOnChainDataService.updateOnChainData(chunk, blockNumber);
-    // }
   }
 
   async updateOnChainDataForPools(poolIds: string[], blockNumber: number) {

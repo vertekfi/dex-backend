@@ -56,9 +56,12 @@ export class DatabasePoolDataService implements PoolDataService {
   async getPools(): Promise<SubgraphPoolBase[]> {
     try {
       const pools = await this.prisma.prismaPool.findMany({
-        // where: {
-        //   isV1: false,
-        // },
+        where: {
+          isV1: false,
+          categories: {
+            none: { category: 'BLACK_LISTED' },
+          },
+        },
         include: {
           dynamicData: true,
           stableDynamicData: true,
@@ -73,11 +76,10 @@ export class DatabasePoolDataService implements PoolDataService {
 
       const subgraphPools: SubgraphPoolBase[] = pools.map((pool): SubgraphPoolBase => {
         const poolType = convertPoolTypeForSubgraph(pool.type);
-        console.log(poolType);
         return {
           id: pool.id,
           address: pool.address,
-          poolType: pool.type,
+          poolType,
           swapFee: pool.dynamicData.swapFee,
           swapEnabled: pool.dynamicData.swapEnabled,
           totalShares: pool.dynamicData.totalShares,
@@ -100,7 +102,14 @@ export class DatabasePoolDataService implements PoolDataService {
       // But for purposes of trades we will get certain values fresh each time on chain
       // A multicall is used and we have fast RPC's.
       // So this should be sufficient while still fast.
-      return getOnChainBalances(subgraphPools, this.vault, this.rpc);
+      for (const pool of subgraphPools) {
+        console.log(pool.id);
+        console.log(`
+        `);
+        await getOnChainBalances([pool], this.vault, this.rpc);
+      }
+      // return getOnChainBalances(subgraphPools, this.vault, this.rpc);
+      return [];
     } catch (error) {
       console.log('Error getting subgraph pools');
       return [];

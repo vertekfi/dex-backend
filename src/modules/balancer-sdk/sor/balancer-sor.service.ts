@@ -44,7 +44,7 @@ export class BalancerSorService {
     weth: networkConfig.weth.address,
   };
 
-  private readonly sorV1: SOR;
+  //private readonly sorV1: SOR;
   private readonly configV1: SorConfig = {
     chainId: this.rpc.chainId,
     vault: networkConfig.balancer.vaultV1,
@@ -67,17 +67,20 @@ export class BalancerSorService {
     // );
     this.sor = new SOR(this.rpc.provider, this.config, poolDataV2, this.sorPriceService);
 
-    const poolDataV1 = new SubgraphPoolDataService(
-      this.rpc,
-      networkConfig.subgraphs.balancerV1,
-      this.configV1.vault,
-    );
-    this.sorV1 = new SOR(this.rpc.provider, this.configV1, poolDataV1, this.sorPriceService);
+    // const poolDataV1 = new SubgraphPoolDataService(
+    //   this.rpc,
+    //   networkConfig.subgraphs.balancerV1,
+    //   this.configV1.vault,
+    // );
+
+    // this.sorV1 = new SOR(this.rpc.provider, this.configV1, poolDataV1, this.sorPriceService);
   }
 
   async getSwaps({ tokenIn, tokenOut, swapType, swapOptions, swapAmount, tokens }: GetSwapsInput) {
     tokenIn = replaceEthWithZeroAddress(tokenIn);
     tokenOut = replaceEthWithZeroAddress(tokenOut);
+    // tokenIn = replaceEthWithWeth(tokenIn);
+    // tokenOut = replaceEthWithWeth(tokenOut);
 
     const isExactInSwap = swapType === 'EXACT_IN';
 
@@ -92,104 +95,16 @@ export class BalancerSorService {
     // Cache pools and then get swaps
     await this.cacheSubgraphPools();
 
-    // TODO: Add conditionally query/use of V1 (tokens in/out relevant for V1 pools, etc)
-    // We are only really concered with a few pools from V1
-    // No need to slow things down for all queries
-    const [swapInfo, swapInfoV1] = await Promise.all([
-      this.sor.getSwaps(
-        tokenIn,
-        tokenOut,
-        sorSwapType,
-        swapAmountScaled,
-        this.getSwapOptions(swapOptions),
-      ),
-      this.sorV1.getSwaps(
-        tokenIn,
-        tokenOut,
-        sorSwapType,
-        swapAmountScaled,
-        this.getSwapOptions(swapOptions),
-      ),
-    ]);
+    const swapInfo = await this.sor.getSwaps(
+      tokenIn,
+      tokenOut,
+      sorSwapType,
+      swapAmountScaled,
+      this.getSwapOptions(swapOptions),
+    );
     // console.log('SorService: swapInfo result =');
     // console.log(swapInfo);
 
-    // console.log(`
-    // `);
-    // console.log('SorServiceV1: swapInfoV1 result =');
-    // console.log(swapInfoV1);
-
-    const swapResult = this.getSwapResult(swapInfo, swapAmount, isExactInSwap, tokens);
-    const swapResultV1 = this.getSwapResult(swapInfoV1, swapAmount, isExactInSwap, tokens);
-
-    const {
-      // tokenIn,
-      // tokenOut,
-      returnAmount,
-      tokenInAmount,
-      tokenOutAmount,
-      effectivePrice,
-      effectivePriceReversed,
-      priceImpact,
-      returnAmountFromSwaps,
-      returnAmountConsideringFees,
-      returnAmountScaled,
-      isV1Trade,
-    } = this.getBestSwapResult(swapResult, swapResultV1);
-
-    const swapInfoOut = isV1Trade ? swapInfoV1 : swapInfo;
-
-    const routes = await this.getSwapResultPoolHops(
-      swapInfoOut.swaps,
-      tokenIn,
-      tokenOut,
-      tokenInAmount,
-      tokenOutAmount,
-    );
-
-    const swapResults = {
-      ...swapInfoOut,
-      tokenIn: replaceZeroAddressWithEth(swapInfoOut.tokenIn),
-      tokenOut: replaceZeroAddressWithEth(swapInfoOut.tokenOut),
-      swapType,
-      tokenInAmount,
-      tokenOutAmount,
-      swapAmount,
-      swapAmountScaled: BigNumber.from(swapInfoOut.swapAmount).toString(),
-      swapAmountForSwaps: swapInfoOut.swapAmountForSwaps
-        ? BigNumber.from(swapInfoOut.swapAmountForSwaps).toString()
-        : undefined,
-      returnAmount,
-      returnAmountScaled,
-      returnAmountConsideringFees,
-      returnAmountFromSwaps,
-      effectivePrice,
-      effectivePriceReversed,
-      priceImpact,
-      isV1Trade,
-      routes,
-      // routes: swapInfo.routes.map((route) => ({
-      //   ...route,
-      //   hops: route.hops.map((hop) => ({
-      //     ...hop,
-      //     pool: pools.find((pool) => pool.id === hop.poolId)!,
-      //   })),
-      // })),
-    };
-
-    // console.log(swapResults);
-
-    return swapResults;
-  }
-
-  private getSwapResult(
-    swapInfo: SwapInfo,
-    swapAmount: string,
-    isExactInSwap: boolean,
-    tokens: PrismaToken[],
-  ): SwapResult {
-    const tokenIn = swapInfo.tokenIn;
-    const tokenOut = swapInfo.tokenOut;
     const returnAmount = formatFixed(
       swapInfo.returnAmount,
       this.getTokenDecimals(isExactInSwap ? tokenOut : tokenIn, tokens),
@@ -197,73 +112,134 @@ export class BalancerSorService {
     const tokenInAmount = isExactInSwap ? swapAmount : returnAmount;
     const tokenOutAmount = isExactInSwap ? returnAmount : swapAmount;
     const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
-    const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount).toString();
-    const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1).toString();
+    const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
+    const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
 
-    const swapAmountScaled = BigNumber.from(swapInfo.swapAmount).toString();
-    const swapAmountForSwaps = swapInfo.swapAmountForSwaps
-      ? BigNumber.from(swapInfo.swapAmountForSwaps).toString()
-      : undefined;
-
-    const returnAmountScaled = BigNumber.from(swapInfo.returnAmount).toString();
-    const returnAmountConsideringFees = BigNumber.from(
-      swapInfo.returnAmountConsideringFees,
-    ).toString();
-
-    // Used with stETH/wstETH
-    const returnAmountFromSwaps = swapInfo.returnAmountFromSwaps
-      ? BigNumber.from(swapInfo.returnAmountFromSwaps).toString()
-      : undefined;
-
-    return {
-      // tokenIn: replaceZeroAddressWithEth(tokenIn),
-      // tokenOut: replaceZeroAddressWithEth(tokenOut),
-      returnAmount,
+    const routes = await this.getSwapResultPoolHops(
+      swapInfo.swaps,
+      tokenIn,
+      tokenOut,
       tokenInAmount,
       tokenOutAmount,
+    );
+
+    const swapResults = {
+      ...swapInfo,
+      tokenIn: replaceZeroAddressWithEth(swapInfo.tokenIn),
+      tokenOut: replaceZeroAddressWithEth(swapInfo.tokenOut),
+      swapType,
+      tokenInAmount,
+      tokenOutAmount,
+      swapAmount,
+      swapAmountScaled: BigNumber.from(swapInfo.swapAmount).toString(),
+      swapAmountForSwaps: swapInfo.swapAmountForSwaps
+        ? BigNumber.from(swapInfo.swapAmountForSwaps).toString()
+        : undefined,
+      returnAmount,
+      returnAmountScaled: BigNumber.from(swapInfo.returnAmount).toString(),
+      returnAmountConsideringFees: BigNumber.from(swapInfo.returnAmountConsideringFees).toString(),
+      returnAmountFromSwaps: swapInfo.returnAmountFromSwaps
+        ? BigNumber.from(swapInfo.returnAmountFromSwaps).toString()
+        : undefined,
+      // routes: swapInfo.routes.map((route) => ({
+      //   ...route,
+      //   hops: route.hops.map((hop) => ({
+      //     ...hop,
+      //     pool: pools.find((pool) => pool.id === hop.poolId)!,
+      //   })),
+      // })),
+      routes,
       effectivePrice: effectivePrice.toString(),
-      effectivePriceReversed,
-      priceImpact,
-      swapAmountScaled,
-      swapAmountForSwaps,
-      returnAmountScaled,
-      returnAmountFromSwaps,
-      returnAmountConsideringFees,
+      effectivePriceReversed: effectivePriceReversed.toString(),
+      priceImpact: priceImpact.toString(),
     };
+
+    // console.log(swapResults);
+
+    return swapResults;
   }
+  // private getSwapResult(
+  //   swapInfo: SwapInfo,
+  //   swapAmount: string,
+  //   isExactInSwap: boolean,
+  //   tokens: PrismaToken[],
+  // ): SwapResult {
+  //   const tokenIn = swapInfo.tokenIn;
+  //   const tokenOut = swapInfo.tokenOut;
+  //   const returnAmount = formatFixed(
+  //     swapInfo.returnAmount,
+  //     this.getTokenDecimals(isExactInSwap ? tokenOut : tokenIn, tokens),
+  //   );
+  //   const tokenInAmount = isExactInSwap ? swapAmount : returnAmount;
+  //   const tokenOutAmount = isExactInSwap ? returnAmount : swapAmount;
+  //   const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
+  //   const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount).toString();
+  //   const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1).toString();
 
-  private getBestSwapResult(
-    swapResult: SwapResult,
-    swapResultV1: SwapResult,
-  ): SwapResult & { isV1Trade: boolean } {
-    const isV1ReturnBetter = oldBnum(swapResultV1.returnAmount).gt(
-      oldBnum(swapResult.returnAmount),
-    );
-    const isV1ReturnBetterAccountingForFees = oldBnum(swapResultV1.returnAmountConsideringFees).gt(
-      oldBnum(swapResult.returnAmountConsideringFees),
-    );
+  //   const swapAmountScaled = BigNumber.from(swapInfo.swapAmount).toString();
+  //   const swapAmountForSwaps = swapInfo.swapAmountForSwaps
+  //     ? BigNumber.from(swapInfo.swapAmountForSwaps).toString()
+  //     : undefined;
 
-    const isV1Trade = isV1ReturnBetter && isV1ReturnBetterAccountingForFees;
-    // console.log({
-    //   ...swapResult,
-    //   isV1Trade,
-    // });
+  //   const returnAmountScaled = BigNumber.from(swapInfo.returnAmount).toString();
+  //   const returnAmountConsideringFees = BigNumber.from(
+  //     swapInfo.returnAmountConsideringFees,
+  //   ).toString();
 
-    // console.log({
-    //   ...swapResultV1,
-    //   isV1Trade,
-    // });
+  //   // Used with stETH/wstETH
+  //   const returnAmountFromSwaps = swapInfo.returnAmountFromSwaps
+  //     ? BigNumber.from(swapInfo.returnAmountFromSwaps).toString()
+  //     : undefined;
 
-    return isV1Trade
-      ? {
-          ...swapResultV1,
-          isV1Trade,
-        }
-      : {
-          ...swapResult,
-          isV1Trade,
-        };
-  }
+  //   return {
+  //     // tokenIn: replaceZeroAddressWithEth(tokenIn),
+  //     // tokenOut: replaceZeroAddressWithEth(tokenOut),
+  //     returnAmount,
+  //     tokenInAmount,
+  //     tokenOutAmount,
+  //     effectivePrice: effectivePrice.toString(),
+  //     effectivePriceReversed,
+  //     priceImpact,
+  //     swapAmountScaled,
+  //     swapAmountForSwaps,
+  //     returnAmountScaled,
+  //     returnAmountFromSwaps,
+  //     returnAmountConsideringFees,
+  //   };
+  // }
+
+  // private getBestSwapResult(
+  //   swapResult: SwapResult,
+  //   swapResultV1: SwapResult,
+  // ): SwapResult & { isV1Trade: boolean } {
+  //   const isV1ReturnBetter = oldBnum(swapResultV1.returnAmount).gt(
+  //     oldBnum(swapResult.returnAmount),
+  //   );
+  //   const isV1ReturnBetterAccountingForFees = oldBnum(swapResultV1.returnAmountConsideringFees).gt(
+  //     oldBnum(swapResult.returnAmountConsideringFees),
+  //   );
+
+  //   const isV1Trade = isV1ReturnBetter && isV1ReturnBetterAccountingForFees;
+  //   // console.log({
+  //   //   ...swapResult,
+  //   //   isV1Trade,
+  //   // });
+
+  //   // console.log({
+  //   //   ...swapResultV1,
+  //   //   isV1Trade,
+  //   // });
+
+  //   return isV1Trade
+  //     ? {
+  //         ...swapResultV1,
+  //         isV1Trade,
+  //       }
+  //     : {
+  //         ...swapResult,
+  //         isV1Trade,
+  //       };
+  // }
 
   async getBatchSwapForTokensIn({
     tokensIn,
@@ -329,8 +305,7 @@ export class BalancerSorService {
 
   private async cacheSubgraphPools() {
     console.time('[Sor] fetchPools');
-    await Promise.all([this.sor.fetchPools(), this.sorV1.fetchPools()]);
-    // await this.sor.fetchPools();
+    await this.sor.fetchPools();
     console.timeEnd(`[Sor] fetchPools`);
   }
 
@@ -371,14 +346,14 @@ export class BalancerSorService {
     );
 
     // Replicate everything with V1 also
-    this.sorV1.swapCostCalculator.setNativeAssetPriceInToken(
-      tokenIn,
-      priceOfNativeAssetInBuyToken.toString(),
-    );
-    this.sorV1.swapCostCalculator.setNativeAssetPriceInToken(
-      tokenOut,
-      priceOfNativeAssetInSellToken.toString(),
-    );
+    // this.sorV1.swapCostCalculator.setNativeAssetPriceInToken(
+    //   tokenIn,
+    //   priceOfNativeAssetInBuyToken.toString(),
+    // );
+    // this.sorV1.swapCostCalculator.setNativeAssetPriceInToken(
+    //   tokenOut,
+    //   priceOfNativeAssetInSellToken.toString(),
+    // );
   }
 
   private getSwapOptions(incomingOptions: GqlSorSwapOptionsInput): SwapOptions {

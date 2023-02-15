@@ -14,7 +14,7 @@ import * as LinearPoolAbi from '../../../abis/LinearPool.json';
 import * as LiquidityBootstrappingPoolAbi from '../../../abis/LiquidityBootstrappingPool.json';
 import { Multicaller } from 'src/modules/common/web3/multicaller';
 import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
-import { PoolDataService, PoolFilter, SubgraphPoolBase } from '../types';
+import { PoolFilter, SubgraphPoolBase } from '../types';
 import { isSameAddress } from '@balancer-labs/sdk';
 import { AccountWeb3 } from 'src/modules/common/types';
 
@@ -62,7 +62,7 @@ export async function getOnChainBalances(
       pool.poolType === 'LiquidityBootstrapping' ||
       pool.poolType === 'Investment'
     ) {
-      multiPool.call(`${pool.id}.weights`, pool.address, 'getNormalizedWeights');
+      // multiPool.call(`${pool.id}.weights`, pool.address, 'getNormalizedWeights');
       multiPool.call(`${pool.id}.swapFee`, pool.address, 'getSwapFeePercentage');
     } else if (
       pool.poolType === 'Stable' ||
