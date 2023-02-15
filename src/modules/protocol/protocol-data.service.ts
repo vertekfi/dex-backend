@@ -54,7 +54,10 @@ export class ProtocolDataService {
 
     pools.forEach((pool) => {
       // Skip StakelessGauge
-      if (pool.staking.gauge.id !== '0x9740727f14461738AF5a37a433D397822380c637') {
+      if (
+        pool.staking.gauge &&
+        pool.staking.gauge.id !== '0x9740727f14461738AF5a37a433D397822380c637'
+      ) {
         multicaller.call(
           `${pool.staking.gauge.id}.pendingFees`,
           pool.staking.gauge.id,
@@ -69,6 +72,7 @@ export class ProtocolDataService {
 
     const values = Object.entries(result).map((feeInfo) => {
       const gaugeAddress = feeInfo[0];
+
       // List is based on current gauges, so we know this is good
       const pool = pools.find((p) => p.staking.gauge.id === gaugeAddress);
       const gauge = pool.staking.gauge.symbol;
