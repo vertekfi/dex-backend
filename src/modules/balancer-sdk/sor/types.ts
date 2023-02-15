@@ -16,12 +16,21 @@ export interface PoolDataService {
   getPools(): Promise<SubgraphPoolBase[]>;
 }
 
-export interface V1ComparisonSwapInfo {
+export interface SwapResult {
+  // tokenIn: string;
+  // tokenOut: string;
   returnAmount: string;
   tokenInAmount: string;
   tokenOutAmount: string;
+  effectivePrice: string;
   effectivePriceReversed: string;
   priceImpact: string;
+
+  swapAmountScaled: string;
+  swapAmountForSwaps: string; //  Used with stETH/wstETH
+  returnAmountScaled: string;
+  returnAmountFromSwaps: string; //  Used with stETH/wstETH
+  returnAmountConsideringFees: string;
 }
 
 export interface GetSwapsInput {

@@ -17,7 +17,7 @@ import { PoolService } from 'src/modules/pool/pool.service';
 import { networkConfig } from '../../config/network-config';
 import { replaceEthWithZeroAddress, replaceZeroAddressWithEth } from '../../utils/addresses';
 import { oldBnum } from '../../utils/old-big-number';
-import { GetSwapsInput, PoolFilter, SwapOptions, SwapTypes, V1ComparisonSwapInfo } from './types';
+import { GetSwapsInput, PoolFilter, SwapOptions, SwapTypes, SwapResult } from './types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { SorPriceService } from './api/sor-price.service';
 import { SubgraphPoolDataService } from './api/subgraphPoolDataService';
@@ -108,34 +108,36 @@ export class BalancerSorService {
         this.getSwapOptions(swapOptions),
       ),
     ]);
-    console.log('SorService: swapInfo result =');
-    console.log(swapInfo);
+    // console.log('SorService: swapInfo result =');
+    // console.log(swapInfo);
 
-    console.log(`
-    `);
-    console.log('SorServiceV1: swapInfoV1 result =');
-    console.log(swapInfoV1);
-
-    const returnAmount = formatFixed(
-      swapInfo.returnAmount,
-      this.getTokenDecimals(isExactInSwap ? tokenOut : tokenIn, tokens),
-    );
-    const tokenInAmount = isExactInSwap ? swapAmount : returnAmount;
-    const tokenOutAmount = isExactInSwap ? returnAmount : swapAmount;
-    const effectivePrice = oldBnum(tokenInAmount).div(tokenOutAmount);
-    const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
-    const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
+    // console.log(`
+    // `);
+    // console.log('SorServiceV1: swapInfoV1 result =');
+    // console.log(swapInfoV1);
 
     const swapResult = this.getSwapResult(swapInfo, swapAmount, isExactInSwap, tokens);
     const swapResultV1 = this.getSwapResult(swapInfoV1, swapAmount, isExactInSwap, tokens);
 
-    const bestResult = this.getBestSwapResult(swapResult, swapResultV1);
-    console.log(`
-    `);
-    // console.log(bestResult);
+    const {
+      // tokenIn,
+      // tokenOut,
+      returnAmount,
+      tokenInAmount,
+      tokenOutAmount,
+      effectivePrice,
+      effectivePriceReversed,
+      priceImpact,
+      returnAmountFromSwaps,
+      returnAmountConsideringFees,
+      returnAmountScaled,
+      isV1Trade,
+    } = this.getBestSwapResult(swapResult, swapResultV1);
+
+    const swapInfoOut = isV1Trade ? swapInfoV1 : swapInfo;
 
     const routes = await this.getSwapResultPoolHops(
-      swapInfo.swaps,
+      swapInfoOut.swaps,
       tokenIn,
       tokenOut,
       tokenInAmount,
@@ -143,23 +145,26 @@ export class BalancerSorService {
     );
 
     const swapResults = {
-      ...swapInfo,
-      tokenIn: replaceZeroAddressWithEth(swapInfo.tokenIn),
-      tokenOut: replaceZeroAddressWithEth(swapInfo.tokenOut),
+      ...swapInfoOut,
+      tokenIn: replaceZeroAddressWithEth(swapInfoOut.tokenIn),
+      tokenOut: replaceZeroAddressWithEth(swapInfoOut.tokenOut),
       swapType,
       tokenInAmount,
       tokenOutAmount,
       swapAmount,
-      swapAmountScaled: BigNumber.from(swapInfo.swapAmount).toString(),
-      swapAmountForSwaps: swapInfo.swapAmountForSwaps
-        ? BigNumber.from(swapInfo.swapAmountForSwaps).toString()
+      swapAmountScaled: BigNumber.from(swapInfoOut.swapAmount).toString(),
+      swapAmountForSwaps: swapInfoOut.swapAmountForSwaps
+        ? BigNumber.from(swapInfoOut.swapAmountForSwaps).toString()
         : undefined,
       returnAmount,
-      returnAmountScaled: BigNumber.from(swapInfo.returnAmount).toString(),
-      returnAmountConsideringFees: BigNumber.from(swapInfo.returnAmountConsideringFees).toString(),
-      returnAmountFromSwaps: swapInfo.returnAmountFromSwaps
-        ? BigNumber.from(swapInfo.returnAmountFromSwaps).toString()
-        : undefined,
+      returnAmountScaled,
+      returnAmountConsideringFees,
+      returnAmountFromSwaps,
+      effectivePrice,
+      effectivePriceReversed,
+      priceImpact,
+      isV1Trade,
+      routes,
       // routes: swapInfo.routes.map((route) => ({
       //   ...route,
       //   hops: route.hops.map((hop) => ({
@@ -167,10 +172,6 @@ export class BalancerSorService {
       //     pool: pools.find((pool) => pool.id === hop.poolId)!,
       //   })),
       // })),
-      routes,
-      effectivePrice: effectivePrice.toString(),
-      effectivePriceReversed: effectivePriceReversed.toString(),
-      priceImpact: priceImpact.toString(),
     };
 
     // console.log(swapResults);
@@ -183,7 +184,7 @@ export class BalancerSorService {
     swapAmount: string,
     isExactInSwap: boolean,
     tokens: PrismaToken[],
-  ): V1ComparisonSwapInfo {
+  ): SwapResult {
     const tokenIn = swapInfo.tokenIn;
     const tokenOut = swapInfo.tokenOut;
     const returnAmount = formatFixed(
@@ -196,30 +197,59 @@ export class BalancerSorService {
     const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount).toString();
     const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1).toString();
 
+    const swapAmountScaled = BigNumber.from(swapInfo.swapAmount).toString();
+    const swapAmountForSwaps = swapInfo.swapAmountForSwaps
+      ? BigNumber.from(swapInfo.swapAmountForSwaps).toString()
+      : undefined;
+
+    const returnAmountScaled = BigNumber.from(swapInfo.returnAmount).toString();
+    const returnAmountConsideringFees = BigNumber.from(
+      swapInfo.returnAmountConsideringFees,
+    ).toString();
+
+    // Used with stETH/wstETH
+    const returnAmountFromSwaps = swapInfo.returnAmountFromSwaps
+      ? BigNumber.from(swapInfo.returnAmountFromSwaps).toString()
+      : undefined;
+
     return {
+      // tokenIn: replaceZeroAddressWithEth(tokenIn),
+      // tokenOut: replaceZeroAddressWithEth(tokenOut),
       returnAmount,
       tokenInAmount,
       tokenOutAmount,
+      effectivePrice: effectivePrice.toString(),
       effectivePriceReversed,
       priceImpact,
+      swapAmountScaled,
+      swapAmountForSwaps,
+      returnAmountScaled,
+      returnAmountFromSwaps,
+      returnAmountConsideringFees,
     };
   }
 
   private getBestSwapResult(
-    swapResult: V1ComparisonSwapInfo,
-    swapResultV1: V1ComparisonSwapInfo,
-  ): V1ComparisonSwapInfo & { isV1Trade: boolean } {
-    const isV1Trade = oldBnum(swapResultV1.returnAmount).gt(oldBnum(swapResult.returnAmount));
+    swapResult: SwapResult,
+    swapResultV1: SwapResult,
+  ): SwapResult & { isV1Trade: boolean } {
+    const isV1ReturnBetter = oldBnum(swapResultV1.returnAmount).gt(
+      oldBnum(swapResult.returnAmount),
+    );
+    const isV1ReturnBetterAccountingForFees = oldBnum(swapResultV1.returnAmountConsideringFees).gt(
+      oldBnum(swapResult.returnAmountConsideringFees),
+    );
 
-    console.log({
-      ...swapResult,
-      isV1Trade,
-    });
+    const isV1Trade = isV1ReturnBetter && isV1ReturnBetterAccountingForFees;
+    // console.log({
+    //   ...swapResult,
+    //   isV1Trade,
+    // });
 
-    console.log({
-      ...swapResultV1,
-      isV1Trade,
-    });
+    // console.log({
+    //   ...swapResultV1,
+    //   isV1Trade,
+    // });
 
     return isV1Trade
       ? {

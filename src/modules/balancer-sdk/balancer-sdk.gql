@@ -44,7 +44,7 @@ type GqlSorGetSwapsResponse {
   effectivePrice: AmountHumanReadable!
   effectivePriceReversed: AmountHumanReadable!
   priceImpact: AmountHumanReadable!
-  isV1BetterTrade: Boolean!
+  isV1Trade: Boolean!
 }
 
 type GqlSorSwap {
