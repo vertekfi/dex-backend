@@ -33,7 +33,7 @@ export class PoolOnChainDataService {
     private readonly pricingService: TokenPriceService,
   ) {}
 
-  async updateOnChainDataV1(poolIds: string[], blockNumber: number) {
+  async updateOnChainData(poolIds: string[], blockNumber: number) {
     if (poolIds.length === 0) return;
     const tokenPrices = await this.pricingService.getCurrentTokenPrices();
 

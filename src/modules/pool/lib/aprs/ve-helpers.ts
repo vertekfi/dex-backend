@@ -31,7 +31,7 @@ export class VeBalHelpers {
         [getAddress(gaugeAddress)],
       );
     }
-    const result = await multicaller.execute('VeBalHelpers:getRelativeWeights');
+
     const result = await multicaller.execute('VeBalHelpers:getRelativeWeights');
 
     const weights = mapValues(result, (weight) => {
