@@ -104,7 +104,7 @@ export async function getOnChainBalances(
   >;
 
   try {
-    pools = (await multiPool.execute()) as Record<
+    pools = (await multiPool.execute('getOnChainBalances')) as Record<
       string,
       {
         amp?: string[];

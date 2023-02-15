@@ -87,8 +87,8 @@ export class RewardPoolService {
     let balancesOnChainData = {} as Record<string, { balanceOf: BigNumber }>;
     try {
       [poolsOnChainData, balancesOnChainData] = await Promise.all([
-        poolDataMulticall.execute(),
-        balancesMulticall.execute(),
+        poolDataMulticall.execute('RewardPoolService:getPoolInfo'),
+        balancesMulticall.execute('RewardPoolService:getPoolInfo'),
       ]);
     } catch (err: any) {
       console.error(err);
@@ -162,7 +162,7 @@ export class RewardPoolService {
 
     let userOnChainData = {} as Record<string, UserInfoMulticallResult>;
     try {
-      userOnChainData = await userMulitcall.execute();
+      userOnChainData = await userMulitcall.execute('RewardPoolService:attachUserPoolsInfo');
     } catch (err: any) {
       console.error(err);
       throw `Issue with multicall execution. ${err}`;

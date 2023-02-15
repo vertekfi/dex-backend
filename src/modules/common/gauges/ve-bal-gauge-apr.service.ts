@@ -16,7 +16,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { BalTokenAdmin } from 'src/modules/balancer-sdk/contracts/bal-token-admin';
 import { AccountWeb3 } from 'src/modules/common/types';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
-import { getTokenAddress } from 'src/modules/common/token/utils';
 import { ProtocolService } from 'src/modules/protocol/protocol.service';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaPoolAprItem, PrismaPoolAprRange } from '@prisma/client';
@@ -26,7 +25,6 @@ import { bnum } from 'src/modules/utils/bignumber-utils';
 import { VeBalAprCalc } from 'src/modules/common/gauges/vebal-apr.calc';
 import { networkConfig } from 'src/modules/config/network-config';
 import { ProtocoFeesService } from 'src/modules/protocol/protocol-fees.service';
-import { AprConcern } from './apr-concern';
 import { PoolSnapshotService } from '../pool/pool-snapshot.service';
 
 @Injectable()
@@ -161,19 +159,6 @@ export class VeGaugeAprService implements PoolAprService {
       };
     });
 
-    const poolIds = protoData.gauges.map((g) => g.poolId);
-    const gaugePools = pools.filter((p) => poolIds.includes(p.id));
-
-    for (const pool of gaugePools) {
-      // const snapshot = await this.prisma.prismaPoolSnapshot.findMany({
-      //   where: { poolId: pool.id },
-      //   orderBy: { timestamp: 'desc' }, // Double check this
-      //   take: 1,
-      // });
-      // console.log(snapshot);
-      // const aprConcern = new AprConcern(snapshot, this.veBalAprService);
-    }
-
     const gaugeAprs: any[] = await this.getGaugeBALAprs({
       pools,
       gauges: gaugeData,
@@ -295,7 +280,7 @@ export class VeGaugeAprService implements PoolAprService {
       multicaller.call(getAddress(gaugeAddress), getAddress(gaugeAddress), 'working_supply');
     }
 
-    const result = await multicaller.execute();
+    const result = await multicaller.execute('VeGaugeAprService:getWorkingSupplyForGauges');
     const supplies = mapValues(result, (weight) => {
       return weight ? formatUnits(weight, 18) : '0.0';
     });
@@ -309,7 +294,7 @@ export class VeGaugeAprService implements PoolAprService {
     for (const gaugeAddress of gaugeAddresses) {
       multicaller.call(getAddress(gaugeAddress), getAddress(gaugeAddress), 'totalSupply');
     }
-    const result = await multicaller.execute();
+    const result = await multicaller.execute('VeGaugeAprService:getTotalSupplyForGauges');
     const supplies = mapValues(result, (weight) => {
       return weight ? formatUnits(weight, 18) : '0.0';
     });
@@ -340,7 +325,9 @@ export class VeGaugeAprService implements PoolAprService {
         ]);
       }
 
-      const result = await multicaller.execute<Record<string, { weight: BigNumber }>>();
+      const result = await multicaller.execute<Record<string, { weight: BigNumber }>>(
+        'VeGaugeAprService:getRelativeWeightsForGauges',
+      );
 
       const weightMap: Record<string, string> = {};
       for (const address in result) {

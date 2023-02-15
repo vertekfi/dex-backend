@@ -63,7 +63,9 @@ export class ProtocolDataService {
       }
     });
 
-    const result = await multicaller.execute<Record<string, { pendingFees: BigNumber }>>();
+    const result = await multicaller.execute<Record<string, { pendingFees: BigNumber }>>(
+      'ProtocolDataService:getAllGaugePendingProtocolFees',
+    );
 
     const values = Object.entries(result).map((feeInfo) => {
       const gaugeAddress = feeInfo[0];
@@ -107,7 +109,9 @@ export class ProtocolDataService {
       multicaller.call(`${pool.address}.balance`, pool.address, 'balanceOf', [feeCollecorAddress]);
     }
 
-    const results = await multicaller.execute<{ [address: string]: { balance: BigNumber } }>();
+    const results = await multicaller.execute<{ [address: string]: { balance: BigNumber } }>(
+      'ProtocolDataService:getFeeCollectorPendingInfo',
+    );
 
     let totalValueUSD = 0;
     const values = Object.entries(results).map((feeInfo) => {

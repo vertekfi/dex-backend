@@ -9,7 +9,7 @@ import { UserBalanceService } from './lib/user-balance.service';
 import { UserSyncGaugeBalanceService } from './lib/user-sync-gauge-balance.service';
 import { UserSyncWalletBalanceService } from './lib/user-sync-wallet-balance.service';
 import { VeBalLockInfoResult } from './types';
-import { UserGaugeShare, UserPoolBalance } from './user-types';
+import { UserPoolBalance } from './user-types';
 import * as votingEscrowAbi from '../abis/VotingEscrow.json';
 import { RPC } from '../common/web3/rpc.provider';
 import { AccountWeb3 } from '../common/types';
@@ -131,7 +131,9 @@ export class UserService {
     veBalMulticaller.call('totalSupply', veAddress, 'totalSupply');
     veBalMulticaller.call('balanceOf', veAddress, 'balanceOf', [account]);
 
-    const result = await veBalMulticaller.execute<VeBalLockInfoResult>();
+    const result = await veBalMulticaller.execute<VeBalLockInfoResult>(
+      'UserService:getUserVeLockInfo',
+    );
 
     return this.formatLockInfo(result);
   }
@@ -240,7 +242,9 @@ export class UserService {
     gaugeAddresses.forEach((g) => multiCaller.call(`${g}.balance`, g, 'balanceOf', [userAddress]));
 
     return Object.entries(
-      await multiCaller.execute<Record<string, { balance: BigNumber }>>(),
+      await multiCaller.execute<Record<string, { balance: BigNumber }>>(
+        'UserService:getUserGaugeBalances',
+      ),
     ).filter((info) => !info[1].balance.isZero());
   }
 }

@@ -35,7 +35,7 @@ export class Multicaller {
     return this;
   }
 
-  async execute<T extends Record<string, any>>(from = {}): Promise<T> {
+  async execute<T extends Record<string, any>>(invokingMethod: string, from = {}): Promise<T> {
     const obj = from;
     // not print the full exception for now, not polluting the log too much
     try {
@@ -45,6 +45,8 @@ export class Multicaller {
       });
     } catch (err) {
       console.log('multicall error', err);
+      console.log('multicall paths:');
+      this.paths.forEach(console.log);
       throw `Non-stacktrace multicall error`;
     }
     this.calls = [];
@@ -95,7 +97,7 @@ export class Multicaller {
         multicall.call(`${erc20Address}.${userAddress}`, erc20Address, 'balanceOf', [userAddress]);
       }
 
-      const response = (await multicall.execute()) as {
+      const response = (await multicall.execute('multicall:fetchBalances')) as {
         [erc20Address: string]: { [userAddress: string]: BigNumber };
       };
 

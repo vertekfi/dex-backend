@@ -3,7 +3,6 @@ import { PrismaToken, PrismaTokenDynamicData } from '@prisma/client';
 import { BigNumber, Contract } from 'ethers';
 import { PrismaService } from 'nestjs-prisma';
 import { HistoricalPrice } from 'src/modules/token/token-types-old';
-import { calcOutGivenIn } from 'src/modules/utils/math/WeightedMath';
 import { ethNum } from 'src/modules/utils/old-big-number';
 import { getPoolAddress } from '../../pool/pool-utils';
 import { AccountWeb3 } from '../../types';
@@ -13,12 +12,10 @@ import { RPC } from '../../web3/rpc.provider';
 import { TokenDefinition, TokenPricingService } from '../types';
 import { getPoolPricingMap, getPricingAssetPrices } from './data';
 import { getTimestampStartOfDaysAgoUTC } from 'src/modules/utils/time';
-import { getVault, getVaultAbi } from '../../web3/contract';
-import { objectToLowerCaseArr, toLowerCaseArr } from 'src/modules/utils/general.utils';
+import { getVault } from '../../web3/contract';
+import { objectToLowerCaseArr } from 'src/modules/utils/general.utils';
 import { ZERO_ADDRESS } from '../../web3/utils';
 import { SwapKind } from '../../types/vault.types';
-import { formatEther, parseUnits } from 'ethers/lib/utils';
-import { formatFixed } from '@ethersproject/bignumber';
 
 export interface IPoolPricingConfig {
   rpc: AccountWeb3;
@@ -142,7 +139,7 @@ export class PoolPricingService implements TokenPricingService {
           weights: BigNumber[];
           swapFee: BigNumber;
         }
-      > = await balancesMulticall.execute();
+      > = await balancesMulticall.execute('IPoolPricingConfig:getWeightedTokenPoolPrices');
 
       const results: { [token: string]: number } = {};
 
@@ -187,20 +184,6 @@ export class PoolPricingService implements TokenPricingService {
 
         const swapFeeCut = spotPrice * swapFee;
         const finalPrice = spotPrice - swapFeeCut;
-
-        const poolTokenInUSD = balanceIn * spotPrice;
-        const poolTokenOutUSD = balanceOut * pricingTokenPrice;
-        const totalValue = poolTokenInUSD + poolTokenOutUSD;
-
-        // console.log(`
-        // `);
-        // console.log('token: ' + tokenIn);
-        // console.log('spotPrice: ' + spotPrice);
-        // console.log('swapFee: ' + swapFee);
-        // console.log('spotPrice after fee: ' + finalPrice);
-        // console.log('balanceIn: ' + balanceIn);
-        // console.log('balanceOut: ' + balanceOut);
-        // console.log('Total liquidity(2 tokens): ' + totalValue);
 
         results[tokenIn] = finalPrice;
       }
