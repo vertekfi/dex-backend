@@ -231,7 +231,7 @@ export class PoolService {
     // Also move all of this apr stuff into its own concern/service
     const swaps = new SwapFeeAprService(this.prisma, 0.5);
     // await this.poolAprUpdaterService.updatePoolAprs([swaps, ...this.aprServices]);
-    await this.poolAprUpdaterService.updatePoolAprs([...this.aprServices]);
+    await this.poolAprUpdaterService.updatePoolAprs([...this.aprServices, swaps]);
   }
 
   async syncChangedPools() {
