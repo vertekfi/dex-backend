@@ -129,6 +129,7 @@ export class ProtocolDataService {
       return {
         token: poolAddress,
         poolId: pool.id,
+        poolAddress: pool.address,
         poolName: pool.name,
         amount: String(poolBalance),
         valueUSD,
