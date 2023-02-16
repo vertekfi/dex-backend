@@ -118,6 +118,8 @@ export class VeGaugeAprService implements PoolAprService {
   async updateVeVrtkApr() {
     const operations = [];
     // TODO: Need to check fee distributor because we may add multiple tokens
+    // Update: fee withdraw data is saved during automation
+    // Need to get what was withdraw and deposited for ve stakers to claim for the previous week
     const vrtkPool = await this.prisma.prismaPool.findFirst({
       where: {
         id: networkConfig.balancer.votingEscrow.lockablePoolId,
