@@ -76,7 +76,7 @@ export class ProtocolDataService {
       // List is based on current gauges, so we know this is good
       const pool = pools.find((p) => p.staking.gauge.id === gaugeAddress);
       const gauge = pool.staking.gauge.symbol;
-      const pendingPoolTokensFee = ethNum(feeInfo[1].pendingFees);
+      const amount = ethNum(feeInfo[1].pendingFees);
       const valueUSD = this.getAmountValueUSD(bpts, pool.address, ethNum(feeInfo[1].pendingFees));
 
       return {
@@ -85,7 +85,7 @@ export class ProtocolDataService {
         poolAddress: pool.address,
         gauge,
         gaugeAddress,
-        pendingPoolTokensFee,
+        amount,
         valueUSD,
       };
     });
