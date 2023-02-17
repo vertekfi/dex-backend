@@ -60,4 +60,10 @@ export class UserQueryResolver {
     const accountAddress = userAddress ? userAddress : getRequiredAccountAddress(context);
     return this.userService.getUserBoosts(accountAddress);
   }
+
+  @Query()
+  async userGetProtocolRewardInfo(@Context() context) {
+    const accountAddress = getRequiredAccountAddress(context);
+    return this.userService.getUserProtocolRewardInfo(accountAddress);
+  }
 }

@@ -7,6 +7,7 @@ extend type Query {
   userGetPortfolioSnapshots(days: Int!): [GqlUserPortfolioSnapshot!]!
   userGetVeLockInfo: GqlUserVoteEscrowInfo!
   userGetGaugeBoosts(userAddress: String): [GqlUserGaugeBoost]!
+  userGetProtocolRewardInfo: [GqlUserProtocolReward]!
   # userGetPoolSnapshots(poolId: String!, range: GqlUserSnapshotDataRange!): [GqlUserPoolSnapshot!]!
 }
 
@@ -20,6 +21,20 @@ extend type Mutation {
 
   userInitStakedBalances: String!
   userSyncChangedStakedBalances: String!
+}
+
+type GqlUserProtocolReward {
+  poolId: String!
+  token: String!
+  tokenInfo: GqlProtocolRewardTokenInfo!
+  amount: String!
+  isBPT: Boolean!
+  tokenList: [GqlToken!]!
+}
+
+type GqlProtocolRewardTokenInfo {
+  logoURI: String
+  valueUSD: String!
 }
 
 type GqlUserGaugeBoost {
