@@ -144,7 +144,7 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
       tokenListMappingKey:
         'https://raw.githubusercontent.com/vertekfi/token-list/dev/tokenlist.json',
       poolDataUrl:
-        'https://raw.githubusercontent.com/vertekfi/pool-data-config/0056f6fc0dd38528031cccc1217ed7413e6a0c11/pool-data.json',
+        'https://raw.githubusercontent.com/vertekfi/pool-data-config/main/pool-data.json',
     },
   },
   '5': {
