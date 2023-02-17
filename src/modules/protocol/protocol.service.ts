@@ -87,6 +87,8 @@ export class ProtocolService {
         return parseFloat(pool?.dynamicData?.swapFee || '0') * swap.valueUSD;
       });
 
+      // TODO: Add gauge fees
+
       const protocolData: ProtocolMetrics = {
         totalLiquidity: `${totalLiquidity}`,
         totalSwapFee,
