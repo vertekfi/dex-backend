@@ -124,4 +124,7 @@ export const CONTRACT_MAP = {
     5: '',
     56: '',
   },
+  SimpleFeeDist: {
+    56: '0x2CFCe0B4d47A994E56904D9EbB9716bbd0A59AbC',
+  },
 };
