@@ -17,6 +17,7 @@ import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
 import { PoolFilter, SubgraphPoolBase } from '../types';
 import { isSameAddress } from '@balancer-labs/sdk';
 import { AccountWeb3 } from 'src/modules/common/types';
+import { getContractAddress } from 'src/modules/common/web3/contract';
 
 export async function getOnChainBalances(
   subgraphPoolsOriginal: SubgraphPoolBase[],
@@ -53,7 +54,12 @@ export async function getOnChainBalances(
 
     subgraphPools.push(pool);
 
-    multiPool.call(`${pool.id}.poolTokens`, vaultAddress, 'getPoolTokens', [pool.id]);
+    multiPool.call(
+      `${pool.id}.poolTokens`,
+      pool.isV1 ? getContractAddress('VAULT_V1') : vaultAddress,
+      'getPoolTokens',
+      [pool.id],
+    );
     multiPool.call(`${pool.id}.totalSupply`, pool.address, 'totalSupply');
 
     // TO DO - Make this part of class to make more flexible?
@@ -62,7 +68,7 @@ export async function getOnChainBalances(
       pool.poolType === 'LiquidityBootstrapping' ||
       pool.poolType === 'Investment'
     ) {
-      // multiPool.call(`${pool.id}.weights`, pool.address, 'getNormalizedWeights');
+      multiPool.call(`${pool.id}.weights`, pool.address, 'getNormalizedWeights');
       multiPool.call(`${pool.id}.swapFee`, pool.address, 'getSwapFeePercentage');
     } else if (
       pool.poolType === 'Stable' ||

@@ -37,7 +37,8 @@ const V1_ASHARE_POOL_TOKENS = [
   '0xFa4b16b0f63F5A6D0651592620D585D308F749A4', // ASHARE
 ].map((t) => t.toLowerCase());
 
-const V1_STABLE_POOL_ID = '';
+const V1_STABLE_POOL_ID = '0xb3a07a9cef918b2ccec4bc85c6f2a7975c5e83f9000000000000000000000001';
+const V1_ASHARE_POOL_ID = '0x74154c70f113c2b603aa49899371d05eeedd1e8c000200000000000000000003';
 
 /**
  * Wraps the underlying work for providing pool data and prices to the Smart Order Router in this backend setup.
@@ -82,8 +83,6 @@ export class BalancerSorService {
       includeV1Pools = true;
     }
 
-    console.log(includeV1Pools);
-
     const isExactInSwap = swapType === 'EXACT_IN';
     const tokenDecimals = this.getTokenDecimals(isExactInSwap ? tokenIn : tokenOut, tokens);
     const swapAmountScaled = this.getSwapAmountScaled(swapAmount, tokenDecimals);
@@ -116,7 +115,7 @@ export class BalancerSorService {
     const effectivePriceReversed = oldBnum(tokenOutAmount).div(tokenInAmount);
     const priceImpact = effectivePrice.div(swapInfo.marketSp).minus(1);
 
-    const routes = await this.getSwapResultPoolHops(
+    const { routes, isV1Trade } = await this.getSwapResultPoolHops(
       swapInfo.swaps,
       tokenIn,
       tokenOut,
@@ -153,6 +152,7 @@ export class BalancerSorService {
       effectivePrice: effectivePrice.toString(),
       effectivePriceReversed: effectivePriceReversed.toString(),
       priceImpact: priceImpact.toString(),
+      isV1Trade,
     };
 
     // console.log(swapResults);
@@ -303,13 +303,8 @@ export class BalancerSorService {
     // Using local pool data from database instead
     // const pools = await this.sor.getPools();
     const poolIds = swaps.map((path) => path.poolId);
-    //  console.log(swaps);
-    //  const gqlPoolsProms = poolIds.map((id) => this.poolService.getGqlPool(id));
-    // const gqlPools = await Promise.all(gqlPoolsProms);
-    const gqlPools = [];
-    for (const id of poolIds) {
-      gqlPools.push(await this.poolService.getGqlPool(id));
-    }
+    const gqlPoolsProms = poolIds.map((id) => this.poolService.getGqlPool(id));
+    const gqlPools = await Promise.all(gqlPoolsProms);
 
     // TODO: Probably already a method on the sor to extract the routing/hop info for a given swap
     const hops: GqlSorSwapRouteHop[] = [];
@@ -337,8 +332,6 @@ export class BalancerSorService {
       hops.push(hop);
     });
 
-    // console.log(hops);
-
     const routes = swaps.map((path): GqlSorSwapRoute => {
       return {
         tokenIn,
@@ -350,17 +343,17 @@ export class BalancerSorService {
       };
     });
 
-    // routes: swapInfo.routes.map((route) => ({
-    //   ...route,
-    //   hops: route.hops.map((hop) => ({
-    //     ...hop,
-    //     pool: pools.find((pool) => pool.id === hop.poolId)!,
-    //   })),
-    // })),
+    let isV1Trade = false;
+    if (swaps.length === 1) {
+      if (poolIds.includes(V1_STABLE_POOL_ID) || poolIds.includes(V1_ASHARE_POOL_ID)) {
+        isV1Trade = true;
+      }
+    }
 
-    // console.log(routes);
-
-    return routes;
+    return {
+      routes,
+      isV1Trade,
+    };
   }
 
   private async getToken(address: string) {

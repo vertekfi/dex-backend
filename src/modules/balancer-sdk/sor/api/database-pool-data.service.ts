@@ -15,7 +15,7 @@ export class DatabasePoolDataService implements PoolDataService {
     try {
       const pools = await this.prisma.prismaPool.findMany({
         where: {
-          isV1: false,
+          // isV1: false,
           categories: {
             none: { category: 'BLACK_LISTED' },
           },
