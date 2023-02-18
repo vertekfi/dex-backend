@@ -598,7 +598,6 @@ export class PoolGqlLoaderUtils {
         tokenOptions:
           isWrappedNativeAsset && supportsNativeAsset
             ? [
-                this.mapPoolTokenToGql(poolToken),
                 this.mapPoolTokenToGql({
                   ...poolToken,
                   token: {
@@ -609,6 +608,7 @@ export class PoolGqlLoaderUtils {
                   },
                   id: `${pool.id}-${networkConfig.eth.address}`,
                 }),
+                this.mapPoolTokenToGql(poolToken),
               ]
             : [this.mapPoolTokenToGql(poolToken)],
       });
