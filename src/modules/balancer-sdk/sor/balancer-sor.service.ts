@@ -288,30 +288,30 @@ export class BalancerSorService {
     // TODO: Probably already a method on the sor to extract the routing/hop info for a given swap
     const hops: GqlSorSwapRouteHop[] = [];
     gqlPools.forEach((pool) => {
-      const hop: GqlSorSwapRouteHop = {
-        poolId: pool.id,
-        pool: {
-          id: pool.id,
-          address: pool.address,
-          decimals: pool.decimals,
-          createTime: pool.createTime,
-          name: pool.name,
-          type: pool.type,
-          symbol: pool.symbol,
-          dynamicData: pool.dynamicData,
-          allTokens: pool.allTokens,
-          displayTokens: pool.displayTokens,
-        },
-        tokenIn,
-        tokenOut,
-        tokenInAmount,
-        tokenOutAmount,
-      };
+      if (!hops.find((p) => p.poolId === pool.id)) {
+        const hop: GqlSorSwapRouteHop = {
+          poolId: pool.id,
+          pool: {
+            id: pool.id,
+            address: pool.address,
+            decimals: pool.decimals,
+            createTime: pool.createTime,
+            name: pool.name,
+            type: pool.type,
+            symbol: pool.symbol,
+            dynamicData: pool.dynamicData,
+            allTokens: pool.allTokens,
+            displayTokens: pool.displayTokens,
+          },
+          tokenIn,
+          tokenOut,
+          tokenInAmount,
+          tokenOutAmount,
+        };
 
-      hops.push(hop);
+        hops.push(hop);
+      }
     });
-
-    // console.log(hops);
 
     const routes = swaps.map((path): GqlSorSwapRoute => {
       return {
@@ -338,6 +338,7 @@ export class BalancerSorService {
   }
 
   private async getToken(address: string) {
+    address = replaceEthWithWeth(address);
     const token = await this.prisma.prismaToken.findUniqueOrThrow({
       where: {
         address,
