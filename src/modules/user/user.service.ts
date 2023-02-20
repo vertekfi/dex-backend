@@ -335,7 +335,7 @@ export class UserService {
       return {
         poolId: gaugeShare.poolId,
         gaugeAddress,
-        boost: boost.toString(),
+        boost: veBALInfo.isExpired ? '1' : boost.toString(),
       };
     });
 
