@@ -208,8 +208,6 @@ export class UserService {
         };
       });
 
-    console.log(pools.map((p) => p.address));
-
     return rewards.sort((r1, r2) =>
       r2.poolId === networkConfig.balancer.votingEscrow.lockablePoolId ? 1 : -1,
     );
