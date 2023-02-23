@@ -122,12 +122,13 @@ export class UserService {
   async getUserProtocolRewardInfo(user: string) {
     if (!user) return [];
 
+    // claimTokens
     const instance = new Contract(
-      getContractAddress('SimpleFeeDist'),
+      getContractAddress('FeeDistributor'),
       [
-        ` function getUserRewards(
-      address user
-    ) external view returns (address[] memory tokens, uint256[] memory amounts)`,
+        ` function claimTokens(
+      address user, address[] tokens
+    ) external view returns ( uint256[] memory)`,
       ],
       this.rpc.provider,
     );
@@ -153,11 +154,29 @@ export class UserService {
         '0xdb043d8a95ad4d3ae0be21a6b34484a345c93481000200000000000000000016',
       ['0xeD236c32f695c83Efde232c288701d6f9C23E60E'.toLowerCase()]:
         '0xdd64e2ec144571b4320f7bfb14a56b2b2cbf37ad000200000000000000000000', // VRTK single token
+      ['0x0db861235c7b90d419a64e1f71b3687db74d4477'.toLowerCase()]:
+        '0x0db861235c7b90d419a64e1f71b3687db74d4477000200000000000000000001',
+      ['0x248D943B9d59c4BE35D41B34F79370dFBf577B2b'.toLowerCase()]:
+        '0x248d943b9d59c4be35d41b34f79370dfbf577b2b000200000000000000000002',
+      ['0xcf61CF9654f5536B8d6c93F09a0308FF3c2650F9'.toLowerCase()]:
+        '0xcf61cf9654f5536b8d6c93f09a0308ff3c2650f9000200000000000000000015',
     };
 
-    const pending = await instance.getUserRewards(user);
-
-    const pendingTokens = pending.tokens.map((t) => t.toLowerCase());
+    const pendingTokens = [
+      //'0x90c97f71e18723b0cf0dfa30ee176ab653e89f40',
+      // '0x14016e85a25aeb13065688cafb43044c2ef86784',
+      '0x0db861235c7b90d419a64e1f71b3687db74d4477',
+      //'0x248d943b9d59c4be35d41b34f79370dfbf577b2b',
+      '0x8e15953eba7d5f8f99853d8f3cb64fc73b3ba770',
+      '0x6e30ec031f2d94c397e469b40f86bff0be014124',
+      '0x32934c1122c0d7b0fc3daab588a4490b53c1568c',
+      '0x64bf08fac067b25c77967affafce73760d8d0bdf',
+      '0xae42be6a9f75a2b53229e262e0488df6ecfeb53a',
+      '0xcf61cf9654f5536b8d6c93f09a0308ff3c2650f9',
+      '0xdb043d8a95ad4d3ae0be21a6b34484a345c93481',
+      '0x9ee22f8b21b53323ae34d153e475aea6363b3ba7',
+      '0xeD236c32f695c83Efde232c288701d6f9C23E60E',
+    ].map((t) => t.toLowerCase());
 
     const [tokens, pools] = await Promise.all([
       this.prisma.prismaToken.findMany({
@@ -187,17 +206,19 @@ export class UserService {
       }),
     ]);
 
+    const pending: BigNumber[] = await instance.claimTokens(user, pendingTokens);
+
     const tokenInfos = pendingTokens.map((address, idx) => {
-      const token = tokens.find((t) => t.address === address);
+      const token = tokens.find((t) => t.address.toLowerCase() === address.toLowerCase());
       return {
         token: token.address,
         isBPT: token.types.find((type) => type.type === 'BPT') ? true : false,
-        valueUSD: ethNum(pending.amounts[idx]) * token.currentPrice.price,
+        valueUSD: ethNum(pending[idx]) * token.currentPrice.price,
         logoURI: token.logoURI,
       };
     });
 
-    const amountInfo = pending.amounts.map((amt, idx) => {
+    const amountInfo = pending.map((amt, idx) => {
       return {
         amount: formatEther(amt),
       };
