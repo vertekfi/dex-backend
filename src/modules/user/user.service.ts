@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PrismaPoolStaking } from '@prisma/client';
+import { PrismaPoolStaking, PrismaTokenCurrentPrice } from '@prisma/client';
 import { formatEther, formatUnits, getAddress } from 'ethers/lib/utils';
 import { PrismaService } from 'nestjs-prisma';
 import { GqlPoolJoinExit, GqlPoolSwap } from 'src/gql-addons';
@@ -23,6 +23,7 @@ import { GaugeService } from '../common/gauges/gauge.service';
 import { GaugeUserShare } from '../gauge/types';
 import { formatFixed, parseFixed } from '@ethersproject/bignumber';
 import { ethNum } from '../utils/old-big-number';
+import { getTokenAddress } from '../common/token/utils';
 
 @Injectable()
 export class UserService {
@@ -122,78 +123,29 @@ export class UserService {
   async getUserProtocolRewardInfo(user: string) {
     if (!user) return [];
 
-    // claimTokens
     const instance = new Contract(
       getContractAddress('FeeDistributor'),
       [
-        ` function claimTokens(
-      address user, address[] tokens
-    ) external view returns ( uint256[] memory)`,
+        `function claimTokens(
+          address user, address[] tokens
+        ) external view returns ( uint256[] memory)`,
       ],
       this.rpc.provider,
     );
 
-    // get price data for token or BPT from database
-    // token logoURI as well
-    // set isBPT as needed
+    const vrtkLow = getTokenAddress('VRTK').toLowerCase();
 
-    const poolIdMap = {
-      ['0x32934c1122c0d7b0fc3daab588a4490b53c1568c'.toLowerCase()]:
-        '0x32934c1122c0d7b0fc3daab588a4490b53c1568c00020000000000000000000e',
-      ['0x64bf08fac067b25c77967affafce73760d8d0bdf'.toLowerCase()]:
-        '0x64bf08fac067b25c77967affafce73760d8d0bdf000200000000000000000011',
-      ['0x6e30ec031f2d94c397e469b40f86bff0be014124'.toLowerCase()]:
-        '0x6e30ec031f2d94c397e469b40f86bff0be014124000200000000000000000006',
-      ['0x8e15953eba7d5f8f99853d8f3cb64fc73b3ba770'.toLowerCase()]:
-        '0x8e15953eba7d5f8f99853d8f3cb64fc73b3ba770000200000000000000000003',
-      ['0x9ee22f8b21b53323ae34d153e475aea6363b3ba7'.toLowerCase()]:
-        '0x9ee22f8b21b53323ae34d153e475aea6363b3ba7000100000000000000000017',
-      ['0xae42be6a9f75a2b53229e262e0488df6ecfeb53a'.toLowerCase()]:
-        '0xae42be6a9f75a2b53229e262e0488df6ecfeb53a000200000000000000000012',
-      ['0xdb043d8a95ad4d3ae0be21a6b34484a345c93481'.toLowerCase()]:
-        '0xdb043d8a95ad4d3ae0be21a6b34484a345c93481000200000000000000000016',
-      ['0xeD236c32f695c83Efde232c288701d6f9C23E60E'.toLowerCase()]:
-        '0xdd64e2ec144571b4320f7bfb14a56b2b2cbf37ad000200000000000000000000', // VRTK single token
-      ['0x0db861235c7b90d419a64e1f71b3687db74d4477'.toLowerCase()]:
-        '0x0db861235c7b90d419a64e1f71b3687db74d4477000200000000000000000001',
-      ['0x248D943B9d59c4BE35D41B34F79370dFBf577B2b'.toLowerCase()]:
-        '0x248d943b9d59c4be35d41b34f79370dfbf577b2b000200000000000000000002',
-      ['0xcf61CF9654f5536B8d6c93F09a0308FF3c2650F9'.toLowerCase()]:
-        '0xcf61cf9654f5536b8d6c93f09a0308ff3c2650f9000200000000000000000015',
-    };
-
-    const pendingTokens = [
-      //'0x90c97f71e18723b0cf0dfa30ee176ab653e89f40',
-      // '0x14016e85a25aeb13065688cafb43044c2ef86784',
-      '0x0db861235c7b90d419a64e1f71b3687db74d4477',
-      //'0x248d943b9d59c4be35d41b34f79370dfbf577b2b',
-      '0x8e15953eba7d5f8f99853d8f3cb64fc73b3ba770',
-      '0x6e30ec031f2d94c397e469b40f86bff0be014124',
-      '0x32934c1122c0d7b0fc3daab588a4490b53c1568c',
-      '0x64bf08fac067b25c77967affafce73760d8d0bdf',
-      '0xae42be6a9f75a2b53229e262e0488df6ecfeb53a',
-      '0xcf61cf9654f5536b8d6c93f09a0308ff3c2650f9',
-      '0xdb043d8a95ad4d3ae0be21a6b34484a345c93481',
-      '0x9ee22f8b21b53323ae34d153e475aea6363b3ba7',
-      '0xeD236c32f695c83Efde232c288701d6f9C23E60E',
-    ].map((t) => t.toLowerCase());
-
-    const [tokens, pools] = await Promise.all([
-      this.prisma.prismaToken.findMany({
-        where: {
-          address: {
-            in: pendingTokens,
-          },
-        },
-        include: {
-          types: true,
-          currentPrice: true,
-        },
-      }),
+    const [tokenPrices, pools, vrtkTokenInfo] = await Promise.all([
+      this.prisma.prismaTokenCurrentPrice.findMany({}),
       this.prisma.prismaPool.findMany({
         where: {
-          address: {
-            in: pendingTokens,
+          categories: {
+            none: {
+              category: 'BLACK_LISTED',
+            },
+          },
+          type: {
+            not: 'STABLE', // These do not pay fees in BPT's
           },
         },
         include: {
@@ -204,47 +156,45 @@ export class UserService {
           },
         },
       }),
+      this.prisma.prismaToken.findFirstOrThrow({
+        where: {
+          address: vrtkLow,
+        },
+      }),
     ]);
 
-    const pending: BigNumber[] = await instance.claimTokens(user, pendingTokens);
+    const poolAddresses = pools.map((p) => p.address).concat(vrtkLow);
+    const pending: BigNumber[] = await instance.claimTokens(user, poolAddresses);
 
-    const tokenInfos = pendingTokens.map((address, idx) => {
-      const token = tokens.find((t) => t.address.toLowerCase() === address.toLowerCase());
-      return {
-        token: token.address,
-        isBPT: token.types.find((type) => type.type === 'BPT') ? true : false,
-        valueUSD: ethNum(pending[idx]) * token.currentPrice.price,
-        logoURI: token.logoURI,
-      };
-    });
+    const rewards = pending
+      .filter((p) => !p.isZero())
+      .map((p, i) => {
+        // Account for solo VRTK in all of this
+        const pool = pools[i];
+        let price: PrismaTokenCurrentPrice;
 
-    const amountInfo = pending.map((amt, idx) => {
-      return {
-        amount: formatEther(amt),
-      };
-    });
+        if (pool) {
+          price = tokenPrices.find((price) => price.tokenAddress === pool.address);
+        } else {
+          price = tokenPrices.find((price) => price.tokenAddress === vrtkLow);
+        }
 
-    const vrtkLow = '0xeD236c32f695c83Efde232c288701d6f9C23E60E'.toLowerCase();
+        return {
+          token: pool ? pool.address : vrtkLow,
+          isBPT: pool ? true : false,
+          poolId: pool ? pool.id : networkConfig.balancer.votingEscrow.lockablePoolId,
+          amount: formatEther(p),
+          tokenInfo: {
+            valueUSD: ethNum(p) * price.price,
+            logoURI: pool ? null : vrtkTokenInfo.logoURI,
+          },
+          tokenList: pool ? pool.tokens.map((t) => t.token) : [vrtkTokenInfo],
+        };
+      });
 
-    const data = tokenInfos.map((tki, idx) => {
-      const poolId = poolIdMap[tki.token];
-      const pool = pools.find((p) => p.id === poolId);
-
-      const tokenList = !pool
-        ? [tokens.find((t) => t.address === vrtkLow)]
-        : pool.tokens.map((t) => t.token);
-
-      return {
-        poolId,
-        token: tki.token,
-        amount: amountInfo[idx].amount,
-        tokenInfo: tki,
-        isBPT: tki.isBPT,
-        tokenList,
-      };
-    });
-
-    return [data[data.length - 1], ...data.slice(0, data.length - 1)];
+    return rewards.sort((r1, r2) =>
+      r2.poolId === networkConfig.balancer.votingEscrow.lockablePoolId ? 1 : -1,
+    );
   }
 
   async getUserVeLockInfo(account?: string) {
