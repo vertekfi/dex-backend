@@ -34,7 +34,9 @@ export class PoolGqlLoaderService {
       include: prismaPoolMinimal.include,
     });
 
-    return pools.map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
+    return pools
+      .filter((p) => p.id !== '0x93c9655dd045cd7f5255354cc6f95e21c0c6520f000000000000000000000018')
+      .map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));
   }
 
   async getPoolsCount(args: QueryPoolGetPoolsArgs): Promise<number> {
