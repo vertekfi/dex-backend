@@ -34,11 +34,6 @@ export class PoolGqlLoaderService {
       include: prismaPoolMinimal.include,
     });
 
-    const it = pools.find(
-      (p) => p.id === '0xdd64e2ec144571b4320f7bfb14a56b2b2cbf37ad000200000000000000000000',
-    );
-    console.log(it.aprItems);
-
     return pools
       .filter((p) => p.id !== '0x93c9655dd045cd7f5255354cc6f95e21c0c6520f000000000000000000000018')
       .map((pool) => this.poolUtils.mapToMinimalGqlPool(pool));

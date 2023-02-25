@@ -1,4 +1,3 @@
-import { formatUnits, parseEther } from '@ethersproject/units';
 import { Inject, Injectable } from '@nestjs/common';
 import { sub } from 'date-fns';
 import { BigNumber } from 'ethers';
@@ -13,14 +12,12 @@ import { toUnixTimestamp } from 'src/modules/utils/time';
 import { getTokenAddress } from '../token/utils';
 import { getContractAddress } from '../web3/contract';
 import { Multicaller } from '../web3/multicaller';
-import { GaugeService } from './gauge.service';
 
 @Injectable()
 export class VeBalAprCalc {
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly pricingService: TokenPriceService,
-    private readonly gaugeService: GaugeService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -70,20 +67,18 @@ export class VeBalAprCalc {
     let totalWeeklyValueUSD = 0;
     let totalAPR = bnum(0);
     let veAPR = bnum(0);
-    const amounts = Object.entries(result)
+
+    Object.entries(result)
       .filter((obj) => !obj[1].isZero())
       .map((obj) => {
         const tokenAddress = obj[0];
         const amount = ethNum(obj[1]);
         const price = prices.find((pr) => pr.tokenAddress === tokenAddress);
         const valueUSD = amount * price.price;
-
         const bptPrice = bnum(price.price);
         const aprBase = bnum(valueUSD).times(52).div(bptPrice.times(veSupply));
-        console.log(aprBase.toString());
 
         totalAPR = totalAPR.plus(aprBase);
-
         totalWeeklyValueUSD += valueUSD;
 
         if (tokenAddress === vrtkAddress) {
@@ -96,13 +91,6 @@ export class VeBalAprCalc {
           valueUSD,
         };
       });
-
-    //const annualValueUSD = totalWeeklyValueUSD * 52
-    // const veBalanced = annualValueUSD /
-
-    console.log(veAPR.toNumber() * 100);
-    // console.log(amounts);
-    // console.log(totalValueUSD);
 
     return totalAPR.toString();
   }
