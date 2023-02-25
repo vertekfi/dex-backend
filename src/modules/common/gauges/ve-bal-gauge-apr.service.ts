@@ -117,9 +117,7 @@ export class VeGaugeAprService implements PoolAprService {
 
   async updateVeVrtkApr() {
     const operations = [];
-    // TODO: Need to check fee distributor because we may add multiple tokens
-    // Update: fee withdraw data is saved during automation
-    // Need to get what was withdraw and deposited for ve stakers to claim for the previous week
+
     const vrtkPool = await this.prisma.prismaPool.findFirst({
       where: {
         id: networkConfig.balancer.votingEscrow.lockablePoolId,
@@ -127,6 +125,7 @@ export class VeGaugeAprService implements PoolAprService {
       ...prismaPoolWithExpandedNesting,
     });
 
+    // Will check fee distributor for additional BPT's deposited
     const vrtkApCalc = await this.veBalAprService.calc(
       vrtkPool.dynamicData.totalLiquidity.toString(),
       vrtkPool.dynamicData.totalShares,
@@ -140,6 +139,8 @@ export class VeGaugeAprService implements PoolAprService {
       type: 'VE_VRTK',
       group: null,
     };
+
+    console.group(vrtkApCalc);
 
     operations.push(
       this.prisma.prismaPoolAprItem.upsert({
@@ -308,6 +309,7 @@ export class VeGaugeAprService implements PoolAprService {
     // the checkpoint function which is necesary for returning
     // the correct value.
     try {
+      // TODO: This needs to use veBalHelper now or APR's will be zero until gauges are manually checkpointed
       const gaugeController = new Contract(
         getContractAddress('GaugeController'),
         [

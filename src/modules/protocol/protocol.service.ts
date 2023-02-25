@@ -18,7 +18,7 @@ export const PROTOCOL_TOKENLIST_CACHE_KEY = 'protocol:tokenlist';
 @Injectable()
 export class ProtocolService {
   constructor(
-    @Inject(RPC) private rpc: AccountWeb3,
+    @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly balancerSubgraphService: BalancerSubgraphService,
     private readonly prisma: PrismaService,
   ) {}

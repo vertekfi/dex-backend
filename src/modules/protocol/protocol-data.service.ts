@@ -1,11 +1,18 @@
 import { BigNumber } from '@ethersproject/bignumber';
+import { Contract } from '@ethersproject/contracts';
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaTokenCurrentPrice, PrismaTokenType } from '@prisma/client';
+import * as moment from 'moment';
 import { PrismaService } from 'nestjs-prisma';
+import { GaugeService } from '../common/gauges/gauge.service';
+import { TokenPriceService } from '../common/token/pricing/token-price.service';
 import { AccountWeb3 } from '../common/types';
 import { getContractAddress } from '../common/web3/contract';
 import { Multicaller } from '../common/web3/multicaller';
 import { RPC } from '../common/web3/rpc.provider';
+import { bscScanService } from '../utils/bsc-scan.service';
+import { getEventData } from '../utils/event-scraping';
+import { logging } from '../utils/logger';
 import { ethNum } from '../utils/old-big-number';
 import { ProtocolService } from './protocol.service';
 
@@ -15,7 +22,63 @@ export class ProtocolDataService {
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
     private readonly protocolService: ProtocolService,
+    private readonly priceService: TokenPriceService,
+    private readonly gaugeService: GaugeService,
   ) {}
+
+  async getGaugeFees(hoursInPast: number) {
+    const [pools, prices] = await Promise.all([
+      this.gaugeService.getPoolGaugesWithFees(),
+      this.priceService.getCurrentTokenPrices(),
+    ]);
+
+    if (hoursInPast && hoursInPast > 7 * 24) {
+      hoursInPast = 7 * 24;
+    }
+    hoursInPast = hoursInPast || 24;
+
+    logging.info(`Checking gauge fees for (${hoursInPast}) hours in the past`);
+
+    const [currentBlockNumber, blockNumberOneDayAgo] = await Promise.all([
+      this.rpc.provider.getBlockNumber(),
+      bscScanService.getBlockNumberByTimestamp(moment().subtract(hoursInPast, 'hours').unix()),
+    ]);
+
+    const fees = [];
+
+    for (const pool of [pools[10]]) {
+      logging.info(`Check 24 hour gauge fees for "${pool.name}"`);
+
+      const gauge = pool.staking.gauge;
+
+      const gaugeInstance = new Contract(
+        gauge.gaugeAddress,
+        ['event FeesWithdraw(uint256 fee_amount)'],
+        this.rpc.provider,
+      );
+
+      await getEventData(
+        gaugeInstance,
+        'FeesWithdraw',
+        blockNumberOneDayAgo,
+        currentBlockNumber,
+        5000,
+        (evt) => {
+          const amount = ethNum(evt.args.fee_amount);
+          const price = prices.find((p) => p.tokenAddress === pool.address);
+          const value = amount * price.price;
+
+          fees.push({
+            gauge: gauge.gaugeAddress,
+            amount,
+            value,
+          });
+        },
+      );
+    }
+
+    console.log(fees);
+  }
 
   async getAllPendingFeeData(onlyWithBalances: boolean) {
     const bpts = await this.getPoolsAndBptsWithPrice();

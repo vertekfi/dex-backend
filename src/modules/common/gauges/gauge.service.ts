@@ -34,6 +34,43 @@ export class GaugeService {
     return data.gauges;
   }
 
+  async getPoolGaugesWithFees() {
+    return this.prisma.prismaPool.findMany({
+      where: {
+        AND: [
+          {
+            staking: {
+              gauge: {
+                isNot: undefined,
+              },
+            },
+          },
+          {
+            staking: {
+              gauge: {
+                isKilled: false,
+                depositFee: {
+                  gt: 0,
+                },
+                withdrawFee: {
+                  gt: 0,
+                },
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        staking: {
+          include: {
+            gauge: true,
+          },
+        },
+        dynamicData: true,
+      },
+    });
+  }
+
   async getCoreGauges() {
     const protoData = await this.protocolService.getProtocolConfigDataForChain();
     const poolIds = getGaugePoolIds(protoData);

@@ -8,6 +8,7 @@ extend type Query {
   adminGetAllGaugePendingProtocolFees: GqlPendingGaugeFeeResult!
   adminGetFeeCollectorBalances: GqlFeesCollectorAmountsResult!
   adminGetAllPendingFeeData(onlyWithBalances: Boolean): GqlAllFeesData!
+  get24HourGaugeFees(hoursInPast: Int): [String]
 }
 
 extend type Mutation {

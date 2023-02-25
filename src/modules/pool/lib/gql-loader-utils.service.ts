@@ -81,6 +81,15 @@ export class PoolGqlLoaderUtils {
 
     let hasRewardApr = false;
 
+    if (pool.id === networkConfig.balancer.votingEscrow.lockablePoolId) {
+      const veVrtkRewardAprItems = aprItems.filter((item) => item.type === 'VE_VRTK');
+      hasRewardApr = true;
+      totalApr = `${_.sumBy(aprItems, 'apr')}`;
+      nativeRewardApr = `${_.sumBy(veVrtkRewardAprItems, 'apr')}`;
+      swapApr = `${_.sumBy(swapAprItems, 'apr')}`;
+      thirdPartyApr = '0';
+    }
+
     if (hasAprRange) {
       let swapFeeApr = 0;
       let minTotalApr = 0;

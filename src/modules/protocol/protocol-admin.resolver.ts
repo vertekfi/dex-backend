@@ -30,4 +30,9 @@ export class ProtocolAdminResolver {
   async adminGetAllPendingFeeData(@Args('onlyWithBalances') onlyWithBalances: boolean) {
     return this.protocolDataService.getAllPendingFeeData(onlyWithBalances);
   }
+
+  @Query()
+  async get24HourGaugeFees(@Args('hoursInPast') hoursInPast: number) {
+    return this.protocolDataService.getGaugeFees(hoursInPast);
+  }
 }

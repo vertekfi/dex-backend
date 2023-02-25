@@ -1,77 +1,110 @@
 import { formatUnits, parseEther } from '@ethersproject/units';
 import { Inject, Injectable } from '@nestjs/common';
 import { sub } from 'date-fns';
+import { BigNumber } from 'ethers';
+import { PrismaService } from 'nestjs-prisma';
 import { bnum } from 'src/modules/balancer-sdk/sor/impl/utils/bignumber';
 import { TokenPriceService } from 'src/modules/common/token/pricing/token-price.service';
-import { getTokenAddress } from 'src/modules/common/token/utils';
 import { AccountWeb3 } from 'src/modules/common/types';
-import { BalMulticaller } from 'src/modules/common/web3/bal-multicall';
-import { getContractAddress } from 'src/modules/common/web3/contract';
-import { ContractService } from 'src/modules/common/web3/contract.service';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
-import { CONTRACT_MAP } from 'src/modules/data/contracts';
+import { networkConfig } from 'src/modules/config/network-config';
+import { ethNum } from 'src/modules/utils/old-big-number';
 import { toUnixTimestamp } from 'src/modules/utils/time';
+import { getTokenAddress } from '../token/utils';
+import { getContractAddress } from '../web3/contract';
+import { Multicaller } from '../web3/multicaller';
+import { GaugeService } from './gauge.service';
 
 @Injectable()
 export class VeBalAprCalc {
   constructor(
-    @Inject(RPC) private rpc: AccountWeb3,
-    private readonly contractService: ContractService,
+    @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly pricingService: TokenPriceService,
+    private readonly gaugeService: GaugeService,
+    private readonly prisma: PrismaService,
   ) {}
 
+  async getVeVrtkApr() {}
+
   public async calc(totalLiquidity: string, totalSupply: string) {
-    const { balAmount, veBalCurrentSupply } = await this.getData();
-
-    const aggregateWeeklyRevenue = bnum(balAmount).times(
-      await this.pricingService.getProtocolTokenPrice(),
-    );
-
-    const bptPrice = bnum(totalLiquidity).div(totalSupply);
-    console.log(bptPrice.toString());
-
-    return aggregateWeeklyRevenue.times(52).div(bptPrice.times(veBalCurrentSupply)).toString();
+    return await this.getFeeDistributionData();
   }
 
-  private async getData(): Promise<{
-    balAmount: string;
-    veBalCurrentSupply: string;
-  }> {
+  private async getFeeDistributionData() {
+    let multicaller = new Multicaller(this.rpc, [
+      'function totalSupply() public view returns (uint256)',
+    ]);
+
+    const veAddress = networkConfig.balancer.votingEscrow.veAddress;
+    multicaller.call(`${veAddress}`, veAddress, 'totalSupply');
+
+    const [pools, prices, veTotalSupply] = await Promise.all([
+      this.prisma.prismaPool.findMany({}),
+      this.pricingService.getCurrentTokenPrices(),
+      multicaller.execute('VeBalAprCalc:getData'),
+    ]);
+
+    multicaller = new Multicaller(this.rpc, [
+      'function getTokensDistributedInWeek(address, uint256) public view returns (uint256)',
+    ]);
+
+    const feeDistAddress = getContractAddress('FeeDistributor');
     const epochBeforeLast = toUnixTimestamp(this.getPreviousEpoch(1).getTime());
-    const multicaller = new BalMulticaller(
-      CONTRACT_MAP.MULTICALL[this.rpc.chainId],
-      this.rpc.provider,
-    );
 
-    // TODO: This needs to partially hard coded for now until next epoch
-    // ~55k weekly, 65% to veVRTK, VRTK price
+    pools.forEach((pool) => {
+      multicaller.call(`${pool.address}`, feeDistAddress, 'getTokensDistributedInWeek', [
+        pool.address,
+        epochBeforeLast,
+      ]);
+    });
 
-    multicaller
-      .call({
-        key: 'balAmount',
-        address: getContractAddress('FeeDistributor'),
-        function: 'getTokensDistributedInWeek',
-        abi: [
-          'function getTokensDistributedInWeek(address, uint256) public view returns (uint256)',
-        ],
-        params: [getTokenAddress('VRTK'), epochBeforeLast],
-      })
-      .call({
-        key: 'veBalCurrentSupply',
-        address: this.contractService.getMainPool().address,
-        function: 'totalSupply()',
-        abi: ['function totalSupply() public view returns (uint256)'],
+    const vrtkAddress = getTokenAddress('VRTK').toLowerCase();
+    multicaller.call(`${vrtkAddress}`, feeDistAddress, 'getTokensDistributedInWeek', [
+      vrtkAddress,
+      epochBeforeLast,
+    ]);
+
+    const result = await multicaller.execute<Record<string, BigNumber>>('VeBalAprCalc:getData');
+    const veSupply = ethNum(veTotalSupply[veAddress]);
+
+    let totalWeeklyValueUSD = 0;
+    let totalAPR = bnum(0);
+    let veAPR = bnum(0);
+    const amounts = Object.entries(result)
+      .filter((obj) => !obj[1].isZero())
+      .map((obj) => {
+        const tokenAddress = obj[0];
+        const amount = ethNum(obj[1]);
+        const price = prices.find((pr) => pr.tokenAddress === tokenAddress);
+        const valueUSD = amount * price.price;
+
+        const bptPrice = bnum(price.price);
+        const aprBase = bnum(valueUSD).times(52).div(bptPrice.times(veSupply));
+        console.log(aprBase.toString());
+
+        totalAPR = totalAPR.plus(aprBase);
+
+        totalWeeklyValueUSD += valueUSD;
+
+        if (tokenAddress === vrtkAddress) {
+          veAPR = aprBase;
+        }
+
+        return {
+          tokenAddress,
+          amount,
+          valueUSD,
+        };
       });
 
-    const result = await multicaller.execute();
+    //const annualValueUSD = totalWeeklyValueUSD * 52
+    // const veBalanced = annualValueUSD /
 
-    for (const key in result) {
-      result[key] = formatUnits(result[key], 18);
-    }
+    console.log(veAPR.toNumber() * 100);
+    // console.log(amounts);
+    // console.log(totalValueUSD);
 
-    result.balAmount = formatUnits(parseEther('35750'), 18);
-
-    return result;
+    return totalAPR.toString();
   }
 
   getPreviousEpoch(weeksToGoBack = 0): Date {
