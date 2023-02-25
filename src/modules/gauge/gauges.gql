@@ -1,11 +1,20 @@
 extend type Query {
   getLiquidityGauges: [LiquidityGauge]!
   getUserGaugeStakes(user: String!, poolIds: [String!]!): [LiquidityGauge]!
+  getGaugeBribes(epoch: Int!): [GaugeBribe]!
 }
 
 extend type Mutation {
   syncGaugeData: Boolean!
   poolReloadStakingForAllPools: String!
+}
+
+type GaugeBribe {
+  token: String!
+  briber: String!
+  amount: String!
+  epochStartTime: Int!
+  gauge: String!
 }
 
 type GaugePool {
@@ -83,6 +92,8 @@ type LiquidityGauge {
   depositFee: Int!
 
   withdrawFee: Int!
+
+  bribes: [GaugeBribe]!
 }
 
 type GaugeShare {
