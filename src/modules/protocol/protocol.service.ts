@@ -35,7 +35,6 @@ export class ProtocolService {
   }
 
   async getProtocolTokenList() {
-    // const url = this.getTokenListUri();
     const { data } = await axios.get(networkConfig.protocol.tokenListUrl);
 
     const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens.filter(

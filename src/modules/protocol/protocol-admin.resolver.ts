@@ -1,7 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { AdminGuard } from '../common/guards/admin.guard';
-import { ProtocolDataService } from './protocol-data.service';
+import { ProtocoFeesService } from './protocol-fees.service';
 import { ProtocolService } from './protocol.service';
 
 @Resolver()
@@ -9,7 +9,7 @@ import { ProtocolService } from './protocol.service';
 export class ProtocolAdminResolver {
   constructor(
     private readonly protocolService: ProtocolService,
-    private readonly protocolDataService: ProtocolDataService,
+    private readonly protocolDataService: ProtocoFeesService,
   ) {}
 
   @Query()
