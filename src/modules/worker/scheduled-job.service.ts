@@ -13,6 +13,7 @@ import { runWithMinimumInterval } from './scheduling';
 import { UserSyncWalletBalanceService } from '../user/lib/user-sync-wallet-balance.service';
 import { UserSyncGaugeBalanceService } from '../user/lib/user-sync-gauge-balance.service';
 import { BlocksSubgraphService } from '../subgraphs/blocks-subgraph/blocks-subgraph.service';
+import { ProtocoFeesService } from '../protocol/protocol-fees.service';
 
 const ONE_MINUTE_IN_MS = 60000;
 const TWO_MINUTES_IN_MS = 120000;
@@ -44,7 +45,7 @@ export class ScheduledJobService {
     @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly poolService: PoolService,
     private readonly tokenSyncService: TokenSyncService,
-    private readonly protocolService: ProtocolService,
+    private readonly protocolFeeService: ProtocoFeesService,
     private readonly gaugeSyncService: GaugeSyncService,
     private readonly poolDataLoader: PoolDataLoaderService,
     private readonly userSyncService: UserSyncWalletBalanceService,
@@ -261,7 +262,7 @@ export class ScheduledJobService {
 
     // every 30 seconds
     this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
-      await this.protocolService.getMetrics();
+      await this.protocolFeeService.getMetrics();
     });
 
     // once an hour at minute 1

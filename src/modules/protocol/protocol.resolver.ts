@@ -1,13 +1,17 @@
 import { Query, Resolver } from '@nestjs/graphql';
+import { ProtocoFeesService } from './protocol-fees.service';
 import { ProtocolService } from './protocol.service';
 
 @Resolver()
 export class ProtocolResolver {
-  constructor(private readonly protocolService: ProtocolService) {}
+  constructor(
+    private readonly protocolService: ProtocolService,
+    private readonly protocolFeeService: ProtocoFeesService,
+  ) {}
 
   @Query()
   protocolMetrics() {
-    return this.protocolService.getMetrics();
+    return this.protocolFeeService.getMetrics();
   }
 
   @Query()

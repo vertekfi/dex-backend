@@ -3,6 +3,7 @@ import { BigNumber, Contract } from 'ethers';
 import { AccountWeb3 } from '../common/types';
 import { getContractAddress } from '../common/web3/contract';
 import { RPC } from '../common/web3/rpc.provider';
+import * as _ from 'lodash';
 
 import * as feeCollectorAbi from '../abis/ProtocolFeesCollector.json';
 import { ethNum } from '../utils/old-big-number';
@@ -15,6 +16,8 @@ import * as moment from 'moment';
 import { bscScanService } from '../utils/bsc-scan.service';
 import { getEventData } from '../utils/event-scraping';
 import { logging } from '../utils/logger';
+import { ProtocolMetrics } from './types';
+import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
 
 @Injectable()
 export class ProtocoFeesService {
@@ -26,6 +29,7 @@ export class ProtocoFeesService {
     private readonly prisma: PrismaService,
     private readonly protocolService: ProtocolService,
     private readonly priceService: TokenPriceService,
+    private readonly balancerSubgraphService: BalancerSubgraphService,
   ) {
     this.feesCollector = new Contract(
       getContractAddress('ProtocolFeesCollector'),
@@ -36,6 +40,58 @@ export class ProtocoFeesService {
 
   async getProtocolSwapFee(): Promise<number> {
     return ethNum(await this.feesCollector.getSwapFeePercentage());
+  }
+
+  async getMetrics(): Promise<ProtocolMetrics> {
+    try {
+      const { totalSwapFee, totalSwapVolume, poolCount } =
+        await this.balancerSubgraphService.getProtocolData({});
+
+      const oneDayAgo = moment().subtract(24, 'hours').unix();
+      const pools = await this.prisma.prismaPool.findMany({
+        where: {
+          categories: { none: { category: 'BLACK_LISTED' } },
+          type: { notIn: ['LINEAR'] },
+          dynamicData: {
+            totalSharesNum: {
+              gt: 0.000000000001,
+            },
+          },
+        },
+        include: { dynamicData: true },
+      });
+
+      const swaps = await this.prisma.prismaPoolSwap.findMany({
+        where: { timestamp: { gte: oneDayAgo } },
+      });
+      const filteredSwaps = swaps.filter((swap) => pools.find((pool) => pool.id === swap.poolId));
+
+      const totalLiquidity = _.sumBy(pools, (pool) =>
+        !pool.dynamicData ? 0 : pool.dynamicData.totalLiquidity,
+      );
+
+      const swapVolume24h = _.sumBy(filteredSwaps, (swap) => swap.valueUSD);
+      const swapFee24h = _.sumBy(filteredSwaps, (swap) => {
+        const pool = pools.find((pool) => pool.id === swap.poolId);
+
+        return parseFloat(pool?.dynamicData?.swapFee || '0') * swap.valueUSD;
+      });
+
+      // TODO: Add gauge fees
+
+      const protocolData: ProtocolMetrics = {
+        totalLiquidity: `${totalLiquidity}`,
+        totalSwapFee,
+        totalSwapVolume,
+        poolCount: `${poolCount}`,
+        swapVolume24h: `${swapVolume24h}`,
+        swapFee24h: `${swapFee24h}`,
+      };
+
+      return protocolData;
+    } catch (error) {
+      console.error('getMetrics: failed');
+    }
   }
 
   async getGaugeFees(hoursInPast: number) {

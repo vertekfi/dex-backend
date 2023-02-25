@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import * as moment from 'moment-timezone';
-import * as _ from 'lodash';
 
-import { BalancerSubgraphService } from '../subgraphs/balancer/balancer-subgraph.service';
-import { LatestsSyncedBlocks, ProtocolConfigData, ProtocolMetrics } from './types';
+import { LatestsSyncedBlocks, ProtocolConfigData } from './types';
 import { PrismaService } from 'nestjs-prisma';
 import { PrismaLastBlockSyncedCategory, PrismaUserBalanceType } from '@prisma/client';
 import axios from 'axios';
@@ -19,7 +16,7 @@ export const PROTOCOL_TOKENLIST_CACHE_KEY = 'protocol:tokenlist';
 export class ProtocolService {
   constructor(
     @Inject(RPC) private readonly rpc: AccountWeb3,
-    private readonly balancerSubgraphService: BalancerSubgraphService,
+
     private readonly prisma: PrismaService,
   ) {}
 
@@ -49,58 +46,6 @@ export class ProtocolService {
 
     const tokens = data[networkConfig.protocol.tokenListMappingKey].tokens;
     return tokens;
-  }
-
-  async getMetrics(): Promise<ProtocolMetrics> {
-    try {
-      const { totalSwapFee, totalSwapVolume, poolCount } =
-        await this.balancerSubgraphService.getProtocolData({});
-
-      const oneDayAgo = moment().subtract(24, 'hours').unix();
-      const pools = await this.prisma.prismaPool.findMany({
-        where: {
-          categories: { none: { category: 'BLACK_LISTED' } },
-          type: { notIn: ['LINEAR'] },
-          dynamicData: {
-            totalSharesNum: {
-              gt: 0.000000000001,
-            },
-          },
-        },
-        include: { dynamicData: true },
-      });
-
-      const swaps = await this.prisma.prismaPoolSwap.findMany({
-        where: { timestamp: { gte: oneDayAgo } },
-      });
-      const filteredSwaps = swaps.filter((swap) => pools.find((pool) => pool.id === swap.poolId));
-
-      const totalLiquidity = _.sumBy(pools, (pool) =>
-        !pool.dynamicData ? 0 : pool.dynamicData.totalLiquidity,
-      );
-
-      const swapVolume24h = _.sumBy(filteredSwaps, (swap) => swap.valueUSD);
-      const swapFee24h = _.sumBy(filteredSwaps, (swap) => {
-        const pool = pools.find((pool) => pool.id === swap.poolId);
-
-        return parseFloat(pool?.dynamicData?.swapFee || '0') * swap.valueUSD;
-      });
-
-      // TODO: Add gauge fees
-
-      const protocolData: ProtocolMetrics = {
-        totalLiquidity: `${totalLiquidity}`,
-        totalSwapFee,
-        totalSwapVolume,
-        poolCount: `${poolCount}`,
-        swapVolume24h: `${swapVolume24h}`,
-        swapFee24h: `${swapFee24h}`,
-      };
-
-      return protocolData;
-    } catch (error) {
-      console.error('getMetrics: failed');
-    }
   }
 
   async getLatestSyncedBlocks(): Promise<LatestsSyncedBlocks> {
