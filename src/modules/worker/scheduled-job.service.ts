@@ -260,8 +260,8 @@ export class ScheduledJobService {
     });
     // this.scheduleNodeJob(this.getRule(0, 1), 'syncGaugeData', this.gaugeService.getAllGauges);
 
-    // every 30 seconds
-    this.scheduleJob('*/30 * * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
+    // every 5 minutes
+    this.scheduleJob('*/5 * * * *', 'cache-protocol-data', TWO_MINUTES_IN_MS, async () => {
       await this.protocolFeeService.getMetrics();
     });
 
