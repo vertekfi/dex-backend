@@ -1,7 +1,7 @@
 extend type Query {
   getLiquidityGauges: [LiquidityGauge]!
   getUserGaugeStakes(user: String!, poolIds: [String!]!): [LiquidityGauge]!
-  getGaugeBribes(epoch: Int!): [GaugeBribe]!
+  getGaugeBribes(epoch: Int): [GaugeBribe]!
 }
 
 extend type Mutation {
@@ -10,7 +10,7 @@ extend type Mutation {
 }
 
 type GaugeBribe {
-  token: String!
+  token: GqlToken!
   briber: String!
   amount: String!
   epochStartTime: Int!

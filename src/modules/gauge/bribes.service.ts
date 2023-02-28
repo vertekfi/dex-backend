@@ -1,11 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { GaugeBribe } from 'src/graphql';
-import * as moment from 'moment';
+import { Multicaller } from '../common/web3/multicaller';
+import { AccountWeb3 } from '../common/types';
+import { RPC } from '../common/web3/rpc.provider';
+import * as managerABI from '../abis/BribeManager.json';
+import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
+import { getGaugeController } from '../common/web3/contract';
+import { networkConfig } from '../config/network-config';
 
 @Injectable()
 export class GaugeBribeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(RPC) private readonly aprServices: AccountWeb3,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async getGaugeBribes(epoch: number): Promise<GaugeBribe[]> {
     const gauges = await this.prisma.prismaPoolStakingGauge.findMany({
@@ -14,21 +23,45 @@ export class GaugeBribeService {
       },
     });
 
-    const bribes = await this.getGaugeOnChainBribes(
-      gauges.map((g) => g.gaugeAddress),
-      epoch,
+    // type GaugeBribe {
+    //   token: GqlToken!
+    //   briber: String!
+    //   amount: String!
+    //   epochStartTime: Int!
+    //   gauge: String!
+    // }
+
+    let epochStartTime: number;
+
+    if (!epoch) {
+      const controller = await getGaugeController();
+      epochStartTime = (await controller.time_total()).toNumber();
+    }
+
+    const abi: string | Array<Fragment | JsonFragment | string> = Object.values(
+      Object.fromEntries([...managerABI].map((row) => [row.name, row])),
     );
 
-    return bribes;
+    const multicall = new Multicaller(this.aprServices, abi);
+
+    gauges.forEach((gauge) =>
+      multicall.call(`${gauge.gaugeAddress}`, networkConfig.vertek.bribeManager, 'getGaugeBribes', [
+        gauge.gaugeAddress,
+        epochStartTime,
+      ]),
+    );
+
+    const bribes = await multicall.execute('GaugeBribeService:getGaugeBribes');
+    console.log(bribes);
+
+    return [];
   }
 
   private async getGaugeOnChainBribes(gauges: string[], epoch: number): Promise<GaugeBribe[]> {
-    const fakeMap = {
-      // ASHARE-BUSD
-      '0xE7A9d3F14A19E6CF1C482aB0e8c7aE40b40a61c0': [],
-      // VRTK-BUSD
-      '0x8601DFCeE55E9e238f7ED7c42f8E46a7779e3f6f': [],
-    };
+    // getGaugeBribes
+    // get gauge addresses
+    // an epoch
+    //
 
     // const timestamp = moment().utc()
 

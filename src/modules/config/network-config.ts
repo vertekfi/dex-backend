@@ -1,4 +1,5 @@
 import { BigNumber } from 'ethers';
+import { hardhatConfig } from './hardhat';
 
 export type DeploymentEnv = 'canary' | 'main';
 
@@ -38,6 +39,10 @@ export interface NetworkConfig {
   };
   bal: {
     address: string;
+  };
+  vertek: {
+    bribeManager: string;
+    bribeRewardClaims: string;
   };
   balancer: {
     vault: string;
@@ -113,6 +118,10 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     bal: {
       address: '',
     },
+    vertek: {
+      bribeManager: '0xb1B1695FeA2E3a8B2aAE3A0d2a59Ea3F5e4A7508',
+      bribeRewardClaims: '0x27eDCe99d5aF44318358497fD5Af5C8e312F1721',
+    },
     balancer: {
       vault: '0x719488F4E859953967eFE963c6Bed059BaAab60c',
       composableStablePoolFactories: [],
@@ -183,6 +192,10 @@ const AllNetworkConfigs: { [chainId: string]: NetworkConfig } = {
     },
     bal: {
       address: '',
+    },
+    vertek: {
+      bribeManager: '',
+      bribeRewardClaims: '',
     },
     balancer: {
       vault: '0xBA5CE8dFcB1E077B4537aCaD17400D843842c520',

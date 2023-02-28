@@ -214,7 +214,7 @@ export class UserService {
   }
 
   async getUserVeLockInfo(account?: string) {
-    if (!account) {
+    if (!account || account === 'undefined') {
       return null;
     }
 
@@ -330,6 +330,10 @@ export class UserService {
   }
 
   async getUserGaugeBalances(userAddress: string, gaugeAddresses: string[]) {
+    if (!userAddress || userAddress === 'undefined') {
+      return [];
+    }
+
     const multiCaller = new Multicaller(this.rpc, [
       'function balanceOf(address) public view returns(uint)',
     ]);

@@ -127,4 +127,10 @@ export const CONTRACT_MAP = {
   SimpleFeeDist: {
     56: '0x2CFCe0B4d47A994E56904D9EbB9716bbd0A59AbC',
   },
+  BribeManager: {
+    56: '0xb1B1695FeA2E3a8B2aAE3A0d2a59Ea3F5e4A7508',
+  },
+  MerkleOrchard: {
+    56: '0x27eDCe99d5aF44318358497fD5Af5C8e312F1721',
+  },
 };
