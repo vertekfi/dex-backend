@@ -15,6 +15,8 @@ type GaugeBribe {
   amount: String!
   epochStartTime: Int!
   gauge: String!
+  valueUSD: Float!
+  epochWeekLabel: String!
 }
 
 type GaugePool {

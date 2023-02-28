@@ -12,6 +12,12 @@ export class GaugeSyncService {
     private readonly protocolService: ProtocolService,
   ) {}
 
+  async syncGaugeBribes() {}
+
+  async syncGaugeVotes() {
+    //
+  }
+
   async syncGaugeData(): Promise<void> {
     const protoData = await this.protocolService.getProtocolConfigDataForChain();
     const poolIds = protoData.gauges.map((g) => g.poolId);

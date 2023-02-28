@@ -20,6 +20,7 @@ import { VeGaugeAprService } from './gauges/ve-bal-gauge-apr.service';
 import { GaugeService } from './gauges/gauge.service';
 import { VeBalAprCalc } from './gauges/vebal-apr.calc';
 import { PoolSnapshotService } from './pool/pool-snapshot.service';
+import { GaugeBribeService } from './gauges/bribes.service';
 
 @Global()
 @Module({
@@ -61,6 +62,7 @@ import { PoolSnapshotService } from './pool/pool-snapshot.service';
     VeGaugeAprService,
     GaugeService,
     VeBalAprCalc,
+    GaugeBribeService,
   ],
   exports: [
     CacheModule,
@@ -88,6 +90,7 @@ import { PoolSnapshotService } from './pool/pool-snapshot.service';
     VeGaugeAprService,
     GaugeService,
     VeBalAprCalc,
+    GaugeBribeService,
   ],
 })
 export class CommonModule {}
