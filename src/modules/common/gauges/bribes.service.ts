@@ -22,7 +22,13 @@ export class GaugeBribeService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async getGaugeBribes(epoch?: number): Promise<GaugeBribe[]> {
+  async getGaugeBribes(epoch?: number): Promise<
+    {
+      gauge: string;
+      currentEpochBribes: GaugeBribe[];
+      nextEpochBribes: GaugeBribe[];
+    }[]
+  > {
     const [gauges, tokens] = await Promise.all([
       this.prisma.prismaPoolStakingGauge.findMany({
         where: {
@@ -43,41 +49,58 @@ export class GaugeBribeService {
       epochStartTime = moment(getPreviousEpoch()).unix();
     }
 
+    const nextEpochTime = moment.unix(epochStartTime).utc().add(1, 'week').unix();
+
     const abi: string | Array<Fragment | JsonFragment | string> = Object.values(
       Object.fromEntries([...managerABI].map((row) => [row.name, row])),
     );
 
     const multicall = new Multicaller(this.aprServices, abi);
 
-    gauges.forEach((gauge) =>
-      multicall.call(`${gauge.gaugeAddress}`, networkConfig.vertek.bribeManager, 'getGaugeBribes', [
-        gauge.gaugeAddress,
-        epochStartTime,
-      ]),
-    );
-
-    const bribeResults = await multicall.execute<
-      Record<
-        string,
-        {
-          amount: BigNumber;
-          epochStartTime: BigNumber;
-          briber: string;
-          token: string;
-          gauge: string;
-        }[]
-      >
-    >('GaugeBribeService:getGaugeBribes');
-
-    let bribesUI = [];
     gauges.forEach((gauge) => {
-      const bribes = bribeResults[gauge.gaugeAddress];
-      if (bribes.length) {
-        bribesUI = bribesUI.concat(this.matchBribesData(tokens, bribes));
-      }
+      multicall.call(
+        `${gauge.gaugeAddress}.${epochStartTime}`,
+        networkConfig.vertek.bribeManager,
+        'getGaugeBribes',
+        [gauge.gaugeAddress, epochStartTime],
+      );
+
+      multicall.call(
+        `${gauge.gaugeAddress}.${nextEpochTime}`,
+        networkConfig.vertek.bribeManager,
+        'getGaugeBribes',
+        [gauge.gaugeAddress, nextEpochTime],
+      );
     });
 
-    // console.log(bribesUI);
+    const bribeResults = await multicall.execute<Record<string, any>>(
+      'GaugeBribeService:getGaugeBribes',
+    );
+
+    let bribesUI = [];
+    let currents = [];
+    let nexts = [];
+    gauges.forEach((gauge) => {
+      const currentEpochBribes = bribeResults[gauge.gaugeAddress][epochStartTime];
+      const nextEpochBribes = bribeResults[gauge.gaugeAddress][nextEpochTime];
+
+      if (currentEpochBribes.length) {
+        currents = currents.concat(this.matchBribesData(tokens, currentEpochBribes));
+      }
+
+      if (nextEpochBribes.length) {
+        nexts = nexts.concat(this.matchBribesData(tokens, nextEpochBribes));
+      }
+
+      bribesUI.push({
+        gauge: gauge.gaugeAddress,
+        currentEpochBribes: currents,
+        nextEpochBribes: nexts,
+      });
+
+      currents = [];
+      nexts = [];
+    });
 
     return bribesUI;
   }
@@ -102,6 +125,7 @@ export class GaugeBribeService {
         .utc()
         .add(6, 'days')
         .format(format)}`;
+
       return {
         ...bribe,
         token,

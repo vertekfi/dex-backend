@@ -96,6 +96,10 @@ type LiquidityGauge {
   withdrawFee: Int!
 
   bribes: [GaugeBribe]!
+
+  currentEpochBribes: [GaugeBribe]!
+
+  nextEpochBribes: [GaugeBribe]!
 }
 
 type GaugeShare {

@@ -91,6 +91,8 @@ export class GaugeService {
             };
           });
 
+        const gaugeBribes = bribes.find((b) => b.gauge === gauge.id);
+
         gauges.push({
           id: gauge.id,
           symbol: pool.staking.gauge.symbol,
@@ -105,7 +107,8 @@ export class GaugeService {
           depositFee: pool.staking.gauge.depositFee,
           withdrawFee: pool.staking.gauge.withdrawFee,
           pool: gqlPool,
-          bribes: bribes.filter((b) => b.gauge === gauge.id),
+          currentEpochBribes: gaugeBribes.currentEpochBribes,
+          nextEpochBribes: gaugeBribes.nextEpochBribes,
         });
       }
     }
