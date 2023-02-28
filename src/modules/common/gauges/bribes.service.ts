@@ -13,6 +13,7 @@ import { formatEther } from 'ethers/lib/utils';
 import { BigNumber } from 'ethers';
 import { ethNum } from '../../utils/old-big-number';
 import * as moment from 'moment-timezone';
+import { getPreviousEpoch } from 'src/modules/utils/epoch.utils';
 
 @Injectable()
 export class GaugeBribeService {
@@ -35,11 +36,11 @@ export class GaugeBribeService {
       }),
     ]);
 
+    // For UI this should show if they vote right now, what they will earn.
+    // So epoch timestamp needs to be for the start of, current, week
     let epochStartTime: number;
-
     if (!epoch) {
-      const controller = await getGaugeController();
-      epochStartTime = (await controller.time_total()).toNumber();
+      epochStartTime = moment(getPreviousEpoch()).unix();
     }
 
     const abi: string | Array<Fragment | JsonFragment | string> = Object.values(

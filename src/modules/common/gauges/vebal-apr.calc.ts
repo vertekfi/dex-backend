@@ -10,6 +10,7 @@ import { getContractAddress } from 'src/modules/common/web3/contract';
 import { ContractService } from 'src/modules/common/web3/contract.service';
 import { RPC } from 'src/modules/common/web3/rpc.provider';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
+import { getPreviousEpoch } from 'src/modules/utils/epoch.utils';
 import { toUnixTimestamp } from 'src/modules/utils/time';
 
 @Injectable()
@@ -28,7 +29,6 @@ export class VeBalAprCalc {
     );
 
     const bptPrice = bnum(totalLiquidity).div(totalSupply);
-    console.log(bptPrice.toString());
 
     return aggregateWeeklyRevenue.times(52).div(bptPrice.times(veBalCurrentSupply)).toString();
   }
@@ -37,7 +37,7 @@ export class VeBalAprCalc {
     balAmount: string;
     veBalCurrentSupply: string;
   }> {
-    const epochBeforeLast = toUnixTimestamp(this.getPreviousEpoch(1).getTime());
+    const epochBeforeLast = toUnixTimestamp(getPreviousEpoch(1).getTime());
     const multicaller = new BalMulticaller(
       CONTRACT_MAP.MULTICALL[this.rpc.chainId],
       this.rpc.provider,
@@ -69,22 +69,8 @@ export class VeBalAprCalc {
       result[key] = formatUnits(result[key], 18);
     }
 
-    result.balAmount = formatUnits(parseEther('35750'), 18);
+    result.balAmount = formatUnits(parseEther('3500'), 18);
 
     return result;
-  }
-
-  getPreviousEpoch(weeksToGoBack = 0): Date {
-    const now = new Date();
-    const todayAtMidnightUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-
-    let daysSinceThursday = now.getDay() - 4;
-    if (daysSinceThursday < 0) daysSinceThursday += 7;
-
-    daysSinceThursday = daysSinceThursday + weeksToGoBack * 7;
-
-    return sub(todayAtMidnightUTC, {
-      days: daysSinceThursday,
-    });
   }
 }
