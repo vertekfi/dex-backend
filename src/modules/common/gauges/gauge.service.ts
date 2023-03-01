@@ -79,17 +79,15 @@ export class GaugeService {
       };
 
       if (pool.staking.gauge) {
-        const rewardTokens = pool.staking.gauge.rewards
-          .filter((rw) => parseFloat(rw.rewardPerSecond) > 0)
-          .map((token) => {
-            const dbToken = tokens.find((t) => t.address === token.tokenAddress.toLowerCase());
+        const rewardTokens = pool.staking.gauge.rewards.map((token) => {
+          const dbToken = tokens.find((t) => t.address === token.tokenAddress.toLowerCase());
 
-            return {
-              ...dbToken,
-              ...token,
-              totalDeposited: 0,
-            };
-          });
+          return {
+            ...dbToken,
+            ...token,
+            totalDeposited: 0,
+          };
+        });
 
         const gaugeBribes = bribes.find((b) => b.gauge === gauge.id);
 
