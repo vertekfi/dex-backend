@@ -200,7 +200,7 @@ export interface IQuery {
     latestSyncedBlocks(): GqlLatestSyncedBlocks | Promise<GqlLatestSyncedBlocks>;
     contentGetNewsItems(): Nullable<GqlContentNewsItem>[] | Promise<Nullable<GqlContentNewsItem>[]>;
     getProtocolTokenList(): Nullable<Nullable<string>[]> | Promise<Nullable<Nullable<string>[]>>;
-    getProtocolPoolData(): Nullable<string>[] | Promise<Nullable<string>[]>;
+    getProtocolPoolData(): Nullable<GqlProtocolGaugeInfo>[] | Promise<Nullable<GqlProtocolGaugeInfo>[]>;
     adminGetAllGaugePendingProtocolFees(): GqlPendingGaugeFeeResult | Promise<GqlPendingGaugeFeeResult>;
     adminGetFeeCollectorBalances(): GqlFeesCollectorAmountsResult | Promise<GqlFeesCollectorAmountsResult>;
     adminGetAllPendingFeeData(onlyWithBalances?: Nullable<boolean>): GqlAllFeesData | Promise<GqlAllFeesData>;
@@ -227,6 +227,7 @@ export interface IQuery {
     userGetPortfolioSnapshots(days: number): GqlUserPortfolioSnapshot[] | Promise<GqlUserPortfolioSnapshot[]>;
     userGetVeLockInfo(): GqlUserVoteEscrowInfo | Promise<GqlUserVoteEscrowInfo>;
     userGetGaugeBoosts(userAddress?: Nullable<string>): Nullable<GqlUserGaugeBoost>[] | Promise<Nullable<GqlUserGaugeBoost>[]>;
+    userGetProtocolRewardInfo(): Nullable<GqlUserProtocolReward>[] | Promise<Nullable<GqlUserProtocolReward>[]>;
 }
 
 export interface GqlSorGetSwapsResponse {
@@ -331,6 +332,15 @@ export interface IMutation {
     userSyncChangedStakedBalances(): string | Promise<string>;
 }
 
+export interface GaugeBribe {
+    __typename?: 'GaugeBribe';
+    token: string;
+    briber: string;
+    amount: string;
+    epochStartTime: number;
+    gauge: string;
+}
+
 export interface GaugePool {
     __typename?: 'GaugePool';
     id: string;
@@ -372,8 +382,8 @@ export interface LiquidityGauge {
     poolId: string;
     isKilled: boolean;
     totalSupply: BigDecimal;
-    shares?: Nullable<GaugeShare[]>;
-    rewardTokens: Nullable<RewardToken>[];
+    shares: GaugeShare[];
+    rewardTokens: RewardToken[];
     factory?: Nullable<GaugeFactory>;
     depositFee: number;
     withdrawFee: number;
@@ -389,9 +399,11 @@ export interface GaugeShare {
 export interface RewardToken {
     __typename?: 'RewardToken';
     id: string;
+    tokenAddress: string;
+    logoURI: string;
     symbol: string;
     decimals: number;
-    rate?: Nullable<BigDecimal>;
+    rewardPerSecond: BigDecimal;
     periodFinish?: Nullable<BigInt>;
     totalDeposited: BigDecimal;
 }
@@ -1014,6 +1026,12 @@ export interface GqlPoolTokenDisplay {
     nestedTokens?: Nullable<GqlPoolTokenDisplay[]>;
 }
 
+export interface GqlProtocolGaugeInfo {
+    __typename?: 'GqlProtocolGaugeInfo';
+    poolId: string;
+    address: string;
+}
+
 export interface GqlAllFeesData {
     __typename?: 'GqlAllFeesData';
     totalValueUSD: number;
@@ -1025,8 +1043,9 @@ export interface GqlProtocolFeesCollectorAmounts {
     __typename?: 'GqlProtocolFeesCollectorAmounts';
     token: string;
     poolId: string;
+    poolAddress: string;
     poolName: string;
-    amount: string;
+    amount: number;
     valueUSD: string;
 }
 
@@ -1049,7 +1068,7 @@ export interface GqlProtocolPendingGaugeFee {
     poolAddress: string;
     gauge: string;
     gaugeAddress: string;
-    pendingPoolTokensFee: number;
+    amount: number;
     valueUSD: number;
 }
 
@@ -1205,6 +1224,22 @@ export interface GqlTokenData {
     discordUrl?: Nullable<string>;
     telegramUrl?: Nullable<string>;
     twitterUsername?: Nullable<string>;
+}
+
+export interface GqlUserProtocolReward {
+    __typename?: 'GqlUserProtocolReward';
+    poolId: string;
+    token: string;
+    tokenInfo: GqlProtocolRewardTokenInfo;
+    amount: string;
+    isBPT: boolean;
+    tokenList: GqlToken[];
+}
+
+export interface GqlProtocolRewardTokenInfo {
+    __typename?: 'GqlProtocolRewardTokenInfo';
+    logoURI?: Nullable<string>;
+    valueUSD: string;
 }
 
 export interface GqlUserGaugeBoost {

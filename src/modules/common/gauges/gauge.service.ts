@@ -17,6 +17,7 @@ import { prismaPoolMinimal } from 'prisma/prisma-types';
 import { ProtocolGaugeInfo } from '../../protocol/types';
 import { getContractAddress } from '../web3/contract';
 import { getGaugePoolIds } from './gauge-utils';
+import { GaugeBribeService } from './bribes.service';
 
 const MAX_REWARDS = 8;
 
@@ -27,6 +28,7 @@ export class GaugeService {
     private readonly gaugeSubgraphService: GaugeSubgraphService,
     private readonly protocolService: ProtocolService,
     private readonly prisma: PrismaService,
+    private readonly bribeService: GaugeBribeService,
   ) {}
 
   async getAllProtocolGauges(): Promise<ProtocolGaugeInfo[]> {
@@ -75,7 +77,7 @@ export class GaugeService {
     const protoData = await this.protocolService.getProtocolConfigDataForChain();
     const poolIds = getGaugePoolIds(protoData);
 
-    const [pools, tokens] = await Promise.all([
+    const [pools, tokens, bribes] = await Promise.all([
       this.prisma.prismaPool.findMany({
         where: {
           id: { in: poolIds },
@@ -87,6 +89,7 @@ export class GaugeService {
           dynamicData: true,
         },
       }),
+      this.bribeService.getGaugeBribes(),
     ]);
 
     const stakingInfos = pools.filter((p) => p.staking).map((p) => p.staking);
@@ -98,7 +101,7 @@ export class GaugeService {
       if (!pool.staking.gauge) {
         continue;
       }
-      //
+
       const gqlPool = {
         ...pool,
         poolType: pool.type,
@@ -123,6 +126,8 @@ export class GaugeService {
           };
         });
 
+        const gaugeBribes = bribes.find((b) => b.gauge === gauge.id);
+
         gauges.push({
           id: gauge.id,
           symbol: pool.staking.gauge.symbol,
@@ -137,6 +142,8 @@ export class GaugeService {
           depositFee: pool.staking.gauge.depositFee,
           withdrawFee: pool.staking.gauge.withdrawFee,
           pool: gqlPool,
+          currentEpochBribes: gaugeBribes.currentEpochBribes,
+          nextEpochBribes: gaugeBribes.nextEpochBribes,
         });
       }
     }

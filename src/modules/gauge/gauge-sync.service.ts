@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaPoolStakingGaugeReward } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { prismaBulkExecuteOperations } from 'prisma/prisma-util';
 import { GaugeService } from '../common/gauges/gauge.service';
@@ -8,10 +7,16 @@ import { ProtocolService } from '../protocol/protocol.service';
 @Injectable()
 export class GaugeSyncService {
   constructor(
-    private gaugeService: GaugeService,
+    private readonly gaugeService: GaugeService,
     private readonly prisma: PrismaService,
     private readonly protocolService: ProtocolService,
   ) {}
+
+  async syncGaugeBribes() {}
+
+  async syncGaugeVotes() {
+    //
+  }
 
   async syncGaugeData(): Promise<void> {
     const protoData = await this.protocolService.getProtocolConfigDataForChain();

@@ -34,7 +34,6 @@ import { SwapFeeAprService } from './lib/aprs/swap-fee-apr.service';
 import { VeGaugeAprService } from '../common/gauges/ve-bal-gauge-apr.service';
 import { GaugeService } from '../common/gauges/gauge.service';
 import { TokenPriceService } from '../common/token/pricing/token-price.service';
-import { networkConfig } from '../config/network-config';
 import { BlockService } from '../common/web3/block.service';
 import { APR_SERVICES } from './lib/providers/apr-services.provider';
 import { PoolAprService } from './pool-types';

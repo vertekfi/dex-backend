@@ -1,10 +1,13 @@
 import { Args, Query, Resolver } from '@nestjs/graphql';
+import { GaugeBribeService } from '../common/gauges/bribes.service';
 import { GaugeService } from '../common/gauges/gauge.service';
-import { VeBalAprCalc } from '../common/gauges/vebal-apr.calc';
 
 @Resolver()
 export class GaugeQueryResolver {
-  constructor(private readonly gaugeService: GaugeService, private readonly veApr: VeBalAprCalc) {}
+  constructor(
+    private readonly gaugeService: GaugeService,
+    private readonly bribeService: GaugeBribeService,
+  ) {}
 
   @Query()
   async getLiquidityGauges() {
@@ -14,5 +17,10 @@ export class GaugeQueryResolver {
   @Query()
   async getUserGaugeStakes(@Args() args) {
     return this.gaugeService.getUserGaugeStakes(args);
+  }
+
+  @Query()
+  async getGaugeBribes(@Args('epoch') epoch: number) {
+    return this.bribeService.getGaugeBribes(epoch);
   }
 }

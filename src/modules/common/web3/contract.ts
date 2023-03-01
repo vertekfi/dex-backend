@@ -5,6 +5,7 @@ import { getChainId, getCurrentRpcProvider, getProviderOrDefault } from './rpc.p
 import * as vaultAbi from '../../abis/Vault.json';
 import { CONTRACT_MAP } from 'src/modules/data/contracts';
 import { TOKENS } from 'src/modules/data/tokens';
+import * as controllerABI from '../../abis/GaugeController.json';
 
 export function returnChecksum() {
   return function (target: any, key: string, descriptor: PropertyDescriptor) {
@@ -24,7 +25,11 @@ export function getContractAt<T extends Contract>(address: string, abi: any): T 
 }
 
 export async function getGaugeController(chainId?: number) {
-  return new Contract('', [], await getProviderOrDefault(chainId));
+  return new Contract(
+    getContractAddress('GaugeController'),
+    controllerABI,
+    await getProviderOrDefault(chainId),
+  );
 }
 
 export async function getVault() {
