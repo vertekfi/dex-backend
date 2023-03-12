@@ -89,7 +89,7 @@ export class GaugeService {
           dynamicData: true,
         },
       }),
-      this.bribeService.getGaugeBribes(),
+      this.bribeService.getAllGaugeBribes(),
     ]);
 
     const stakingInfos = pools.filter((p) => p.staking).map((p) => p.staking);

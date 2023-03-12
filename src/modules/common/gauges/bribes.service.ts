@@ -6,7 +6,6 @@ import { AccountWeb3 } from '../../common/types';
 import { RPC } from '../../common/web3/rpc.provider';
 import * as managerABI from '../../abis/BribeManager.json';
 import { Fragment, JsonFragment } from '@ethersproject/abi/lib/fragments';
-import { getGaugeController } from '../../common/web3/contract';
 import { networkConfig } from '../../config/network-config';
 import { PrismaToken, PrismaTokenCurrentPrice } from '@prisma/client';
 import { formatEther } from 'ethers/lib/utils';
@@ -14,15 +13,102 @@ import { BigNumber } from 'ethers';
 import { ethNum } from '../../utils/old-big-number';
 import * as moment from 'moment-timezone';
 import { getPreviousEpoch } from 'src/modules/utils/epoch.utils';
+import * as fs from 'fs-extra';
+import { join } from 'path';
+import { getContractAddress } from '../web3/contract';
 
 @Injectable()
 export class GaugeBribeService {
   constructor(
-    @Inject(RPC) private readonly aprServices: AccountWeb3,
+    @Inject(RPC) private readonly rpc: AccountWeb3,
     private readonly prisma: PrismaService,
   ) {}
 
-  async getGaugeBribes(epoch?: number): Promise<
+  async getUserPendingBribeRewards(user: string, epoch: number) {
+    let userClaims = [];
+
+    if (!user) {
+      return userClaims;
+    }
+
+    const [prices, gauges] = await Promise.all([
+      this.prisma.prismaTokenCurrentPrice.findMany({}),
+      this.prisma.prismaPoolStakingGauge.findMany({}),
+    ]);
+
+    const bribers = fs.readJSONSync(
+      join(process.cwd(), 'src/modules/common/gauges/data', epoch.toString(), 'bribers-data.json'),
+    );
+
+    // TODO: Multicall to check already claimed **
+
+    bribers.forEach((briber) => {
+      briber.bribes
+        .filter((b) => b.epochStartTime === epoch)
+        .forEach((bribe) => {
+          const claims = bribe.userTreeData
+            .filter((u) => u.user.toLowerCase() === user.toLowerCase())
+            .map((claim) => {
+              const claimData = claim.claims[0];
+              const priceInfo = prices.find(
+                (p) => p.tokenAddress === claimData.token.toLowerCase(),
+              );
+              const gaugeRecord = gauges.find(
+                (g) => g.gaugeAddress.toLowerCase() === claimData.gauge.toLowerCase(),
+              );
+
+              // TODO: Multicall to check already claimed *
+
+              const amountOwed = ethNum(claimData.amountOwed);
+              const valueUSD = amountOwed * priceInfo.price;
+
+              return {
+                // tokenIndex: handle on frontend
+                briber: briber.briber,
+                distributionId: bribe.distribution.distributionId,
+                ...claimData,
+                amountOwed: String(amountOwed),
+                amountOwedBN: claimData.amountOwed,
+                valueUSD,
+                gaugeRecord,
+              };
+            });
+
+          userClaims.push(...claims);
+        });
+    });
+
+    // TODO: Multicall to check already claimed *
+
+    const multi = new Multicaller(this.rpc, [
+      `  function isClaimed(
+      address token,
+      address briber,
+      uint256 distributionId,
+      address claimer
+  ) public view returns (bool)`,
+    ]);
+
+    const orchard = getContractAddress('MerkleOrchard');
+    userClaims.forEach((claim, i) => {
+      multi.call(`${i}`, orchard, 'isClaimed', [
+        claim.token,
+        claim.briber,
+        claim.distributionId,
+        user,
+      ]);
+    });
+
+    const claimsResult = await multi.execute<Record<string, boolean>>(
+      'GaugeBribeService:getUserPendingBribeRewards',
+    );
+
+    userClaims = userClaims.filter((claim, idx) => claimsResult[idx.toString()] === false);
+
+    return userClaims;
+  }
+
+  async getAllGaugeBribes(epoch?: number): Promise<
     {
       gauge: string;
       currentEpochBribes: GaugeBribe[];
@@ -44,25 +130,24 @@ export class GaugeBribeService {
 
     // For UI this should show if they vote right now, what they will earn.
     // So epoch timestamp needs to be for the start of, current, week
-    let epochStartTime: number;
     if (!epoch) {
-      epochStartTime = moment(getPreviousEpoch()).unix();
+      epoch = moment(getPreviousEpoch()).unix();
     }
 
-    const nextEpochTime = moment.unix(epochStartTime).utc().add(1, 'week').unix();
+    const nextEpochTime = moment.unix(epoch).utc().add(1, 'week').unix();
 
     const abi: string | Array<Fragment | JsonFragment | string> = Object.values(
       Object.fromEntries([...managerABI].map((row) => [row.name, row])),
     );
 
-    const multicall = new Multicaller(this.aprServices, abi);
+    const multicall = new Multicaller(this.rpc, abi);
 
     gauges.forEach((gauge) => {
       multicall.call(
-        `${gauge.gaugeAddress}.${epochStartTime}`,
+        `${gauge.gaugeAddress}.${epoch}`,
         networkConfig.vertek.bribeManager,
         'getGaugeBribes',
-        [gauge.gaugeAddress, epochStartTime],
+        [gauge.gaugeAddress, epoch],
       );
 
       multicall.call(
@@ -81,7 +166,7 @@ export class GaugeBribeService {
     let currents = [];
     let nexts = [];
     gauges.forEach((gauge) => {
-      const currentEpochBribes = bribeResults[gauge.gaugeAddress][epochStartTime];
+      const currentEpochBribes = bribeResults[gauge.gaugeAddress][epoch];
       const nextEpochBribes = bribeResults[gauge.gaugeAddress][nextEpochTime];
 
       if (currentEpochBribes.length) {

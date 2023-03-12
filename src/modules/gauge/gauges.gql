@@ -1,12 +1,33 @@
 extend type Query {
   getLiquidityGauges: [LiquidityGauge]!
   getUserGaugeStakes(user: String!, poolIds: [String!]!): [LiquidityGauge]!
-  getGaugeBribes(epoch: Int): [GaugeBribe]!
+  getAllGaugeBribes(epoch: Int): [EpochBribeInfo]!
+  getSingleGaugeBribes(gauge: String!, epoch: Int!): [EpochBribeInfo]!
+  getUserBribeClaims(user: String!, epoch: Int!): [UserBribeClaim]!
 }
 
 extend type Mutation {
   syncGaugeData: Boolean!
   poolReloadStakingForAllPools: String!
+}
+
+type UserBribeClaim {
+  distributionId: String!
+  amountOwed: String!
+  amountOwedBN: String!
+  briber: String!
+  gauge: String!
+  gaugeRecord: LiquidityGauge!
+  token: String!
+  # tokenIndex: Int! # index of claim token in the claimDistributions tokens array
+  proof: [String!]!
+  valueUSD: Float!
+}
+
+type EpochBribeInfo {
+  gauge: String!
+  currentEpochBribes: [GaugeBribe]!
+  nextEpochBribes: [GaugeBribe]!
 }
 
 type GaugeBribe {

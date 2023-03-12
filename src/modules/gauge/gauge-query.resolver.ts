@@ -20,7 +20,12 @@ export class GaugeQueryResolver {
   }
 
   @Query()
-  async getGaugeBribes(@Args('epoch') epoch: number) {
-    return this.bribeService.getGaugeBribes(epoch);
+  async getAllGaugeBribes(@Args('epoch') epoch: number) {
+    return this.bribeService.getAllGaugeBribes(epoch);
+  }
+
+  @Query()
+  async getUserBribeClaims(@Args() args) {
+    return this.bribeService.getUserPendingBribeRewards(args.user, args.epoch);
   }
 }
