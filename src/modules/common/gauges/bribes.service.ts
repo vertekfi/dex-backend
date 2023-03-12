@@ -40,8 +40,6 @@ export class GaugeBribeService {
       join(process.cwd(), 'src/modules/common/gauges/data', epoch.toString(), 'bribers-data.json'),
     );
 
-    // TODO: Multicall to check already claimed **
-
     bribers.forEach((briber) => {
       briber.bribes
         .filter((b) => b.epochStartTime === epoch)
@@ -78,8 +76,6 @@ export class GaugeBribeService {
         });
     });
 
-    // TODO: Multicall to check already claimed *
-
     const multi = new Multicaller(this.rpc, [
       `  function isClaimed(
       address token,
@@ -103,7 +99,9 @@ export class GaugeBribeService {
       'GaugeBribeService:getUserPendingBribeRewards',
     );
 
-    userClaims = userClaims.filter((claim, idx) => claimsResult[idx.toString()] === false);
+    userClaims = userClaims.filter(
+      (claim, idx) => claimsResult[idx.toString()] === false && claim.proof.length,
+    );
 
     return userClaims;
   }
